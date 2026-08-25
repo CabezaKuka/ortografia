@@ -524,7 +524,7 @@
         <span class="pet-hero-name" id="pet-hero-name">Gatito</span>
       </div>
       <span class="stat-pill" id="stat-coins">
-        <span class="stat-icon">🪙</span>
+        <span class="stat-icon">💰</span>
         <span class="stat-value" id="stat-coins-value">0</span>
       </span>
     </div>
@@ -885,7 +885,7 @@ const ACHIEVEMENTS = [
     check:(p,s) => p.streak >= 7 },
   { id:"racha30",    emoji:"🌟", name:"Mes entero",        desc:"Practicá 30 días seguidos.",
     check:(p,s) => p.streak >= 30 },
-  { id:"monedas100", emoji:"🪙", name:"Alcancía llena",    desc:"Juntá 100 monedas en total.",
+  { id:"monedas100", emoji:"💰", name:"Alcancía llena",    desc:"Juntá 100 monedas en total.",
     check:(p,s) => p.totalCoinsEarned >= 100 },
   { id:"racha10",    emoji:"🎯", name:"10 sin fallar",     desc:"Acertá 10 palabras seguidas en una sesión.",
     check:(p,s) => s.sessionCorrectStreak >= 10 }
@@ -1027,7 +1027,7 @@ function openChest(){
   const label = document.getElementById("chest-label");
   if(btn) btn.disabled = true;
   if(emoji) emoji.textContent = "🎉";
-  if(label) label.textContent = "+" + reward + " 🪙";
+  if(label) label.textContent = "+" + reward + " 💰";
   setTimeout(updateChestUI, 1100);
 }
 function updateProgressUI(){
@@ -1073,7 +1073,7 @@ function paintPetChips(){
     btn.classList.toggle("equipped", equipped);
     if(equipped) priceEl.textContent = "Puesta ✓";
     else if(owned) priceEl.textContent = "Usar";
-    else priceEl.textContent = "🪙 " + p.price;
+    else priceEl.textContent = "💰 " + p.price;
   });
 }
 function onPetClick(id){
@@ -1100,8 +1100,8 @@ function onPetClick(id){
     const priceEl = document.getElementById("pet-price-" + id);
     if(!priceEl) return;
     const old = priceEl.textContent;
-    priceEl.textContent = "Faltan 🪙";
-    setTimeout(() => { if(priceEl.textContent === "Faltan 🪙") priceEl.textContent = old; }, 900);
+    priceEl.textContent = "Faltan 💰";
+    setTimeout(() => { if(priceEl.textContent === "Faltan 💰") priceEl.textContent = old; }, 900);
   }
 }
 
@@ -1128,7 +1128,7 @@ function paintAccessoryChips(){
     btn.classList.toggle("equipped", equipped);
     if(equipped) priceEl.textContent = "Puesto ✓";
     else if(owned) priceEl.textContent = "Usar";
-    else priceEl.textContent = "🪙 " + a.price;
+    else priceEl.textContent = "💰 " + a.price;
   });
 }
 function onAccessoryClick(id){
@@ -1155,8 +1155,8 @@ function onAccessoryClick(id){
     const priceEl = document.getElementById("acc-price-" + id);
     if(!priceEl) return;
     const old = priceEl.textContent;
-    priceEl.textContent = "Faltan 🪙";
-    setTimeout(() => { if(priceEl.textContent === "Faltan 🪙") priceEl.textContent = old; }, 900);
+    priceEl.textContent = "Faltan 💰";
+    setTimeout(() => { if(priceEl.textContent === "Faltan 💰") priceEl.textContent = old; }, 900);
   }
 }
 
