@@ -1,0 +1,16 @@
+{
+  "name": "Dictado — Práctica de ortografía",
+  "short_name": "Dictado",
+  "description": "Dictado de ortografía en español: práctica y examen con reglas.",
+  "start_url": "./dictado_ortografia__grok.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#6C5CE7",
+  "theme_color": "#6C5CE7",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
