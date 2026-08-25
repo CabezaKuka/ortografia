@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Dictado de ortografía en español: práctica y examen con reglas, escritura en pantalla y repaso de errores.">
+<title>Dictado — Práctica de ortografía</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --grad-1: #6C5CE7;
+    --grad-2: #FF6F91;
+    --grad-3: #FFC371;
+    --card-bg: #ffffff;
+    --ink: #2b2620;
+    --ink-dim: #7a746c;
+    --ui-accent: #6C5CE7;
+    --ui-accent-2: #FF2D95;
+    --good: #22C55E;
+    --bad: #FF3B30;
+    --paper-line: rgba(43,38,32,0.08);
+    --font-display: 'Kalam', 'Segoe Script', cursive;
+    --font-body: 'Nunito', -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background: linear-gradient(135deg, var(--grad-1) 0%, var(--grad-2) 55%, var(--grad-3) 100%);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: var(--font-body);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px 14px;
+  }
+
+  .app{ width:100%; max-width: 660px; }
+
+  header.topbar{ text-align:center; margin-bottom: 14px; }
+  header.topbar h1{
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 6.5vw, 2.9rem);
+    margin: 0;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  }
+  header.topbar p{
+    margin: 4px 0 0;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.95rem;
+  }
+
+  .speed-control{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 14px 0 18px;
+  }
+  .speed-label{ color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight:700; margin-right:2px; }
+  .speed-btn{
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.82rem;
+    border-radius: 999px;
+    border: 1.5px solid rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    padding: 7px 13px;
+    cursor:pointer;
+    transition: all 0.15s ease;
+  }
+  .speed-btn:hover{ background: rgba(255,255,255,0.28); }
+  .speed-btn.active{ background:#fff; color: var(--ui-accent); border-color:#fff; }
+  .speed-btn[aria-pressed="true"]{ background:#fff; color: var(--ui-accent); border-color:#fff; }
+
+  .card{
+    background: var(--card-bg);
+    border-radius: 22px;
+    padding: 28px 24px;
+    box-shadow: 0 25px 55px rgba(0,0,0,0.28);
+    border-top: 7px solid;
+    border-image: linear-gradient(90deg,#06AED5,#FF3B30,#E8A600,#9D4EDD,#2ECC71,#FF2D95,#3A86FF,#FB8500) 1;
+  }
+
+  .hidden{ display:none !important; }
+
+  /* ---------- MENU ---------- */
+  .menu-options{ display:flex; flex-direction:column; gap: 14px; }
+  .mode-btn{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    background: #F7F5FF;
+    border: 2px solid rgba(108,92,231,0.2);
+    border-radius: 14px;
+    padding: 16px 18px;
+    color: var(--ink);
+    text-align:left;
+    cursor:pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    font-family: var(--font-body);
+  }
+  .mode-btn:hover{ transform: translateY(-2px); border-color: var(--ui-accent); }
+  .mode-btn:disabled{ opacity:0.45; cursor:not-allowed; transform:none; }
+  .mode-btn .emoji{ font-size: 2rem; }
+  .mode-btn strong{ display:block; font-size: 1.08rem; }
+  .mode-btn span.desc{ color: var(--ink-dim); font-size: 0.88rem; }
+
+  .options-row{
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px dashed rgba(43,38,32,0.12);
+  }
+  .opt-toggle{
+    display:flex; align-items:center; gap:8px;
+    font-size: 0.84rem; font-weight:700; color: var(--ink);
+    background: #F7F5FF; border: 2px solid rgba(108,92,231,0.18);
+    border-radius: 999px; padding: 8px 14px; cursor:pointer;
+    font-family: var(--font-body);
+  }
+  .opt-toggle input{ width:16px; height:16px; accent-color: var(--ui-accent); }
+  .opt-toggle[aria-pressed="true"]{ border-color: var(--ui-accent); background: rgba(108,92,231,0.1); }
+
+  /* ---------- FILTRO DE CATEGORIAS ---------- */
+  .filter-block{ margin-top: 22px; border-top: 1px dashed rgba(43,38,32,0.15); padding-top: 16px; }
+  .filter-title{
+    font-size: 0.82rem; font-weight:800; color: var(--ink-dim);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; text-align:center;
+  }
+  .cat-chips{ display:flex; flex-wrap:wrap; gap: 7px; justify-content:center; }
+  .cat-chip{
+    font-family: var(--font-body); font-weight:700; font-size: 0.76rem;
+    border-radius: 999px; padding: 6px 12px; cursor:pointer;
+    border: 2px solid; background: #fff; transition: all 0.15s ease;
+  }
+  .cat-chip[aria-pressed="false"]{ opacity: 0.42; }
+  .chip-actions{ display:flex; gap:8px; justify-content:center; margin-top:10px; }
+  .chip-actions button{ font-size: 0.74rem; padding: 5px 12px; background: transparent; color: var(--ink-dim); text-decoration: underline; border:none; cursor:pointer; }
+  .filter-count{ text-align:center; font-size:0.78rem; color: var(--ink-dim); margin-top: 10px; }
+  .filter-count.warn{ color: var(--bad); font-weight:700; }
+
+  /* ---------- AVISO DE VOZ ---------- */
+  .voice-warn{
+    background: #FFF4E5; border:2px solid #E8A600; border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 16px; font-size: 0.84rem; color: #6b4a00;
+  }
+  .voice-warn strong{ display:block; margin-bottom:2px; }
+  .voice-info{
+    text-align:center; font-size: 0.78rem; color: var(--ink-dim);
+    margin-bottom: 12px;
+  }
+  .voice-info button{
+    font-size: 0.74rem; padding: 3px 10px; margin-left: 6px;
+    background: transparent; border:1px solid rgba(43,38,32,0.2);
+    border-radius: 999px; color: var(--ink-dim); cursor:pointer;
+  }
+
+  .context-frase{
+    margin-top: 10px; font-family: var(--font-body); font-size: 0.86rem;
+    color: var(--ink-dim); font-style: italic;
+  }
+
+  .legend{
+    margin-top: 18px;
+    display:flex;
+    gap: 10px 14px;
+    flex-wrap: wrap;
+    justify-content:center;
+    font-size: 0.76rem;
+    color: var(--ink-dim);
+  }
+  .legend .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+
+  .shortcuts-hint{
+    margin-top: 14px; text-align:center; font-size: 0.72rem;
+    color: var(--ink-dim); line-height: 1.45;
+  }
+  .shortcuts-hint kbd{
+    display:inline-block; background:#F0EEF8; border:1px solid rgba(108,92,231,0.25);
+    border-radius:4px; padding:1px 5px; font-family: var(--font-body); font-size:0.7rem;
+  }
+
+  /* ---------- BADGES ---------- */
+  .badge{
+    display:inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  /* ---------- PRACTICE / EXAM SHARED ---------- */
+  .session-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+    color: var(--ink-dim);
+    gap: 8px; flex-wrap: wrap;
+  }
+  .session-stats{ font-size: 0.82rem; color: var(--ink-dim); }
+  .session-stats .ok{ color: var(--good); font-weight:700; }
+  .session-stats .ko{ color: var(--bad); font-weight:700; }
+
+  .timerbar{
+    height: 7px;
+    background: rgba(43,38,32,0.08);
+    border-radius: 999px;
+    overflow:hidden;
+    margin: 10px 0 4px;
+  }
+  .timerbar-fill{
+    height:100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--ui-accent), var(--ui-accent-2));
+    transition: width 0.1s linear;
+  }
+  .timerbar-fill.paused{ opacity: 0.55; }
+
+  .status-line{
+    text-align:center;
+    min-height: 1.4em;
+    font-size: 0.95rem;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+  }
+
+  .stage{
+    min-height: 210px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap: 10px;
+    cursor: default;
+  }
+  .stage.clickable{ cursor:pointer; }
+
+  .speaker-icon{ font-size: 2.6rem; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:0.55; transform:scale(1);} 50%{ opacity:1; transform:scale(1.08);} }
+
+  .word-reveal{
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 8.5vw, 3rem);
+    letter-spacing: 1px;
+    text-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    opacity:0;
+    animation: chalkIn 0.5s ease forwards;
+  }
+  @keyframes chalkIn{ from{ opacity:0; filter: blur(4px); transform: translateY(6px);} to{ opacity:1; filter: blur(0); transform:translateY(0);} }
+
+  .paper-note{
+    position:relative;
+    background-image: repeating-linear-gradient(transparent, transparent 27px, var(--paper-line) 28px);
+    color: var(--ink);
+    border-radius: 4px;
+    padding: 22px 18px 16px;
+    margin-top: 6px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.12);
+    transform: rotate(-0.6deg);
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    line-height: 1.55;
+  }
+  .paper-note::before{
+    content:"";
+    position:absolute;
+    top:-12px; left: 50%;
+    width: 90px; height: 26px;
+    margin-left: -45px;
+    background: var(--note-accent, #FFD97D);
+    opacity:0.85;
+    transform: rotate(-3deg);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  }
+
+  .hint-text{ margin-top: 14px; font-size: 0.85rem; color: var(--ink-dim); font-family: var(--font-body); }
+
+  /* Escritura en pantalla */
+  .type-box{
+    width: 100%; max-width: 360px; margin: 8px auto 0;
+  }
+  .type-box input{
+    width: 100%;
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    text-align: center;
+    padding: 12px 14px;
+    border: 2px solid rgba(108,92,231,0.35);
+    border-radius: 12px;
+    background: #FAFAFF;
+    color: var(--ink);
+    letter-spacing: 1px;
+  }
+  .type-box input:focus{
+    outline: none;
+    border-color: var(--ui-accent);
+    box-shadow: 0 0 0 3px rgba(108,92,231,0.2);
+  }
+  .type-box input.ok{ border-color: var(--good); background: #F0FDF4; }
+  .type-box input.ko{ border-color: var(--bad); background: #FEF2F2; }
+  .type-feedback{
+    min-height: 1.3em; font-size: 0.88rem; font-weight:700; margin-top: 6px;
+  }
+  .type-feedback.ok{ color: var(--good); }
+  .type-feedback.ko{ color: var(--bad); }
+
+  .timer-actions{
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top: 8px;
+  }
+  .timer-actions button{
+    font-size: 0.78rem; padding: 6px 12px;
+    background: #F7F5FF; border: 1.5px solid rgba(108,92,231,0.25);
+    color: var(--ink); border-radius: 999px;
+  }
+
+  .controls-row{ display:flex; gap: 10px; justify-content:center; margin-top: 16px; flex-wrap: wrap; }
+
+  button{
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.92rem;
+    border-radius: 12px;
+    border: none;
+    padding: 11px 18px;
+    cursor:pointer;
+    transition: transform 0.12s ease, filter 0.12s ease;
+  }
+  button:hover{ filter: brightness(1.06); }
+  button:active{ transform: scale(0.97); }
+  button:focus-visible{ outline: 3px solid var(--ui-accent); outline-offset: 2px; }
+
+  .btn-ghost{ background: #fff; border: 2px solid rgba(43,38,32,0.15); color: var(--ink); }
+  .btn-ghost:hover{ border-color: var(--ui-accent); }
+  .btn-primary{ background: var(--ui-accent); color: #fff; }
+  .btn-good{ background: var(--good); color: #fff; padding: 14px 24px; font-size: 1rem; }
+  .btn-bad{ background: var(--bad); color: #fff; padding: 14px 24px; font-size: 1rem; }
+
+  /* ---------- RESULTS ---------- */
+  .score-wrap{ text-align:center; }
+  .score-num{ font-family: var(--font-display); font-size: 4rem; line-height:1; color: var(--ui-accent); }
+  .score-den{ color: var(--ink-dim); font-size: 1.1rem; }
+  .score-msg{ margin-top: 8px; font-size: 1.05rem; }
+  .score-sub{ color: var(--ink-dim); font-size: 0.9rem; margin-top: 4px; }
+
+  .review-list{ margin-top: 20px; max-height: 280px; overflow-y:auto; padding-right: 4px; }
+  .review-item{
+    background: rgba(255,59,48,0.06);
+    border-left: 3px solid var(--bad);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    text-align: left;
+  }
+  .review-item strong{ font-family: var(--font-display); font-size: 1.1rem; }
+  .review-item p{ margin: 4px 0 0; font-size: 0.85rem; color: var(--ink-dim); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+
+  @media (max-width: 420px){
+    .card{ padding: 20px 16px; }
+    .controls-row button{ flex: 1 1 auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <h1>✏️ Dictado</h1>
+    <p>Práctica de ortografía</p>
+  </header>
+
+  <div class="speed-control" id="speed-control" role="group" aria-label="Velocidad de dictado">
+    <span class="speed-label">🔊 Velocidad:</span>
+    <button type="button" class="speed-btn" data-rate="0.6" aria-pressed="false" onclick="setRate(0.6,this)">🐢 Lenta</button>
+    <button type="button" class="speed-btn active" data-rate="0.8" aria-pressed="true" onclick="setRate(0.8,this)">🚶 Normal</button>
+    <button type="button" class="speed-btn" data-rate="1.05" aria-pressed="false" onclick="setRate(1.05,this)">🐇 Rápida</button>
+  </div>
+
+  <div class="card">
+
+    <!-- MENU -->
+    <section id="screen-menu" class="screen">
+      <div id="voice-warn" class="voice-warn hidden"></div>
+      <div id="voice-info" class="voice-info hidden"></div>
+      <div class="menu-options">
+        <button type="button" class="mode-btn" id="btn-practice" onclick="startPractice()">
+          <span class="emoji">📘</span>
+          <span>
+            <strong>Modo Práctica</strong>
+            <span class="desc">Escucha, escribe y revisa la regla. Marca si acertaste. Al final puedes repasar los errores.</span>
+          </span>
+        </button>
+        <button type="button" class="mode-btn" id="btn-exam" onclick="startExam()">
+          <span class="emoji">📝</span>
+          <span>
+            <strong>Modo Examen</strong>
+            <span class="desc">Hasta 20 palabras al azar (equilibradas por regla). Obtén tu nota sobre 100.</span>
+          </span>
+        </button>
+        <button type="button" class="mode-btn hidden" id="btn-review" onclick="startReview()">
+          <span class="emoji">🔁</span>
+          <span>
+            <strong>Repasar errores</strong>
+            <span class="desc" id="review-desc">Solo las palabras que fallaste la última vez.</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="options-row">
+        <label class="opt-toggle" id="opt-type" aria-pressed="false">
+          <input type="checkbox" id="chk-type" onchange="toggleTypeMode(this.checked)">
+          Escribir en pantalla
+        </label>
+      </div>
+
+      <div class="filter-block">
+        <div class="filter-title">Practicar solo estas reglas</div>
+        <div class="cat-chips" id="cat-chips"></div>
+        <div class="chip-actions">
+          <button type="button" onclick="setAllCats(true)">Todas</button>
+          <button type="button" onclick="setAllCats(false)">Ninguna</button>
+        </div>
+        <div class="filter-count" id="filter-count"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="shortcuts-hint">
+        Atajos: <kbd>Espacio</kbd> escuchar de nuevo · <kbd>Enter</kbd> continuar / revelar ·
+        <kbd>1</kbd> correcta · <kbd>2</kbd> incorrecta · <kbd>+</kbd> +5 s
+      </div>
+    </section>
+
+    <!-- PRACTICE -->
+    <section id="screen-practice" class="screen hidden">
+      <div class="session-top">
+        <span id="practice-badge"></span>
+        <span id="practice-counter"></span>
+        <span class="session-stats" id="practice-stats"></span>
+      </div>
+      <div class="timerbar"><div id="practice-timerfill" class="timerbar-fill"></div></div>
+      <div id="practice-status" class="status-line" aria-live="polite"></div>
+      <div id="practice-stage" class="stage"></div>
+      <div class="controls-row">
+        <button type="button" class="btn-ghost" onclick="replayCurrent()">🔊 Escuchar de nuevo</button>
+        <button type="button" class="btn-ghost" onclick="exitToMenu()">🏠 Terminar práctica</button>
+      </div>
+    </section>
+
+    <!-- EXAM -->
+    <section id="screen-exam" class="screen hidden">
+      <div class="session-top">
+        <span id="exam-badge"></span>
+        <span id="exam-progress"></span>
+      </div>
+      <div class="timerbar"><div id="exam-timerfill" class="timerbar-fill"></div></div>
+      <div id="exam-status" class="status-line" aria-live="polite"></div>
+      <div id="exam-stage" class="stage"></div>
+      <div class="controls-row">
+        <button type="button" class="btn-ghost" onclick="replayCurrent()">🔊 Escuchar de nuevo</button>
+        <button type="button" class="btn-ghost" onclick="exitToMenu()">🏠 Salir del examen</button>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="screen-results" class="screen hidden">
+      <div class="score-wrap">
+        <div class="score-num" id="result-score">0</div>
+        <div class="score-den" id="result-den">de 100</div>
+        <div class="score-msg" id="result-msg"></div>
+        <div class="score-sub" id="result-sub"></div>
+      </div>
+      <div id="result-review-wrap">
+        <div id="result-review-title" class="hint-text hidden">Para repasar:</div>
+        <div class="review-list" id="result-review-list"></div>
+      </div>
+      <div class="controls-row">
+        <button type="button" class="btn-primary" id="result-again" onclick="startExam()">🔄 Repetir examen</button>
+        <button type="button" class="btn-ghost" id="result-review-btn" onclick="startReview()" class="hidden">🔁 Repasar errores</button>
+        <button type="button" class="btn-ghost" onclick="exitToMenu()">🏠 Menú principal</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ---------------- Categories ---------------- */
+const CAT = {
+  bv:    { label:"B / V",           color:"#06AED5", text:"#fff" },
+  csz:   { label:"C · S · Z",       color:"#FF3B30", text:"#fff" },
+  h:     { label:"H",               color:"#E8A600", text:"#2b2620" },
+  tilde: { label:"Tilde",           color:"#9D4EDD", text:"#fff" },
+  gj:    { label:"G / J",           color:"#2ECC71", text:"#fff" },
+  lly:   { label:"LL / Y",          color:"#FF2D95", text:"#fff" },
+  mp:    { label:"M antes de B/P",  color:"#3A86FF", text:"#fff" },
+  nv:    { label:"N antes de V",    color:"#FB8500", text:"#fff" }
+};
+
+/* ---------------- Word bank (ampliado y con contrastes) ---------------- */
+const WORDS = [
+  /* H */
+  {w:"haber", cat:"h", frase:"Tiene que haber una solución.", rule:"Todas las formas del verbo <em>haber</em> se escriben con H: he, has, ha, hemos, había, hubo. No lo confundas con «a ver», que es mirar: vamos a ver la película."},
+  {w:"hielo", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, huevo, huella."},
+  {w:"hierro", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, huevo, huella."},
+  {w:"hueso", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, huevo, huella."},
+  {w:"huevo", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, huevo, huella."},
+  {w:"huella", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, huevo, huella."},
+  {w:"hospital", cat:"h", rule:"Las palabras que empiezan con HOSP- se escriben con H: hospital, hospedaje, hospicio."},
+  {w:"hipermercado", cat:"h", rule:"Las palabras que empiezan con HIPER- se escriben con H: hipermercado, hipertensión."},
+  {w:"hidratar", cat:"h", rule:"Las palabras que empiezan con HIDR- se escriben con H: hidratar, hidráulico, hidrógeno."},
+  {w:"húmedo", cat:"h", rule:"Las palabras que empiezan con HUM- seguido de vocal se escriben con H: húmedo, humano, humor."},
+  {w:"ahora", cat:"h", rule:"Se escribe con H: ahora, ahí, ahíto. No lleva H «aora» (no existe)."},
+  {w:"ahorrar", cat:"h", rule:"Las palabras de la familia de ahorro llevan H: ahorrar, ahorro, ahorrativo."},
+
+  /* B / V */
+  {w:"bienestar", cat:"bv", rule:"Las palabras que empiezan con BIEN- se escriben con B: bienestar, bienvenido. Ojo: viene, del verbo venir, va con V."},
+  {w:"también", cat:"bv", rule:"Se escribe B después de M, nunca V: también, cambio, hombre, ambos."},
+  {w:"cambio", cat:"bv", rule:"Se escribe B después de M, nunca V: cambio, también, tumba."},
+  {w:"escribir", cat:"bv", rule:"Los verbos terminados en -BIR se escriben con B, <em>excepto</em> hervir, servir y vivir: escribir, recibir, prohibir."},
+  {w:"recibir", cat:"bv", rule:"Termina en -BIR → se escribe con B: recibir, describir. Excepciones con V: hervir, servir, vivir."},
+  {w:"prohibir", cat:"bv", rule:"Termina en -BIR → se escribe con B: prohibir, exhibir. Excepciones con V: hervir, servir, vivir."},
+  {w:"hervir", cat:"bv", rule:"Casi todos los verbos en -BIR van con B, <em>pero</em> hay tres excepciones con V: hervir, servir y vivir (y derivados: convivir, revivir)."},
+  {w:"servir", cat:"bv", rule:"Casi todos los verbos en -BIR van con B, <em>pero</em> hay tres excepciones con V: hervir, servir y vivir (y derivados: convivir, revivir)."},
+  {w:"vivir", cat:"bv", rule:"Casi todos los verbos en -BIR van con B, <em>pero</em> hay tres excepciones con V: hervir, servir y vivir (y derivados: convivir, revivir)."},
+  {w:"contribuir", cat:"bv", rule:"Los verbos terminados en -BUIR se escriben con B: contribuir, atribuir, distribuir."},
+  {w:"distribuir", cat:"bv", rule:"Termina en -BUIR → se escribe con B: distribuir, retribuir."},
+  {w:"absurdo", cat:"bv", rule:"Se escribe B antes de consonante: absurdo, abstracto, obtener."},
+  {w:"subrayar", cat:"bv", rule:"Se escribe B antes de consonante: subrayar, subterráneo, submarino."},
+  {w:"obtener", cat:"bv", rule:"Se escribe B antes de consonante: obtener, objeto."},
+  {w:"cantaba", cat:"bv", rule:"El pretérito imperfecto de los verbos en -AR se escribe con B: cantaba, jugaba, caminaba."},
+  {w:"jugábamos", cat:"bv", rule:"Pretérito imperfecto de verbos en -AR → con B: jugábamos, cantábamos."},
+  {w:"íbamos", cat:"bv", rule:"El pretérito imperfecto del verbo IR también se escribe con B: iba, ibas, íbamos."},
+  {w:"octavo", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"nueva", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"activo", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"grave", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"amabilidad", cat:"bv", rule:"Los sustantivos terminados en -BILIDAD se escriben con B, excepto movilidad y civilidad: amabilidad, posibilidad."},
+  {w:"advertir", cat:"bv", rule:"Se escribe V después de AD-: advertir, adverbio, adversario."},
+  {w:"villancico", cat:"bv", rule:"Dos familias que suenan igual: villa, villano y villancico van con V; billar, billete y billón van con B. Hay que memorizar cuál es cuál."},
+  {w:"vicepresidente", cat:"bv", rule:"El prefijo VICE- («en lugar de») se escribe con V: vicepresidente, viceversa. No lo confundas con BI- («dos»): bicicleta."},
+  {w:"buscar", cat:"bv", rule:"Las palabras que empiezan con BUS- se escriben con B: buscar, búsqueda, busto."},
+  {w:"burbuja", cat:"bv", rule:"Las palabras que empiezan con BUR- se escriben con B: burbuja, burro, burla."},
+  {w:"mover", cat:"bv", rule:"El verbo mover y su familia van con V: mover, movimiento, móvil."},
+  {w:"beber", cat:"bv", rule:"Beber va con B. Compará: beber (tomar líquido) vs. vivir (con V, excepción de -BIR)."},
+
+  /* C · S · Z */
+  {w:"acción", cat:"csz", rule:"Busca un pariente de la palabra: si tiene CT, se escribe -CCIÓN. Acto, actor → acción."},
+  {w:"construcción", cat:"csz", rule:"Busca un pariente: si tiene CT, se escribe -CCIÓN. Constructor → construcción."},
+  {w:"comprensión", cat:"csz", rule:"Busca un pariente: si tiene S, se escribe -SIÓN. Comprensivo → comprensión."},
+  {w:"división", cat:"csz", rule:"Busca un pariente: si tiene S, se escribe -SIÓN. Divisor → división."},
+  {w:"decisión", cat:"csz", rule:"Busca un pariente: si tiene S, se escribe -SIÓN. Decisivo → decisión."},
+  {w:"extensión", cat:"csz", rule:"Busca un pariente: si tiene S, se escribe -SIÓN. Extenso → extensión."},
+  {w:"niñez", cat:"csz", rule:"Los sustantivos abstractos terminados en -EZ/-EZA se escriben con Z: niñez, vejez."},
+  {w:"belleza", cat:"csz", rule:"Sustantivo abstracto en -EZA → con Z: belleza, pobreza."},
+  {w:"luces", cat:"csz", rule:"Las palabras terminadas en Z cambian a C en el plural: luz → luces."},
+  {w:"peces", cat:"csz", rule:"Palabra terminada en Z cambia a C en el plural: pez → peces."},
+  {w:"nacer", cat:"csz", rule:"Los verbos terminados en -CER/-CIR se escriben con C, excepto toser, coser y asir: nacer, crecer."},
+  {w:"conducir", cat:"csz", rule:"Termina en -CIR → se escribe con C: conducir, producir."},
+  {w:"empecé", cat:"csz", rule:"Los verbos en -ZAR cambian la Z por C delante de E: empezar → empecé."},
+  {w:"crucé", cat:"csz", rule:"Verbo en -ZAR cambia Z por C ante E: cruzar → crucé."},
+  {w:"famoso", cat:"csz", rule:"Los adjetivos terminados en -OSO/-OSA se escriben con S: famoso, hermosa."},
+  {w:"generosa", cat:"csz", rule:"Adjetivo en -OSA → con S: generosa, cariñosa."},
+  {w:"canadiense", cat:"csz", rule:"Los gentilicios terminados en -ENSE se escriben con S: canadiense, costarricense. Excepción: vascuence."},
+  {w:"grandísimo", cat:"csz", rule:"Los superlativos terminados en -ÍSIMO/-ÍSIMA se escriben con S: grandísimo, riquísima."},
+  {w:"cielo", cat:"csz", rule:"Delante de E o de I este sonido se escribe con C, nunca con Z: cielo, cebra, cinco. Con S también existe (siempre, señor)."},
+  {w:"cereza", cat:"csz", rule:"Delante de E/I va C y delante de A/O/U va Z: ce-re-za, zapato."},
+  {w:"zapato", cat:"csz", rule:"Delante de A, O o U este sonido se escribe con Z, nunca con C: zapato, zorro, zumo. Con C ahí sonaría /k/: casa."},
+  {w:"paz", cat:"csz", rule:"Sustantivos abstractos en -AZ suelen ir con Z: paz, capaz (adjetivo). Plural: paces."},
+
+  /* Tilde */
+  {w:"canción", cat:"tilde", rule:"Es una palabra aguda terminada en N, por eso lleva tilde: canción, corazón."},
+  {w:"corazón", cat:"tilde", rule:"Palabra aguda terminada en N → lleva tilde: corazón, canción."},
+  {w:"jamás", cat:"tilde", rule:"Palabra aguda terminada en S → lleva tilde: jamás, autobús."},
+  {w:"autobús", cat:"tilde", rule:"Palabra aguda terminada en S → lleva tilde: autobús, compás."},
+  {w:"café", cat:"tilde", rule:"Palabra aguda terminada en vocal → lleva tilde: café, sofá, bebé."},
+  {w:"árbol", cat:"tilde", rule:"Palabra llana (grave) que NO termina en N, S ni vocal → lleva tilde: árbol, cráter."},
+  {w:"fácil", cat:"tilde", rule:"Palabra llana que termina en L → lleva tilde: fácil, difícil."},
+  {w:"lápiz", cat:"tilde", rule:"Palabra llana que termina en Z → lleva tilde: lápiz, césped."},
+  {w:"azúcar", cat:"tilde", rule:"Palabra llana que termina en R → lleva tilde: azúcar, néctar."},
+  {w:"césped", cat:"tilde", rule:"Palabra llana que termina en D → lleva tilde: césped, huésped."},
+  {w:"pájaro", cat:"tilde", rule:"Las palabras esdrújulas siempre llevan tilde: pájaro, teléfono, música."},
+  {w:"teléfono", cat:"tilde", rule:"Palabra esdrújula → siempre lleva tilde: teléfono, número."},
+  {w:"música", cat:"tilde", rule:"Palabra esdrújula → siempre lleva tilde: música, rápido."},
+  {w:"sábado", cat:"tilde", rule:"Palabra esdrújula → siempre lleva tilde: sábado, médico."},
+  {w:"país", cat:"tilde", rule:"Hiato: la vocal débil (I) suena más fuerte, por eso lleva tilde: país, raíz."},
+  {w:"día", cat:"tilde", rule:"Hiato: la vocal débil tónica lleva tilde: día, tío."},
+  {w:"baúl", cat:"tilde", rule:"Hiato: la vocal débil tónica lleva tilde: baúl, oír."},
+  {w:"oír", cat:"tilde", rule:"Hiato: la vocal débil tónica lleva tilde: oír, reír."},
+  {w:"él", cat:"tilde", frase:"Él llegó tarde a la escuela.", rule:"Se tilda cuando es pronombre (él llegó), para diferenciarlo del artículo «el» (el perro)."},
+  {w:"sé", cat:"tilde", frase:"Yo sé la respuesta.", rule:"Se tilda cuando es del verbo saber o ser (yo sé, sé bueno), para diferenciarlo del pronombre «se»."},
+  {w:"más", cat:"tilde", frase:"Quiero más pan, por favor.", rule:"Se tilda cuando indica cantidad (quiero más), para diferenciarlo de «mas» (pero)."},
+  {w:"té", cat:"tilde", frase:"Mi abuela toma una taza de té.", rule:"Se tilda cuando es la bebida (tomé té), para diferenciarlo del pronombre «te»."},
+  {w:"tú", cat:"tilde", frase:"Tú eres mi amigo.", rule:"Se tilda cuando es pronombre (tú cantás), para diferenciarlo del posesivo «tu» (tu casa)."},
+
+  /* G / J */
+  {w:"general", cat:"gj", rule:"El grupo GEN se escribe con G: general, urgente, imagen, inteligente. Se escapan jengibre, berenjena y ajeno."},
+  {w:"gigante", cat:"gj", rule:"Palabra de memoria: gigante, gigantesco y girasol van con G, aunque suenen como J."},
+  {w:"ingeniero", cat:"gj", rule:"El grupo GEN se escribe con G: general, urgente, imagen, inteligente. Se escapan jengibre, berenjena y ajeno."},
+  {w:"urgente", cat:"gj", rule:"El grupo GEN se escribe con G: general, urgente, imagen, inteligente. Se escapan jengibre, berenjena y ajeno."},
+  {w:"imagen", cat:"gj", rule:"El grupo GEN se escribe con G: general, urgente, imagen, inteligente. Se escapan jengibre, berenjena y ajeno."},
+  {w:"geografía", cat:"gj", rule:"Las palabras que empiezan con GEO- se escriben con G: geografía, geometría, geología."},
+  {w:"colegio", cat:"gj", rule:"Las palabras terminadas en -GIO/-GIA se escriben con G: colegio, magia, energía. Excepciones: bujía, herejía y lejía."},
+  {w:"magia", cat:"gj", rule:"Las palabras terminadas en -GIO/-GIA se escriben con G: colegio, magia, energía. Excepciones: bujía, herejía y lejía."},
+  {w:"inteligente", cat:"gj", rule:"El grupo GEN se escribe con G: general, urgente, imagen, inteligente. Se escapan jengibre, berenjena y ajeno."},
+  {w:"reloj", cat:"gj", rule:"Al final de palabra el sonido /j/ se escribe con J, nunca con G: reloj, carcaj."},
+  {w:"jirafa", cat:"gj", rule:"No hay regla: JI- y GI- suenan igual. Con J: jirafa, jinete. Con G: gigante, girasol."},
+  {w:"extranjero", cat:"gj", rule:"Las palabras terminadas en -JERO, -JERA o -JERÍA se escriben con J: extranjero, mensajero, relojería. La única excepción es ligero."},
+  {w:"mensaje", cat:"gj", rule:"Las palabras terminadas en -AJE se escriben con J: mensaje, viaje, garaje."},
+  {w:"traduje", cat:"gj", rule:"El pretérito de los verbos terminados en -DUCIR, y también el de decir y traer, se escribe con J: traduje, conduje, dije, traje."},
+  {w:"viaje", cat:"gj", rule:"Termina en -AJE → con J: viaje, mensaje, garaje, personaje."},
+
+  /* LL / Y */
+  {w:"cuchillo", cat:"lly", rule:"Las palabras terminadas en -ILLO se escriben con LL: cuchillo, ladrillo."},
+  {w:"sombrilla", cat:"lly", rule:"Termina en -ILLA → se escribe con LL: sombrilla, semilla."},
+  {w:"ladrillo", cat:"lly", rule:"Termina en -ILLO → se escribe con LL: ladrillo, cuchillo."},
+  {w:"llorar", cat:"lly", rule:"Familia de memoria: llorar, lloro, llorón y lloriquear van todas con LL."},
+  {w:"llegar", cat:"lly", rule:"Familia de memoria: llegar, llegada y allegado van todas con LL."},
+  {w:"llamar", cat:"lly", rule:"Familia de memoria: llamar, llamada, llamativo y llamado van todas con LL."},
+  {w:"brillar", cat:"lly", rule:"Familia de memoria: brillar, brillo, brillante y brillantina van todas con LL."},
+  {w:"caballo", cat:"lly", rule:"Familia de memoria: caballo, caballero, caballería y caballete van todas con LL."},
+  {w:"lluvia", cat:"lly", rule:"Familia de memoria: lluvia, llover, lluvioso y llovizna van todas con LL."},
+  {w:"llave", cat:"lly", rule:"Familia de memoria: llave, llavero y llavín van todas con LL."},
+  {w:"calle", cat:"lly", rule:"Familia de memoria: calle, callejón, callejero y bocacalle van todas con LL."},
+  {w:"rey", cat:"lly", rule:"Al final de palabra, el sonido /i/ después de vocal se escribe con Y: rey, ley, buey, hoy, muy, soy."},
+  {w:"ley", cat:"lly", rule:"Al final de palabra, el sonido /i/ después de vocal se escribe con Y: rey, ley, buey, hoy, muy, soy."},
+  {w:"hoy", cat:"lly", rule:"Al final de palabra, el sonido /i/ después de vocal se escribe con Y: rey, ley, buey, hoy, muy, soy."},
+  {w:"mayo", cat:"lly", rule:"El oído no distingue LL de Y: hay que memorizarlas. Con Y: mayo, playa, ayuda, arroyo. Con LL: calle, caballo."},
+  {w:"playa", cat:"lly", rule:"El oído no distingue LL de Y: hay que memorizarlas. Con Y: mayo, playa, ayuda, arroyo. Con LL: calle, caballo."},
+  {w:"leyendo", cat:"lly", rule:"El gerundio de leer cambia la I por Y entre vocales: leyendo, oyendo, cayendo."},
+  {w:"construyendo", cat:"lly", rule:"Los verbos terminados en -UIR cambian la I por Y en el gerundio: construyendo, huyendo."},
+  {w:"ayuda", cat:"lly", rule:"Familia con Y: ayuda, ayudar, ayudante. No lleva LL."},
+
+  /* M antes de B/P */
+  {w:"tiempo", cat:"mp", rule:"Se escribe M antes de P, nunca N: tiempo, campo, importante."},
+  {w:"campo", cat:"mp", rule:"Antes de P siempre va M: campo, tiempo."},
+  {w:"importante", cat:"mp", rule:"Antes de P siempre va M: importante, imposible."},
+  {w:"imposible", cat:"mp", rule:"Antes de P siempre va M: imposible, empezar."},
+  {w:"empezar", cat:"mp", rule:"Antes de P siempre va M: empezar, empujar."},
+  {w:"hombre", cat:"mp", rule:"Se escribe M antes de B, nunca N: hombre, bomba."},
+  {w:"bomba", cat:"mp", rule:"Antes de B siempre va M: bomba, tambor."},
+  {w:"trompeta", cat:"mp", rule:"Antes de P siempre va M: trompeta, ejemplo."},
+  {w:"compañero", cat:"mp", rule:"Antes de P siempre va M: compañero, campo."},
+  {w:"ejemplo", cat:"mp", rule:"Antes de P siempre va M: ejemplo, trompeta."},
+  {w:"tambor", cat:"mp", rule:"Antes de B siempre va M: tambor, también, cambio."},
+  {w:"ambos", cat:"mp", rule:"Antes de B siempre va M: ambos, hombre, bomba."},
+
+  /* N antes de V */
+  {w:"inventar", cat:"nv", rule:"Se escribe N antes de V, nunca M: inventar, conveniente."},
+  {w:"conveniente", cat:"nv", rule:"Antes de V siempre va N: conveniente, envidia."},
+  {w:"envidia", cat:"nv", rule:"Antes de V siempre va N: envidia, enviar."},
+  {w:"invitar", cat:"nv", rule:"Antes de V siempre va N: invitar, investigar."},
+  {w:"convivir", cat:"nv", rule:"Antes de V siempre va N: convivir, convocar."},
+  {w:"convocar", cat:"nv", rule:"Antes de V siempre va N: convocar, convertir."},
+  {w:"enviar", cat:"nv", rule:"Antes de V siempre va N: enviar, invierno."},
+  {w:"convertir", cat:"nv", rule:"Antes de V siempre va N: convertir, conveniente."},
+  {w:"investigar", cat:"nv", rule:"Antes de V siempre va N: investigar, invitar."},
+  {w:"convencer", cat:"nv", rule:"Antes de V siempre va N: convencer, convivir."},
+  {w:"invierno", cat:"nv", rule:"Antes de V siempre va N: invierno, invitar, inventar."},
+  {w:"envidioso", cat:"nv", rule:"Antes de V siempre va N: envidioso, envidia."}
+];
+
+/* ---------------- App state ---------------- */
+const STORAGE_KEY = "dictado-ortografia-v2";
+const state = {
+  screen: "menu",
+  mode: null, // "practice" | "exam" | "review"
+  queue: [],
+  practiceCount: 0,
+  practiceCorrect: 0,
+  practiceWrong: [],
+  examWords: [],
+  examIndex: 0,
+  examCorrect: 0,
+  examWrong: [],
+  current: null,
+  phase: null,
+  pendingTimeout: null,
+  keyLock: false,
+  speakToken: 0,
+  typeMode: false,
+  timerRemaining: 0,
+  timerPaused: false,
+  timerRaf: null,
+  timerEndAt: 0,
+  lastWrong: []
+};
+let currentRate = 0.8;
+let selectedCats = new Set(Object.keys(CAT));
+
+function writeSeconds(item){
+  return Math.min(12, Math.max(5, 3.5 + item.w.length * 0.5));
+}
+
+/* ---------------- Utilities ---------------- */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function clearPending(){
+  if(state.pendingTimeout){ clearTimeout(state.pendingTimeout); state.pendingTimeout = null; }
+  if(state.timerRaf){ cancelAnimationFrame(state.timerRaf); state.timerRaf = null; }
+}
+function hexToRgba(hex, alpha){
+  const h = hex.replace('#','');
+  const num = parseInt(h,16);
+  const r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function normalizeAnswer(s){
+  return (s || "").trim().toLowerCase().normalize("NFC");
+}
+
+/* ---------------- Persistencia ---------------- */
+function loadPrefs(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(typeof data.rate === "number") currentRate = data.rate;
+    if(Array.isArray(data.cats) && data.cats.length) selectedCats = new Set(data.cats);
+    if(typeof data.typeMode === "boolean") state.typeMode = data.typeMode;
+    if(Array.isArray(data.lastWrong)) state.lastWrong = data.lastWrong;
+  }catch(e){}
+}
+function savePrefs(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      rate: currentRate,
+      cats: [...selectedCats],
+      typeMode: state.typeMode,
+      lastWrong: state.lastWrong.slice(0, 40)
+    }));
+  }catch(e){}
+}
+function applyLoadedPrefs(){
+  document.querySelectorAll(".speed-btn").forEach(b => {
+    const on = parseFloat(b.dataset.rate) === currentRate;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  const chk = document.getElementById("chk-type");
+  if(chk){
+    chk.checked = state.typeMode;
+    document.getElementById("opt-type").setAttribute("aria-pressed", state.typeMode ? "true" : "false");
+  }
+  updateReviewButton();
+}
+
+/* ---------------- Speed control ---------------- */
+function setRate(rate, btn){
+  currentRate = rate;
+  document.querySelectorAll('.speed-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute("aria-pressed", "false");
+  });
+  btn.classList.add('active');
+  btn.setAttribute("aria-pressed", "true");
+  savePrefs();
+}
+
+function toggleTypeMode(on){
+  state.typeMode = !!on;
+  document.getElementById("opt-type").setAttribute("aria-pressed", on ? "true" : "false");
+  savePrefs();
+}
+
+/* ---------------- Speech ---------------- */
+const VOICE_ORDER = [
+  "es-mx","es-us","es-419","es-ar","es-co","es-cl","es-pe","es-bo","es-uy",
+  "es-py","es-ve","es-ec","es-cr","es-pa","es-do","es-gt","es-hn","es-ni",
+  "es-sv","es-pr","es-es"
+];
+let spanishVoice = null;
+let voiceChecked = false;
+
+function voiceRank(v){
+  const lang = (v.lang || "").toLowerCase().replace("_","-");
+  const idx = VOICE_ORDER.indexOf(lang);
+  if(idx !== -1) return idx;
+  if(lang.startsWith("es")) return VOICE_ORDER.indexOf("es-es") - 0.5;
+  return 999;
+}
+function pickVoice(){
+  if(!("speechSynthesis" in window)) { showVoiceWarning("nospeech"); return; }
+  const voices = window.speechSynthesis.getVoices();
+  if(!voices || voices.length === 0) return;
+  const es = voices.filter(v => (v.lang || "").toLowerCase().startsWith("es"));
+  if(es.length === 0){ spanishVoice = null; showVoiceWarning("noes"); voiceChecked = true; return; }
+  es.sort((a,b) => voiceRank(a) - voiceRank(b));
+  spanishVoice = es[0];
+  voiceChecked = true;
+  const lang = (spanishVoice.lang || "").toLowerCase().replace("_","-");
+  showVoiceWarning(lang === "es-es" ? "peninsular" : "ok");
+  showVoiceInfo();
+}
+function showVoiceWarning(kind){
+  const el = document.getElementById("voice-warn");
+  if(!el) return;
+  if(kind === "ok"){ el.classList.add("hidden"); el.innerHTML = ""; return; }
+  let html = "";
+  if(kind === "nospeech"){
+    html = "<strong>Este navegador no puede dictar.</strong>Abrí el archivo en Chrome, Edge o Safari.";
+  } else if(kind === "noes"){
+    html = "<strong>No hay voz en español instalada.</strong>Las palabras se van a leer con voz de otro idioma y el dictado no sirve. Instalá una voz en español desde la configuración del sistema (Windows: Configuración → Hora e idioma → Voz; macOS: Accesibilidad → Contenido hablado; Android: Ajustes → Sistema → Idiomas → Salida de texto a voz).";
+  } else if(kind === "peninsular"){
+    html = "<strong>Solo hay voz de España.</strong>Pronuncia la C y la Z distinto, así que las palabras de la categoría C · S · Z se resuelven de oído. Conviene instalar una voz latinoamericana (México, Argentina, Colombia, etc.).";
+  }
+  el.innerHTML = html;
+  el.classList.remove("hidden");
+}
+function showVoiceInfo(){
+  const el = document.getElementById("voice-info");
+  if(!el || !spanishVoice){ if(el) el.classList.add("hidden"); return; }
+  const name = spanishVoice.name || spanishVoice.lang;
+  el.innerHTML = `Voz: <strong>${name}</strong> (${spanishVoice.lang}) <button type="button" onclick="testVoice()">Probar</button>`;
+  el.classList.remove("hidden");
+}
+function testVoice(){
+  speak("Hola. Esta es la voz del dictado.");
+}
+if("speechSynthesis" in window){
+  pickVoice();
+  window.speechSynthesis.onvoiceschanged = pickVoice;
+  setTimeout(() => { if(!voiceChecked) pickVoice(); }, 1200);
+} else {
+  showVoiceWarning("nospeech");
+}
+
+function speechTextFor(item){
+  if(item.frase) return item.w + ". Como en: " + item.frase + " " + item.w + ".";
+  return item.w + ".";
+}
+function speak(text, onend){
+  if(!("speechSynthesis" in window)){ if(onend) onend(); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = spanishVoice ? spanishVoice.lang : "es-MX";
+  u.rate = currentRate;
+  if(spanishVoice) u.voice = spanishVoice;
+  let done = false;
+  const finish = () => { if(!done){ done = true; if(onend) onend(); } };
+  u.onend = finish;
+  u.onerror = finish;
+  window.speechSynthesis.speak(u);
+  setTimeout(finish, Math.max(2800, text.length * 280 / currentRate));
+}
+
+function replayCurrent(){
+  if(!state.current) return;
+  const item = state.current;
+  if(state.phase === "revealed"){ speak(speechTextFor(item)); return; }
+  clearPending();
+  state.phase = "dictating";
+  state.timerPaused = false;
+  renderCurrent();
+  const token = ++state.speakToken;
+  speak(speechTextFor(item), () => {
+    if(token !== state.speakToken) return;
+    if(state.current !== item) return;
+    beginWaiting();
+  });
+}
+
+/* ---------------- Screen switching ---------------- */
+function showScreen(name){
+  ["menu","practice","exam","results"].forEach(s => {
+    document.getElementById("screen-" + s).classList.toggle("hidden", s !== name);
+  });
+  state.screen = name;
+}
+function exitToMenu(){
+  if(state.screen === "exam" && state.examIndex < state.examWords.length){
+    if(!confirm("Vas a perder el avance de este examen. ¿Salir igual?")) return;
+  }
+  if(state.screen === "practice" && (state.practiceCorrect > 0 || state.practiceWrong.length > 0)){
+    // guardar errores de la sesión de práctica
+    if(state.practiceWrong.length){
+      state.lastWrong = state.practiceWrong.map(x => x.w);
+      savePrefs();
+    }
+  }
+  clearPending();
+  state.speakToken++;
+  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+  state.current = null;
+  state.phase = null;
+  state.timerPaused = false;
+  showScreen("menu");
+  updateReviewButton();
+}
+
+/* ---------------- Timer (JS, pausable) ---------------- */
+function runCountdown(fillEl, seconds, cb){
+  clearPending();
+  state.timerRemaining = seconds;
+  state.timerPaused = false;
+  state.timerEndAt = performance.now() + seconds * 1000;
+  fillEl.classList.remove("paused");
+  fillEl.style.width = "100%";
+
+  const tick = (now) => {
+    if(state.timerPaused){
+      state.timerRaf = requestAnimationFrame(tick);
+      return;
+    }
+    const left = Math.max(0, (state.timerEndAt - now) / 1000);
+    state.timerRemaining = left;
+    fillEl.style.width = (left / seconds * 100) + "%";
+    if(left <= 0){
+      state.timerRaf = null;
+      cb();
+      return;
+    }
+    state.timerRaf = requestAnimationFrame(tick);
+  };
+  state.timerRaf = requestAnimationFrame(tick);
+}
+
+function pauseTimer(){
+  if(state.phase !== "waiting" || state.timerPaused) return;
+  state.timerPaused = true;
+  state.timerRemaining = Math.max(0, (state.timerEndAt - performance.now()) / 1000);
+  const fill = document.getElementById(state.screen + "-timerfill");
+  if(fill) fill.classList.add("paused");
+  const btn = document.getElementById("btn-pause");
+  if(btn) btn.textContent = "▶️ Seguir";
+  renderCurrent();
+}
+function resumeTimer(){
+  if(state.phase !== "waiting" || !state.timerPaused) return;
+  state.timerPaused = false;
+  state.timerEndAt = performance.now() + state.timerRemaining * 1000;
+  const fill = document.getElementById(state.screen + "-timerfill");
+  if(fill) fill.classList.remove("paused");
+  const btn = document.getElementById("btn-pause");
+  if(btn) btn.textContent = "⏸️ Pausar";
+}
+function togglePause(){
+  if(state.timerPaused) resumeTimer();
+  else pauseTimer();
+}
+function addTime(sec){
+  if(state.phase !== "waiting") return;
+  state.timerRemaining += sec;
+  state.timerEndAt += sec * 1000;
+  const fill = document.getElementById(state.screen + "-timerfill");
+  if(fill && !state.timerPaused){
+    // width se actualiza en el próximo tick
+  }
+}
+
+/* ---------------- Shared render helpers ---------------- */
+function revealBlockHTML(item){
+  const cat = CAT[item.cat];
+  const tint = hexToRgba(cat.color, 0.10);
+  const frase = item.frase ? `<div class="context-frase">${item.frase}</div>` : "";
+  return `
+    <div class="word-reveal" style="color:${cat.color}">${item.w}</div>
+    ${frase}
+    <div class="paper-note" style="background-color:${tint}; border-left:5px solid ${cat.color}; --note-accent:${cat.color};">${item.rule}</div>
+  `;
+}
+function badgeHTML(item){
+  const cat = CAT[item.cat];
+  return `<span class="badge" style="background:${cat.color};color:${cat.text}">${cat.label}</span>`;
+}
+function renderCurrent(){
+  if(state.screen === "practice") renderPractice();
+  else if(state.screen === "exam") renderExam();
+}
+function beginWaiting(){
+  state.phase = "waiting";
+  state.timerPaused = false;
+  renderCurrent();
+  if(state.typeMode){
+    // En modo escritura en pantalla no corre timer: se corrige recién al enviar.
+    clearPending();
+  } else {
+    const fill = document.getElementById(state.screen + "-timerfill");
+    const secs = writeSeconds(state.current);
+    runCountdown(fill, secs, () => {
+      state.phase = "revealed";
+      maybeAutoCheck();
+      renderCurrent();
+    });
+  }
+  // foco al input si hay escritura en pantalla
+  if(state.typeMode){
+    setTimeout(() => {
+      const inp = document.getElementById("type-input");
+      if(inp) inp.focus();
+    }, 50);
+  }
+}
+function syncTimerbarVisibility(){
+  const fill = document.getElementById(state.screen + "-timerfill");
+  if(fill && fill.parentElement) fill.parentElement.classList.toggle("hidden", state.typeMode);
+}
+// Envío en modo escritura: sin timer, corrige apenas se envía (Enter o botón).
+// Corrige solo, pero espera a que toquen "Siguiente" / Enter / la tarjeta
+// para pasar de palabra — así da tiempo a leer la regla.
+function submitTyped(){
+  if(state.phase !== "waiting" || !state.typeMode) return;
+  clearPending();
+  stopTimerBar();
+  maybeAutoCheck();
+  state.phase = "revealed";
+  renderCurrent();
+}
+function avanzarTyped(){
+  if(state.phase !== "revealed" || !state.typeMode) return;
+  clearPending();
+  const ok = state._lastMatch;
+  if(state.screen === "practice") markPractice(ok);
+  else if(state.screen === "exam") markExam(ok);
+}
+function stopTimerBar(){
+  clearPending();
+  const fill = document.getElementById(state.screen + "-timerfill");
+  if(!fill) return;
+  fill.classList.remove("paused");
+  fill.style.width = "0%";
+}
+function revealNow(ev){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  if(state.phase !== "waiting") return;
+  clearPending();
+  stopTimerBar();
+  state.phase = "revealed";
+  maybeAutoCheck();
+  renderCurrent();
+}
+function stageWaitingHTML(item){
+  if(state.typeMode){
+    return `<div class="speaker-icon">✍️</div>
+      <div class="type-box">
+        <input type="text" id="type-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          placeholder="Escribí la palabra…" aria-label="Escribí la palabra dictada"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();submitTyped();}">
+        <div class="type-feedback" id="type-feedback"></div>
+      </div>
+      <div class="timer-actions">
+        <button type="button" class="btn-primary" style="padding:9px 20px;" onclick="submitTyped()">✅ Corregir</button>
+      </div>
+      <div class="hint-text">Sin límite de tiempo · <kbd>Enter</kbd> o el botón para corregir</div>`;
+  }
+  const frase = item.frase ? `<div class="hint-text">Escribe solo la palabra, no la frase entera.</div>` : ``;
+  return `<div class="speaker-icon">✍️</div>
+    ${frase}
+    <div class="timer-actions">
+      <button type="button" id="btn-pause" onclick="togglePause()">${state.timerPaused ? "▶️ Seguir" : "⏸️ Pausar"}</button>
+      <button type="button" onclick="addTime(5)">➕ +5 s</button>
+      <button type="button" class="btn-ghost" style="padding:6px 12px;font-size:0.78rem;" onclick="revealNow(event)">👁️ Ver ahora</button>
+    </div>`;
+}
+function setStageClickable(stage, on, handler){
+  stage.classList.toggle("clickable", !!on);
+  stage.onclick = on ? function(e){
+    if(e && e.target && e.target.closest && e.target.closest("button, input")) return;
+    handler();
+  } : null;
+  if(on){ stage.setAttribute("role","button"); stage.setAttribute("tabindex","0"); }
+  else { stage.removeAttribute("role"); stage.removeAttribute("tabindex"); }
+}
+
+function maybeAutoCheck(){
+  if(!state.typeMode || !state.current) return;
+  const inp = document.getElementById("type-input");
+  if(!inp) return;
+  const typed = normalizeAnswer(inp.value);
+  const target = normalizeAnswer(state.current.w);
+  // se evalúa al revelar; el feedback se pinta en render
+  state._lastTyped = typed;
+  state._lastMatch = typed.length > 0 && typed === target;
+}
+
+function typeFeedbackHTML(){
+  if(!state.typeMode) return "";
+  if(state.phase !== "revealed") return "";
+  const typed = state._lastTyped || "";
+  if(!typed){
+    return `<div class="type-feedback">No escribiste nada en pantalla.</div>`;
+  }
+  if(state._lastMatch){
+    return `<div class="type-feedback ok">✓ Escribiste bien: «${typed}»</div>`;
+  }
+  return `<div class="type-feedback ko">✗ Escribiste «${typed}» · correcto: «${state.current.w}»</div>`;
+}
+
+/* ---------------- Filtro de categorias ---------------- */
+function activeWords(){
+  return WORDS.filter(w => selectedCats.has(w.cat));
+}
+function buildChips(){
+  const el = document.getElementById("cat-chips");
+  el.innerHTML = Object.entries(CAT).map(([key, c]) => {
+    const n = WORDS.filter(w => w.cat === key).length;
+    return `<button type="button" class="cat-chip" id="chip-${key}" aria-pressed="true"
+      style="border-color:${c.color}; color:${c.color}"
+      onclick="toggleCat('${key}')">${c.label} <span style="opacity:.6">${n}</span></button>`;
+  }).join("");
+  paintChips();
+}
+function paintChips(){
+  Object.entries(CAT).forEach(([key, c]) => {
+    const chip = document.getElementById("chip-" + key);
+    if(!chip) return;
+    const on = selectedCats.has(key);
+    chip.setAttribute("aria-pressed", on ? "true" : "false");
+    chip.style.background = on ? hexToRgba(c.color, 0.14) : "#fff";
+  });
+  const total = activeWords().length;
+  const countEl = document.getElementById("filter-count");
+  const modeBtns = document.querySelectorAll(".mode-btn:not(#btn-review)");
+  if(total === 0){
+    countEl.textContent = "Elige al menos una regla para empezar.";
+    countEl.classList.add("warn");
+    modeBtns.forEach(b => { b.disabled = true; });
+  } else {
+    countEl.textContent = total + " palabras disponibles · el examen toma " + Math.min(20, total) + ".";
+    countEl.classList.remove("warn");
+    modeBtns.forEach(b => { b.disabled = false; });
+  }
+  savePrefs();
+}
+function toggleCat(key){
+  if(selectedCats.has(key)) selectedCats.delete(key); else selectedCats.add(key);
+  paintChips();
+}
+function setAllCats(on){
+  selectedCats = on ? new Set(Object.keys(CAT)) : new Set();
+  paintChips();
+}
+
+function stratifiedSample(n){
+  const pools = {};
+  activeWords().forEach(w => { (pools[w.cat] = pools[w.cat] || []).push(w); });
+  Object.keys(pools).forEach(k => { pools[k] = shuffle(pools[k]); });
+  const out = [];
+  while(out.length < n){
+    const keys = shuffle(Object.keys(pools).filter(k => pools[k].length > 0));
+    if(keys.length === 0) break;
+    for(const k of keys){
+      if(out.length >= n) break;
+      out.push(pools[k].pop());
+    }
+  }
+  return shuffle(out);
+}
+
+function updateReviewButton(){
+  const btn = document.getElementById("btn-review");
+  const desc = document.getElementById("review-desc");
+  const n = state.lastWrong.length;
+  if(n > 0){
+    btn.classList.remove("hidden");
+    desc.textContent = n + " palabra" + (n === 1 ? "" : "s") + " de la última sesión.";
+  } else {
+    btn.classList.add("hidden");
+  }
+}
+
+/* ---------------- PRACTICE MODE ---------------- */
+function startPractice(){
+  if(activeWords().length === 0) return;
+  state.mode = "practice";
+  state.queue = shuffle(activeWords());
+  state.practiceCount = 0;
+  state.practiceCorrect = 0;
+  state.practiceWrong = [];
+  showScreen("practice");
+  nextPracticeWord();
+}
+function startReview(){
+  const pool = WORDS.filter(w => state.lastWrong.includes(w.w) && selectedCats.has(w.cat));
+  const words = pool.length ? pool : WORDS.filter(w => state.lastWrong.includes(w.w));
+  if(words.length === 0){
+    alert("No hay errores guardados para repasar.");
+    return;
+  }
+  state.mode = "review";
+  state.queue = shuffle(words);
+  state.practiceCount = 0;
+  state.practiceCorrect = 0;
+  state.practiceWrong = [];
+  showScreen("practice");
+  nextPracticeWord();
+}
+function nextPracticeWord(){
+  clearPending();
+  if(state.queue.length === 0){
+    // fin de cola: si hay errores de esta sesión, ofrecer resultados
+    finishPracticeSession();
+    return;
+  }
+  state.current = state.queue.pop();
+  state.practiceCount++;
+  state.phase = "dictating";
+  state._lastTyped = "";
+  state._lastMatch = false;
+  renderPractice();
+  const token = ++state.speakToken;
+  speak(speechTextFor(state.current), () => {
+    if(token !== state.speakToken) return;
+    if(state.screen !== "practice" || state.current === null) return;
+    beginWaiting();
+  });
+}
+function finishPracticeSession(){
+  clearPending();
+  if(state.practiceWrong.length){
+    state.lastWrong = state.practiceWrong.map(x => x.w);
+    savePrefs();
+  }
+  // mostrar resumen estilo results
+  state.current = null;
+  showScreen("results");
+  const total = state.practiceCorrect + state.practiceWrong.length;
+  const score = total ? Math.round(state.practiceCorrect / total * 100) : 0;
+  document.getElementById("result-score").textContent = score;
+  document.getElementById("result-den").textContent = "de 100 (práctica)";
+  let msg;
+  if(total === 0){ msg = "No marcaste aciertos ni fallos en esta sesión."; }
+  else if(score >= 90){ msg = "¡Excelente! 🌟 Dominás estas palabras."; }
+  else if(score >= 70){ msg = "¡Muy bien! 👏 Vas por muy buen camino."; }
+  else if(score >= 51){ msg = "Bien, seguí practicando un poco más. 💪"; }
+  else { msg = "Sigamos practicando, cada intento suma. 📖"; }
+  document.getElementById("result-msg").textContent = msg;
+  document.getElementById("result-sub").textContent = state.practiceCorrect + " de " + total + " marcadas como correctas";
+
+  const listEl = document.getElementById("result-review-list");
+  const titleEl = document.getElementById("result-review-title");
+  const reviewBtn = document.getElementById("result-review-btn");
+  const againBtn = document.getElementById("result-again");
+  listEl.innerHTML = "";
+  againBtn.textContent = "📘 Seguir practicando";
+  againBtn.onclick = () => startPractice();
+  if(state.practiceWrong.length > 0){
+    titleEl.classList.remove("hidden");
+    titleEl.textContent = "Para repasar:";
+    state.practiceWrong.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "review-item";
+      div.innerHTML = `<strong>${item.w}</strong><p>${item.rule}</p>`;
+      listEl.appendChild(div);
+    });
+    reviewBtn.classList.remove("hidden");
+    reviewBtn.onclick = () => startReview();
+  } else {
+    titleEl.classList.add("hidden");
+    reviewBtn.classList.add("hidden");
+  }
+  updateReviewButton();
+}
+function markPractice(correct){
+  if(state.phase !== "revealed") return;
+  if(correct){
+    state.practiceCorrect++;
+  } else {
+    state.practiceWrong.push(state.current);
+  }
+  nextPracticeWord();
+}
+function renderPractice(){
+  document.getElementById("practice-badge").innerHTML = badgeHTML(state.current);
+  const label = state.mode === "review" ? "Repaso" : "Palabra";
+  document.getElementById("practice-counter").textContent = label + " " + state.practiceCount;
+  const stats = document.getElementById("practice-stats");
+  stats.innerHTML = `<span class="ok">✓ ${state.practiceCorrect}</span> · <span class="ko">✗ ${state.practiceWrong.length}</span>`;
+
+  const status = document.getElementById("practice-status");
+  const stage = document.getElementById("practice-stage");
+  setStageClickable(stage, false, null);
+  syncTimerbarVisibility();
+  if(state.phase === "dictating"){
+    status.textContent = "🔊 Dictando...";
+    stage.innerHTML = `<div class="speaker-icon">🔊</div>`;
+  } else if(state.phase === "waiting"){
+    status.textContent = state.typeMode ? "✍️ Escribí la palabra abajo..." : "✍️ Escribí la palabra en tu hoja...";
+    stage.innerHTML = stageWaitingHTML(state.current);
+  } else if(state.phase === "revealed" && state.typeMode){
+    status.textContent = state._lastMatch ? "¡Bien! 🎉" : "Fijate la regla 👇";
+    stage.innerHTML = revealBlockHTML(state.current) + typeFeedbackHTML() + `
+      <div class="controls-row" style="margin-top:18px;">
+        <button type="button" class="btn-ghost" onclick="avanzarTyped()">➡️ Siguiente</button>
+      </div>
+      <div class="hint-text">Ya se corrigió solo · <kbd>Enter</kbd>, tocá o el botón para seguir</div>`;
+    setStageClickable(stage, true, avanzarTyped);
+  } else if(state.phase === "revealed"){
+    status.textContent = "¿La escribiste correctamente?";
+    stage.innerHTML = revealBlockHTML(state.current) + typeFeedbackHTML() + `
+      <div class="controls-row" style="margin-top:18px;">
+        <button type="button" class="btn-good" onclick="markPractice(true)">✅ Correcta</button>
+        <button type="button" class="btn-bad" onclick="markPractice(false)">❌ Incorrecta</button>
+      </div>
+      <div class="hint-text">Teclas: <kbd>1</kbd> correcta · <kbd>2</kbd> incorrecta</div>`;
+  }
+}
+
+/* ---------------- EXAM MODE ---------------- */
+function startExam(){
+  if(activeWords().length === 0) return;
+  state.mode = "exam";
+  state.examWords = stratifiedSample(Math.min(20, activeWords().length));
+  state.examIndex = 0;
+  state.examCorrect = 0;
+  state.examWrong = [];
+  showScreen("exam");
+  nextExamWord();
+}
+function nextExamWord(){
+  clearPending();
+  if(state.examIndex >= state.examWords.length){ showResults(); return; }
+  state.current = state.examWords[state.examIndex];
+  state.phase = "dictating";
+  state._lastTyped = "";
+  state._lastMatch = false;
+  renderExam();
+  const token = ++state.speakToken;
+  speak(speechTextFor(state.current), () => {
+    if(token !== state.speakToken) return;
+    if(state.screen !== "exam" || state.current === null) return;
+    beginWaiting();
+  });
+}
+function markExam(correct){
+  if(state.phase !== "revealed") return;
+  if(correct){ state.examCorrect++; }
+  else { state.examWrong.push(state.current); }
+  state.examIndex++;
+  nextExamWord();
+}
+function renderExam(){
+  document.getElementById("exam-badge").innerHTML = badgeHTML(state.current);
+  document.getElementById("exam-progress").textContent = "Palabra " + (state.examIndex + 1) + " / " + state.examWords.length;
+  const status = document.getElementById("exam-status");
+  const stage = document.getElementById("exam-stage");
+  setStageClickable(stage, false, null);
+  syncTimerbarVisibility();
+  if(state.phase === "dictating"){
+    status.textContent = "🔊 Dictando...";
+    stage.innerHTML = `<div class="speaker-icon">🔊</div>`;
+  } else if(state.phase === "waiting"){
+    status.textContent = state.typeMode ? "✍️ Escribí la palabra abajo..." : "✍️ Escribí la palabra en tu hoja...";
+    stage.innerHTML = stageWaitingHTML(state.current);
+  } else if(state.phase === "revealed" && state.typeMode){
+    status.textContent = state._lastMatch ? "¡Bien! 🎉" : "Fijate la regla 👇";
+    stage.innerHTML = revealBlockHTML(state.current) + typeFeedbackHTML() + `
+      <div class="controls-row" style="margin-top:18px;">
+        <button type="button" class="btn-ghost" onclick="avanzarTyped()">➡️ Siguiente</button>
+      </div>
+      <div class="hint-text">Ya se corrigió solo · <kbd>Enter</kbd>, tocá o el botón para seguir</div>`;
+    setStageClickable(stage, true, avanzarTyped);
+  } else if(state.phase === "revealed"){
+    status.textContent = "¿La escribiste correctamente?";
+    stage.innerHTML = revealBlockHTML(state.current) + typeFeedbackHTML() + `
+      <div class="controls-row" style="margin-top:18px;">
+        <button type="button" class="btn-good" onclick="markExam(true)">✅ Correcta</button>
+        <button type="button" class="btn-bad" onclick="markExam(false)">❌ Incorrecta</button>
+      </div>
+      <div class="hint-text">Teclas: <kbd>1</kbd> correcta · <kbd>2</kbd> incorrecta</div>`;
+  }
+}
+
+/* ---------------- RESULTS ---------------- */
+function showResults(){
+  clearPending();
+  state.current = null;
+  if(state.examWrong.length){
+    state.lastWrong = state.examWrong.map(x => x.w);
+    savePrefs();
+  }
+  showScreen("results");
+  const total = state.examWords.length || 1;
+  const score = Math.round(state.examCorrect / total * 100);
+  document.getElementById("result-score").textContent = score;
+  document.getElementById("result-den").textContent = "de 100";
+  let msg;
+  if(score >= 90){ msg = "¡Excelente! 🌟 Dominás estas palabras."; }
+  else if(score >= 70){ msg = "¡Muy bien! 👏 Vas por muy buen camino."; }
+  else if(score >= 51){ msg = "Bien, seguí practicando un poco más. 💪"; }
+  else { msg = "Sigamos practicando, cada intento suma. 📖"; }
+  document.getElementById("result-msg").textContent = msg;
+  document.getElementById("result-sub").textContent = state.examCorrect + " de " + state.examWords.length + " palabras correctas";
+
+  const listEl = document.getElementById("result-review-list");
+  const titleEl = document.getElementById("result-review-title");
+  const reviewBtn = document.getElementById("result-review-btn");
+  const againBtn = document.getElementById("result-again");
+  listEl.innerHTML = "";
+  againBtn.textContent = "🔄 Repetir examen";
+  againBtn.onclick = () => startExam();
+  if(state.examWrong.length > 0){
+    titleEl.classList.remove("hidden");
+    titleEl.textContent = "Para repasar:";
+    state.examWrong.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "review-item";
+      div.innerHTML = `<strong>${item.w}</strong><p>${item.rule}</p>`;
+      listEl.appendChild(div);
+    });
+    reviewBtn.classList.remove("hidden");
+    reviewBtn.onclick = () => startReview();
+  } else {
+    titleEl.classList.add("hidden");
+    reviewBtn.classList.add("hidden");
+  }
+  updateReviewButton();
+}
+
+/* ---------------- Init ---------------- */
+function buildLegend(){
+  const el = document.getElementById("legend");
+  el.innerHTML = Object.values(CAT).map(c =>
+    `<span><span class="dot" style="background:${c.color}"></span>${c.label}</span>`
+  ).join("");
+}
+loadPrefs();
+buildLegend();
+buildChips();
+applyLoadedPrefs();
+["practice-stage","exam-stage"].forEach(id => {
+  document.getElementById(id).setAttribute("aria-live","polite");
+});
+
+/* Pausar síntesis al ocultar pestaña */
+document.addEventListener("visibilitychange", () => {
+  if(document.hidden && "speechSynthesis" in window){
+    window.speechSynthesis.cancel();
+  }
+});
+
+/* ---------------- Teclado ---------------- */
+const IGNORED_KEYS = ["Shift","Control","Alt","Meta","Tab","CapsLock","Escape","AltGraph","ContextMenu"];
+document.addEventListener("keydown", (e) => {
+  if(IGNORED_KEYS.indexOf(e.key) !== -1) return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+
+  const ae = document.activeElement;
+  const typing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
+
+  // Espacio = replay (si no estamos escribiendo)
+  if(e.key === " " && !typing && (state.screen === "practice" || state.screen === "exam")){
+    e.preventDefault();
+    replayCurrent();
+    return;
+  }
+
+  // + = sumar tiempo
+  if((e.key === "+" || e.key === "=") && state.phase === "waiting"){
+    e.preventDefault();
+    addTime(5);
+    return;
+  }
+
+  // Enter en waiting = revelar (modo no-escritura; en modo escritura el input maneja su propio Enter)
+  if(e.key === "Enter" && state.phase === "waiting" && !typing && !state.typeMode){
+    e.preventDefault();
+    revealNow(e);
+    return;
+  }
+
+  // Enter en la pantalla de auto-corrección (modo escritura) = pasar a la próxima ya
+  if(e.key === "Enter" && state.phase === "revealed" && state.typeMode && !typing){
+    e.preventDefault();
+    avanzarTyped();
+    return;
+  }
+
+  // 1 / 2 en revealed — solo en modo no-escritura (en modo escritura ya se corrige solo)
+  if(state.phase === "revealed" && !state.typeMode){
+    if(e.key === "1"){
+      e.preventDefault();
+      if(state.screen === "practice") markPractice(true);
+      else if(state.screen === "exam") markExam(true);
+      return;
+    }
+    if(e.key === "2"){
+      e.preventDefault();
+      if(state.screen === "practice") markPractice(false);
+      else if(state.screen === "exam") markExam(false);
+      return;
+    }
+  }
+
+  if(ae && ae.tagName === "BUTTON" && (e.key === "Enter" || e.key === " ")) return;
+
+  // cualquier tecla en práctica revealed (sin input) ya no avanza sola: hay que marcar
+});
+</script>
+</body>
+</html>
