@@ -2,7 +2,7 @@
   "name": "Dictado — Práctica de ortografía",
   "short_name": "Dictado",
   "description": "Dictado de ortografía en español: práctica y examen con reglas.",
-  "start_url": "./dictado_ortografia__grok.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
