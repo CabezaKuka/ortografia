@@ -370,13 +370,16 @@
   .hero-row #stat-streak{ justify-self:start; }
   .hero-row #stat-coins{ justify-self:end; }
   .stat-pill{
-    display:inline-flex; align-items:center; gap:4px;
-    font-family: var(--font-body); font-weight: 800; font-size: 0.85rem;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:1px;
+    font-family: var(--font-body); font-weight: 800;
     background: rgba(255,255,255,0.22); color:#fff;
     border: 1.5px solid rgba(255,255,255,0.4);
-    border-radius: 999px; padding: 5px 12px;
+    border-radius: 18px; padding: 10px 16px; min-width: 58px;
     text-shadow: 0 1px 3px rgba(0,0,0,0.15);
   }
+  .stat-icon{ font-size: 2.1rem; line-height:1; }
+  .stat-value{ font-size: 1.1rem; line-height:1.1; }
   .pop{ animation: stat-pop 0.4s ease; }
   @keyframes stat-pop{
     0%{ transform: scale(1); }
@@ -389,7 +392,10 @@
     display:flex; flex-direction:column; align-items:center; gap:0;
     justify-self:center;
   }
-  .pet-emoji-wrap{ position:relative; display:inline-block; }
+  .pet-emoji-wrap{
+    position:relative; display:inline-block;
+    animation: pet-bounce 2.4s ease-in-out infinite;
+  }
   .pet-accessory{
     position:absolute; left:50%; transform:translateX(-50%);
     font-size: 1.5rem; pointer-events:none; line-height:1;
@@ -400,7 +406,6 @@
   .pet-hero-emoji{
     font-size: 4.4rem; line-height:1;
     filter: drop-shadow(0 10px 16px rgba(0,0,0,0.28));
-    animation: pet-bounce 2.4s ease-in-out infinite;
     display:inline-block;
   }
   .pet-hero-name{
@@ -507,7 +512,10 @@
   <header class="topbar">
     <h1>✏️ Dictado</h1>
     <div class="hero-row" id="hero-row">
-      <span class="stat-pill" id="stat-streak">🔥 0</span>
+      <span class="stat-pill" id="stat-streak">
+        <span class="stat-icon">🔥</span>
+        <span class="stat-value" id="stat-streak-value">0</span>
+      </span>
       <div class="pet-hero" id="pet-hero">
         <div class="pet-emoji-wrap">
           <span class="pet-hero-emoji" id="pet-hero-emoji">🐱</span>
@@ -515,7 +523,10 @@
         </div>
         <span class="pet-hero-name" id="pet-hero-name">Gatito</span>
       </div>
-      <span class="stat-pill" id="stat-coins">🪙 0</span>
+      <span class="stat-pill" id="stat-coins">
+        <span class="stat-icon">🪙</span>
+        <span class="stat-value" id="stat-coins-value">0</span>
+      </span>
     </div>
   </header>
 
@@ -531,7 +542,7 @@
     <!-- MENU -->
     <section id="screen-menu" class="screen">
       <div id="voice-warn" class="voice-warn hidden"></div>
-      <div class="chest-wrap">
+      <div class="chest-wrap" id="chest-wrap">
         <button type="button" class="chest-btn" id="chest-btn" onclick="openChest()">
           <span class="chest-emoji" id="chest-emoji">🎁</span>
           <span class="chest-label" id="chest-label">Cofre diario</span>
@@ -990,34 +1001,43 @@ function updateBestScoreUI(){
   }
 }
 function updateChestUI(){
+  const wrap = document.getElementById("chest-wrap");
   const btn = document.getElementById("chest-btn");
   const emoji = document.getElementById("chest-emoji");
   const label = document.getElementById("chest-label");
-  if(!btn || !emoji || !label) return;
+  if(!wrap || !btn || !emoji || !label) return;
   const available = progress.lastChestDate !== todayKey();
-  btn.disabled = !available;
-  emoji.textContent = available ? "🎁" : "✅";
-  label.textContent = available ? "Cofre diario" : "Volvé mañana";
+  if(!available){
+    wrap.classList.add("hidden");
+    return;
+  }
+  wrap.classList.remove("hidden");
+  btn.disabled = false;
+  emoji.textContent = "🎁";
+  label.textContent = "Cofre diario";
 }
 function openChest(){
   if(progress.lastChestDate === todayKey()) return;
   const reward = 3 + Math.floor(Math.random()*3); // 3..5
   progress.lastChestDate = todayKey();
   addCoins(reward);
-  updateChestUI();
   burstConfetti(true);
+  const btn = document.getElementById("chest-btn");
   const emoji = document.getElementById("chest-emoji");
+  const label = document.getElementById("chest-label");
+  if(btn) btn.disabled = true;
   if(emoji) emoji.textContent = "🎉";
-  setTimeout(updateChestUI, 900);
+  if(label) label.textContent = "+" + reward + " 🪙";
+  setTimeout(updateChestUI, 1100);
 }
 function updateProgressUI(){
-  const streakEl = document.getElementById("stat-streak");
-  const coinsEl = document.getElementById("stat-coins");
+  const streakEl = document.getElementById("stat-streak-value");
+  const coinsEl = document.getElementById("stat-coins-value");
   const petEmojiEl = document.getElementById("pet-hero-emoji");
   const petNameEl = document.getElementById("pet-hero-name");
   const accEl = document.getElementById("pet-accessory");
-  if(streakEl) streakEl.textContent = "🔥 " + progress.streak;
-  if(coinsEl) coinsEl.textContent = "🪙 " + progress.coins;
+  if(streakEl) streakEl.textContent = progress.streak;
+  if(coinsEl) coinsEl.textContent = progress.coins;
   const pet = PETS.find(p => p.id === progress.equippedPet) || PETS[0];
   if(petEmojiEl) petEmojiEl.textContent = pet.emoji;
   if(petNameEl) petNameEl.textContent = pet.name;

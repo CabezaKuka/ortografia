@@ -1,7 +1,7 @@
 // Service worker mínimo: solo existir + interceptar fetch es requisito
 // de Chrome/Android para mostrar el prompt de instalación.
 // No cachea nada agresivamente para no complicar actualizaciones futuras.
-const CACHE = "dictado-shell-v5";
+const CACHE = "dictado-shell-v6";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
