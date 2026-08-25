@@ -131,13 +131,13 @@
     border-top: 1px dashed rgba(43,38,32,0.12);
   }
   .opt-toggle{
-    display:flex; align-items:center; gap:8px;
-    font-size: 0.84rem; font-weight:700; color: var(--ink);
+    display:flex; align-items:center; gap:6px;
+    font-size: 0.74rem; font-weight:700; color: var(--ink);
     background: #F7F5FF; border: 2px solid rgba(108,92,231,0.18);
-    border-radius: 999px; padding: 8px 14px; cursor:pointer;
+    border-radius: 999px; padding: 5px 11px; cursor:pointer;
     font-family: var(--font-body);
   }
-  .opt-toggle input{ width:16px; height:16px; accent-color: var(--ui-accent); }
+  .opt-toggle input{ width:13px; height:13px; accent-color: var(--ui-accent); }
   .opt-toggle[aria-pressed="true"]{ border-color: var(--ui-accent); background: rgba(108,92,231,0.1); }
 
   /* ---------- FILTRO DE CATEGORIAS ---------- */
@@ -148,9 +148,9 @@
   }
   .cat-chips{ display:flex; flex-wrap:wrap; gap: 7px; justify-content:center; }
   .cat-chip{
-    font-family: var(--font-body); font-weight:700; font-size: 0.68rem;
-    border-radius: 999px; padding: 4px 9px; cursor:pointer;
-    border: 2px solid; background: #fff; transition: all 0.15s ease;
+    font-family: var(--font-body); font-weight:700; font-size: 0.6rem;
+    border-radius: 999px; padding: 3px 7px; cursor:pointer;
+    border: 1.5px solid; background: #fff; transition: all 0.15s ease;
   }
   .cat-chip[aria-pressed="false"]{ opacity: 0.42; }
   .chip-actions{ display:flex; gap:8px; justify-content:center; margin-top:10px; }
@@ -389,6 +389,14 @@
     display:flex; flex-direction:column; align-items:center; gap:0;
     justify-self:center;
   }
+  .pet-emoji-wrap{ position:relative; display:inline-block; }
+  .pet-accessory{
+    position:absolute; left:50%; transform:translateX(-50%);
+    font-size: 1.5rem; pointer-events:none; line-height:1;
+  }
+  .pet-accessory.pos-top{ top:-13px; }
+  .pet-accessory.pos-mid{ top:36%; }
+  .pet-accessory.pos-bottom{ bottom:-4px; }
   .pet-hero-emoji{
     font-size: 4.4rem; line-height:1;
     filter: drop-shadow(0 10px 16px rgba(0,0,0,0.28));
@@ -426,6 +434,58 @@
   .pet-chip.equipped .pet-price{ color: var(--good); }
   .pet-chip.owned:not(.equipped) .pet-price{ color: var(--ui-accent); }
 
+  /* ---------- LOGROS ---------- */
+  .achievements-block{ margin-top: 20px; border-top: 1px dashed rgba(43,38,32,0.15); padding-top: 16px; }
+  .ach-chips{ display:flex; flex-wrap:wrap; gap: 8px; justify-content:center; }
+  .ach-chip{
+    font-size: 1.4rem; width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+    border-radius: 50%; background:#F7F5FF; border:2px solid rgba(108,92,231,0.18);
+    filter: grayscale(1); opacity: 0.4; transition: all 0.2s ease; cursor:default;
+  }
+  .ach-chip.unlocked{ filter:none; opacity:1; border-color:#FFC371; background: rgba(255,195,113,0.18); }
+
+  /* ---------- COFRE DIARIO ---------- */
+  .chest-wrap{ display:flex; justify-content:center; margin-bottom: 16px; }
+  .chest-btn{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    background: linear-gradient(135deg,#FFC371,#FF6F91);
+    border:none; border-radius:16px; padding:9px 20px; cursor:pointer;
+    box-shadow: 0 8px 18px rgba(255,111,145,0.35);
+    transition: transform 0.15s ease;
+  }
+  .chest-btn:hover:not(:disabled){ transform: translateY(-2px) scale(1.03); }
+  .chest-btn:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; background:#e6e2f5; }
+  .chest-emoji{ font-size: 2rem; display:inline-block; animation: chest-wiggle 1.8s ease-in-out infinite; }
+  .chest-btn:disabled .chest-emoji{ animation:none; }
+  @keyframes chest-wiggle{
+    0%,100%{ transform: rotate(0deg); }
+    10%{ transform: rotate(-8deg); }
+    20%{ transform: rotate(8deg); }
+    30%{ transform: rotate(-4deg); }
+    40%{ transform: rotate(0deg); }
+  }
+  .chest-label{ font-family: var(--font-body); font-weight:800; font-size:0.76rem; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.2); }
+
+  /* ---------- MEJOR PUNTAJE ---------- */
+  .best-score{ display:block; margin-top:4px; font-weight:800; color: var(--ui-accent); }
+
+  /* ---------- TOAST DE LOGRO ---------- */
+  .achievement-toast{
+    position:fixed; top:-90px; left:50%; transform: translateX(-50%);
+    display:flex; align-items:center; gap:10px;
+    background:#fff; border-radius:16px; padding:12px 18px;
+    box-shadow: 0 14px 34px rgba(0,0,0,0.28);
+    border: 2px solid #FFC371;
+    z-index: 10000;
+    transition: top 0.4s cubic-bezier(.34,1.56,.64,1), opacity 0.3s ease;
+    opacity:0;
+    max-width: 90vw;
+  }
+  .achievement-toast.show{ top: 16px; opacity:1; }
+  .ach-emoji{ font-size: 2rem; }
+  .ach-text{ font-family: var(--font-body); font-size: 0.83rem; color: var(--ink); line-height:1.3; }
+  .ach-text strong{ font-family: var(--font-display); color: var(--ui-accent); font-size:0.95rem; }
+
   /* ---------- CONFETI ---------- */
   .confetti-layer{
     position: fixed; inset:0; pointer-events:none; z-index: 9999; overflow:hidden;
@@ -449,7 +509,10 @@
     <div class="hero-row" id="hero-row">
       <span class="stat-pill" id="stat-streak">🔥 0</span>
       <div class="pet-hero" id="pet-hero">
-        <span class="pet-hero-emoji" id="pet-hero-emoji">🐱</span>
+        <div class="pet-emoji-wrap">
+          <span class="pet-hero-emoji" id="pet-hero-emoji">🐱</span>
+          <span class="pet-accessory" id="pet-accessory"></span>
+        </div>
         <span class="pet-hero-name" id="pet-hero-name">Gatito</span>
       </div>
       <span class="stat-pill" id="stat-coins">🪙 0</span>
@@ -457,7 +520,7 @@
   </header>
 
   <div class="speed-control" id="speed-control" role="group" aria-label="Velocidad de dictado">
-    <span class="speed-label">🔊 Velocidad:</span>
+    <span class="speed-label">🔊</span>
     <button type="button" class="speed-btn" data-rate="0.6" aria-pressed="false" onclick="setRate(0.6,this)">🐢 Lenta</button>
     <button type="button" class="speed-btn active" data-rate="0.8" aria-pressed="true" onclick="setRate(0.8,this)">🚶 Normal</button>
     <button type="button" class="speed-btn" data-rate="1.05" aria-pressed="false" onclick="setRate(1.05,this)">🐇 Rápida</button>
@@ -468,6 +531,12 @@
     <!-- MENU -->
     <section id="screen-menu" class="screen">
       <div id="voice-warn" class="voice-warn hidden"></div>
+      <div class="chest-wrap">
+        <button type="button" class="chest-btn" id="chest-btn" onclick="openChest()">
+          <span class="chest-emoji" id="chest-emoji">🎁</span>
+          <span class="chest-label" id="chest-label">Cofre diario</span>
+        </button>
+      </div>
       <div class="menu-options">
         <button type="button" class="mode-btn" id="btn-practice" onclick="startPractice()">
           <span class="emoji">📘</span>
@@ -480,7 +549,7 @@
           <span class="emoji">📝</span>
           <span>
             <strong>Modo Examen</strong>
-            <span class="desc">Hasta 20 palabras al azar (equilibradas por regla). Obtén tu nota sobre 100.</span>
+            <span class="desc">Hasta 20 palabras al azar. Obtén tu nota sobre 100.<br><span id="best-score-line" class="best-score hidden"></span></span>
           </span>
         </button>
         <button type="button" class="mode-btn hidden" id="btn-review" onclick="startReview()">
@@ -511,6 +580,14 @@
       <div class="pets-block">
         <div class="filter-title">Mascotas 🐾 · comprá y equipá con tus monedas</div>
         <div class="pet-chips" id="pet-chips"></div>
+      </div>
+      <div class="pets-block">
+        <div class="filter-title">Accesorios 🎩 · vestí a tu mascota</div>
+        <div class="pet-chips" id="acc-chips"></div>
+      </div>
+      <div class="achievements-block">
+        <div class="filter-title">Logros 🏆</div>
+        <div class="ach-chips" id="ach-chips"></div>
       </div>
     </section>
 
@@ -766,7 +843,8 @@ const state = {
   timerPaused: false,
   timerRaf: null,
   timerEndAt: 0,
-  lastWrong: []
+  lastWrong: [],
+  sessionCorrectStreak: 0
 };
 let currentRate = 0.8;
 let selectedCats = new Set(Object.keys(CAT));
@@ -783,12 +861,36 @@ const PETS = [
   { id:"unicornio", emoji:"🦄", name:"Unicornio", price:50 },
   { id:"dragon",    emoji:"🐲", name:"Dragón",    price:80 }
 ];
+const ACCESSORIES = [
+  { id:"ninguno",   emoji:"",   name:"Sin accesorio", price:0,  pos:"none" },
+  { id:"gorra",     emoji:"🧢", name:"Gorra",     price:20, pos:"top" },
+  { id:"sombrero",  emoji:"🎩", name:"Sombrero",  price:20, pos:"top" },
+  { id:"lentes",    emoji:"🕶️", name:"Lentes",   price:20, pos:"mid" },
+  { id:"bufanda",   emoji:"🧣", name:"Bufanda",   price:20, pos:"bottom" },
+  { id:"corona",    emoji:"👑", name:"Corona",    price:40, pos:"top" }
+];
+const ACHIEVEMENTS = [
+  { id:"racha7",     emoji:"🔥", name:"Semana completa",  desc:"Practicá 7 días seguidos.",
+    check:(p,s) => p.streak >= 7 },
+  { id:"racha30",    emoji:"🌟", name:"Mes entero",        desc:"Practicá 30 días seguidos.",
+    check:(p,s) => p.streak >= 30 },
+  { id:"monedas100", emoji:"🪙", name:"Alcancía llena",    desc:"Juntá 100 monedas en total.",
+    check:(p,s) => p.totalCoinsEarned >= 100 },
+  { id:"racha10",    emoji:"🎯", name:"10 sin fallar",     desc:"Acertá 10 palabras seguidas en una sesión.",
+    check:(p,s) => s.sessionCorrectStreak >= 10 }
+];
 let progress = {
   coins: 0,
+  totalCoinsEarned: 0,
   streak: 0,
   lastActiveDate: null,
   ownedPets: ["gato"],
-  equippedPet: "gato"
+  equippedPet: "gato",
+  ownedAccessories: ["ninguno"],
+  equippedAccessory: "ninguno",
+  achievements: [],
+  bestExamScore: 0,
+  lastChestDate: null
 };
 function loadProgress(){
   try{
@@ -796,10 +898,16 @@ function loadProgress(){
     if(!raw) return;
     const data = JSON.parse(raw);
     if(typeof data.coins === "number") progress.coins = data.coins;
+    if(typeof data.totalCoinsEarned === "number") progress.totalCoinsEarned = data.totalCoinsEarned;
     if(typeof data.streak === "number") progress.streak = data.streak;
     if(typeof data.lastActiveDate === "string") progress.lastActiveDate = data.lastActiveDate;
     if(Array.isArray(data.ownedPets) && data.ownedPets.length) progress.ownedPets = data.ownedPets;
     if(typeof data.equippedPet === "string") progress.equippedPet = data.equippedPet;
+    if(Array.isArray(data.ownedAccessories) && data.ownedAccessories.length) progress.ownedAccessories = data.ownedAccessories;
+    if(typeof data.equippedAccessory === "string") progress.equippedAccessory = data.equippedAccessory;
+    if(Array.isArray(data.achievements)) progress.achievements = data.achievements;
+    if(typeof data.bestExamScore === "number") progress.bestExamScore = data.bestExamScore;
+    if(typeof data.lastChestDate === "string") progress.lastChestDate = data.lastChestDate;
   }catch(e){}
 }
 function saveProgress(){
@@ -826,12 +934,15 @@ function registerActivity(){
   saveProgress();
   updateProgressUI();
   pulse("stat-streak");
+  checkAchievements();
 }
 function addCoins(n){
   progress.coins += n;
+  if(n > 0) progress.totalCoinsEarned += n;
   saveProgress();
   updateProgressUI();
   pulse("stat-coins");
+  checkAchievements();
 }
 function rewardCorrect(){
   addCoins(1);
@@ -844,17 +955,81 @@ function pulse(id){
   void el.offsetWidth; // reiniciar animación
   el.classList.add("pop");
 }
+function checkAchievements(){
+  ACHIEVEMENTS.forEach(a => {
+    if(progress.achievements.includes(a.id)) return;
+    if(a.check(progress, state)){
+      progress.achievements.push(a.id);
+      saveProgress();
+      paintAchievementChips();
+      showAchievementToast(a);
+      burstConfetti(true);
+    }
+  });
+}
+function showAchievementToast(a){
+  const el = document.createElement("div");
+  el.className = "achievement-toast";
+  el.innerHTML = '<span class="ach-emoji">' + a.emoji + '</span>' +
+    '<span class="ach-text"><strong>¡Logro desbloqueado!</strong><br>' + a.name + '</span>';
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("show"));
+  setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => el.remove(), 400);
+  }, 3200);
+}
+function updateBestScoreUI(){
+  const el = document.getElementById("best-score-line");
+  if(!el) return;
+  if(progress.bestExamScore > 0){
+    el.textContent = "🏅 Mejor puntaje: " + progress.bestExamScore + "/100";
+    el.classList.remove("hidden");
+  } else {
+    el.classList.add("hidden");
+  }
+}
+function updateChestUI(){
+  const btn = document.getElementById("chest-btn");
+  const emoji = document.getElementById("chest-emoji");
+  const label = document.getElementById("chest-label");
+  if(!btn || !emoji || !label) return;
+  const available = progress.lastChestDate !== todayKey();
+  btn.disabled = !available;
+  emoji.textContent = available ? "🎁" : "✅";
+  label.textContent = available ? "Cofre diario" : "Volvé mañana";
+}
+function openChest(){
+  if(progress.lastChestDate === todayKey()) return;
+  const reward = 3 + Math.floor(Math.random()*3); // 3..5
+  progress.lastChestDate = todayKey();
+  addCoins(reward);
+  updateChestUI();
+  burstConfetti(true);
+  const emoji = document.getElementById("chest-emoji");
+  if(emoji) emoji.textContent = "🎉";
+  setTimeout(updateChestUI, 900);
+}
 function updateProgressUI(){
   const streakEl = document.getElementById("stat-streak");
   const coinsEl = document.getElementById("stat-coins");
   const petEmojiEl = document.getElementById("pet-hero-emoji");
   const petNameEl = document.getElementById("pet-hero-name");
+  const accEl = document.getElementById("pet-accessory");
   if(streakEl) streakEl.textContent = "🔥 " + progress.streak;
   if(coinsEl) coinsEl.textContent = "🪙 " + progress.coins;
   const pet = PETS.find(p => p.id === progress.equippedPet) || PETS[0];
   if(petEmojiEl) petEmojiEl.textContent = pet.emoji;
   if(petNameEl) petNameEl.textContent = pet.name;
+  if(accEl){
+    const acc = ACCESSORIES.find(a => a.id === progress.equippedAccessory) || ACCESSORIES[0];
+    accEl.textContent = acc.emoji || "";
+    accEl.className = "pet-accessory" + (acc.pos && acc.pos !== "none" ? " pos-" + acc.pos : "");
+  }
+  updateBestScoreUI();
   paintPetChips();
+  paintAccessoryChips();
+  paintAchievementChips();
 }
 function buildPetChips(){
   const wrap = document.getElementById("pet-chips");
@@ -908,6 +1083,77 @@ function onPetClick(id){
     priceEl.textContent = "Faltan 🪙";
     setTimeout(() => { if(priceEl.textContent === "Faltan 🪙") priceEl.textContent = old; }, 900);
   }
+}
+
+/* ---------------- Accesorios de la mascota ---------------- */
+function buildAccessoryChips(){
+  const wrap = document.getElementById("acc-chips");
+  if(!wrap) return;
+  wrap.innerHTML = ACCESSORIES.map(a => `
+    <button type="button" class="pet-chip" data-acc="${a.id}" onclick="onAccessoryClick('${a.id}')">
+      <span class="pet-emoji">${a.emoji || "🚫"}</span>
+      <span class="pet-name">${a.name}</span>
+      <span class="pet-price" id="acc-price-${a.id}"></span>
+    </button>`).join("");
+}
+function paintAccessoryChips(){
+  ACCESSORIES.forEach(a => {
+    const btn = document.querySelector('.pet-chip[data-acc="' + a.id + '"]');
+    const priceEl = document.getElementById("acc-price-" + a.id);
+    if(!btn || !priceEl) return;
+    const owned = progress.ownedAccessories.includes(a.id);
+    const equipped = progress.equippedAccessory === a.id;
+    btn.classList.toggle("owned", owned);
+    btn.classList.toggle("locked", !owned);
+    btn.classList.toggle("equipped", equipped);
+    if(equipped) priceEl.textContent = "Puesto ✓";
+    else if(owned) priceEl.textContent = "Usar";
+    else priceEl.textContent = "🪙 " + a.price;
+  });
+}
+function onAccessoryClick(id){
+  const a = ACCESSORIES.find(x => x.id === id);
+  if(!a) return;
+  if(progress.ownedAccessories.includes(id)){
+    if(progress.equippedAccessory !== id){
+      progress.equippedAccessory = id;
+      saveProgress();
+      updateProgressUI();
+      pulse("pet-hero-emoji");
+    }
+    return;
+  }
+  if(progress.coins >= a.price){
+    progress.coins -= a.price;
+    progress.ownedAccessories.push(id);
+    progress.equippedAccessory = id;
+    saveProgress();
+    updateProgressUI();
+    pulse("pet-hero-emoji");
+    burstConfetti(false);
+  } else {
+    const priceEl = document.getElementById("acc-price-" + id);
+    if(!priceEl) return;
+    const old = priceEl.textContent;
+    priceEl.textContent = "Faltan 🪙";
+    setTimeout(() => { if(priceEl.textContent === "Faltan 🪙") priceEl.textContent = old; }, 900);
+  }
+}
+
+/* ---------------- Logros ---------------- */
+function buildAchievementChips(){
+  const wrap = document.getElementById("ach-chips");
+  if(!wrap) return;
+  wrap.innerHTML = ACHIEVEMENTS.map(a =>
+    '<span class="ach-chip" id="ach-chip-' + a.id + '" title="' + a.name + ': ' + a.desc + '">' + a.emoji + '</span>'
+  ).join("");
+}
+function paintAchievementChips(){
+  ACHIEVEMENTS.forEach(a => {
+    const el = document.getElementById("ach-chip-" + a.id);
+    if(!el) return;
+    el.classList.toggle("unlocked", progress.achievements.includes(a.id));
+  });
 }
 
 /* ---------------- Confeti ---------------- */
@@ -1408,6 +1654,7 @@ function startPractice(){
   state.practiceCount = 0;
   state.practiceCorrect = 0;
   state.practiceWrong = [];
+  state.sessionCorrectStreak = 0;
   showScreen("practice");
   nextPracticeWord();
 }
@@ -1423,6 +1670,7 @@ function startReview(){
   state.practiceCount = 0;
   state.practiceCorrect = 0;
   state.practiceWrong = [];
+  state.sessionCorrectStreak = 0;
   showScreen("practice");
   nextPracticeWord();
 }
@@ -1446,6 +1694,17 @@ function nextPracticeWord(){
     beginWaiting();
   });
 }
+/* ---------------- Frases de aliento ---------------- */
+const ENCOURAGEMENT = {
+  excellent: ["¡Excelente! 🌟 Dominás estas palabras.", "¡Sos una máquina! 🚀 Ortografía impecable.", "¡Perfecto! 🏆 No fallaste casi nada."],
+  great:     ["¡Muy bien! 👏 Vas por muy buen camino.", "¡Gran trabajo! 💪 Cada vez mejor.", "¡Así se hace! 🔥 Seguí así."],
+  good:      ["Bien, seguí practicando un poco más. 💪", "Vas bien, un poco más y la sacás. 📈", "Buen intento, ya casi lo tenés. 🙂"],
+  keep:      ["Sigamos practicando, cada intento suma. 📖", "No te desanimes, la próxima sale mejor. 🌱", "Practicando es como se aprende. ¡De nuevo! 🔁"]
+};
+function pickEncouragement(tier){
+  const arr = ENCOURAGEMENT[tier];
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 function finishPracticeSession(){
   clearPending();
   if(state.practiceWrong.length){
@@ -1465,10 +1724,10 @@ function finishPracticeSession(){
   document.getElementById("result-den").textContent = "de 100 (práctica)";
   let msg;
   if(total === 0){ msg = "No marcaste aciertos ni fallos en esta sesión."; }
-  else if(score >= 90){ msg = "¡Excelente! 🌟 Dominás estas palabras."; }
-  else if(score >= 70){ msg = "¡Muy bien! 👏 Vas por muy buen camino."; }
-  else if(score >= 51){ msg = "Bien, seguí practicando un poco más. 💪"; }
-  else { msg = "Sigamos practicando, cada intento suma. 📖"; }
+  else if(score >= 90){ msg = pickEncouragement("excellent"); }
+  else if(score >= 70){ msg = pickEncouragement("great"); }
+  else if(score >= 51){ msg = pickEncouragement("good"); }
+  else { msg = pickEncouragement("keep"); }
   document.getElementById("result-msg").textContent = msg;
   document.getElementById("result-sub").textContent = state.practiceCorrect + " de " + total + " marcadas como correctas";
 
@@ -1500,9 +1759,12 @@ function markPractice(correct, alreadyRewarded){
   if(state.phase !== "revealed") return;
   if(correct){
     state.practiceCorrect++;
+    state.sessionCorrectStreak++;
     if(!alreadyRewarded) rewardCorrect();
+    checkAchievements();
   } else {
     state.practiceWrong.push(state.current);
+    state.sessionCorrectStreak = 0;
   }
   nextPracticeWord();
 }
@@ -1550,6 +1812,7 @@ function startExam(){
   state.examIndex = 0;
   state.examCorrect = 0;
   state.examWrong = [];
+  state.sessionCorrectStreak = 0;
   showScreen("exam");
   nextExamWord();
 }
@@ -1572,9 +1835,11 @@ function markExam(correct, alreadyRewarded){
   if(state.phase !== "revealed") return;
   if(correct){
     state.examCorrect++;
+    state.sessionCorrectStreak++;
     if(!alreadyRewarded) rewardCorrect();
+    checkAchievements();
   }
-  else { state.examWrong.push(state.current); }
+  else { state.examWrong.push(state.current); state.sessionCorrectStreak = 0; }
   state.examIndex++;
   nextExamWord();
 }
@@ -1623,13 +1888,18 @@ function showResults(){
   const score = Math.round(state.examCorrect / total * 100);
   registerActivity();
   if(score >= 70) burstConfetti(true);
+  if(score > progress.bestExamScore){
+    progress.bestExamScore = score;
+    saveProgress();
+    updateBestScoreUI();
+  }
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = "de 100";
   let msg;
-  if(score >= 90){ msg = "¡Excelente! 🌟 Dominás estas palabras."; }
-  else if(score >= 70){ msg = "¡Muy bien! 👏 Vas por muy buen camino."; }
-  else if(score >= 51){ msg = "Bien, seguí practicando un poco más. 💪"; }
-  else { msg = "Sigamos practicando, cada intento suma. 📖"; }
+  if(score >= 90){ msg = pickEncouragement("excellent"); }
+  else if(score >= 70){ msg = pickEncouragement("great"); }
+  else if(score >= 51){ msg = pickEncouragement("good"); }
+  else { msg = pickEncouragement("keep"); }
   document.getElementById("result-msg").textContent = msg;
   document.getElementById("result-sub").textContent = state.examCorrect + " de " + state.examWords.length + " palabras correctas";
 
@@ -1663,8 +1933,11 @@ loadPrefs();
 loadProgress();
 buildChips();
 buildPetChips();
+buildAccessoryChips();
+buildAchievementChips();
 applyLoadedPrefs();
 updateProgressUI();
+updateChestUI();
 ["practice-stage","exam-stage"].forEach(id => {
   document.getElementById(id).setAttribute("aria-live","polite");
 });
