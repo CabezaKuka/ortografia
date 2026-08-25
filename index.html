@@ -148,8 +148,8 @@
   }
   .cat-chips{ display:flex; flex-wrap:wrap; gap: 7px; justify-content:center; }
   .cat-chip{
-    font-family: var(--font-body); font-weight:700; font-size: 0.76rem;
-    border-radius: 999px; padding: 6px 12px; cursor:pointer;
+    font-family: var(--font-body); font-weight:700; font-size: 0.68rem;
+    border-radius: 999px; padding: 4px 9px; cursor:pointer;
     border: 2px solid; background: #fff; transition: all 0.15s ease;
   }
   .cat-chip[aria-pressed="false"]{ opacity: 0.42; }
@@ -164,39 +164,10 @@
     padding: 10px 14px; margin-bottom: 16px; font-size: 0.84rem; color: #6b4a00;
   }
   .voice-warn strong{ display:block; margin-bottom:2px; }
-  .voice-info{
-    text-align:center; font-size: 0.78rem; color: var(--ink-dim);
-    margin-bottom: 12px;
-  }
-  .voice-info button{
-    font-size: 0.74rem; padding: 3px 10px; margin-left: 6px;
-    background: transparent; border:1px solid rgba(43,38,32,0.2);
-    border-radius: 999px; color: var(--ink-dim); cursor:pointer;
-  }
 
   .context-frase{
     margin-top: 10px; font-family: var(--font-body); font-size: 0.86rem;
     color: var(--ink-dim); font-style: italic;
-  }
-
-  .legend{
-    margin-top: 18px;
-    display:flex;
-    gap: 10px 14px;
-    flex-wrap: wrap;
-    justify-content:center;
-    font-size: 0.76rem;
-    color: var(--ink-dim);
-  }
-  .legend .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:middle; }
-
-  .shortcuts-hint{
-    margin-top: 14px; text-align:center; font-size: 0.72rem;
-    color: var(--ink-dim); line-height: 1.45;
-  }
-  .shortcuts-hint kbd{
-    display:inline-block; background:#F0EEF8; border:1px solid rgba(108,92,231,0.25);
-    border-radius:4px; padding:1px 5px; font-family: var(--font-body); font-size:0.7rem;
   }
 
   /* ---------- BADGES ---------- */
@@ -389,10 +360,15 @@
   }
 
   /* ---------- STATS BAR (racha / monedas / mascota) ---------- */
-  .stats-bar{
-    display:flex; align-items:center; justify-content:center;
-    gap: 8px; margin: 8px 0 2px; flex-wrap: wrap;
+  .hero-row{
+    display:grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items:center;
+    width:100%;
+    margin-top: 6px;
   }
+  .hero-row #stat-streak{ justify-self:start; }
+  .hero-row #stat-coins{ justify-self:end; }
   .stat-pill{
     display:inline-flex; align-items:center; gap:4px;
     font-family: var(--font-body); font-weight: 800; font-size: 0.85rem;
@@ -411,7 +387,7 @@
   /* ---------- MASCOTA PROTAGONISTA ---------- */
   .pet-hero{
     display:flex; flex-direction:column; align-items:center; gap:0;
-    margin: 2px 0 6px;
+    justify-self:center;
   }
   .pet-hero-emoji{
     font-size: 4.4rem; line-height:1;
@@ -469,14 +445,13 @@
 
 <div class="app">
   <header class="topbar">
-    <div class="pet-hero" id="pet-hero">
-      <span class="pet-hero-emoji" id="pet-hero-emoji">🐱</span>
-      <span class="pet-hero-name" id="pet-hero-name">Gatito</span>
-    </div>
     <h1>✏️ Dictado</h1>
-    <p>Práctica de ortografía</p>
-    <div class="stats-bar" id="stats-bar">
+    <div class="hero-row" id="hero-row">
       <span class="stat-pill" id="stat-streak">🔥 0</span>
+      <div class="pet-hero" id="pet-hero">
+        <span class="pet-hero-emoji" id="pet-hero-emoji">🐱</span>
+        <span class="pet-hero-name" id="pet-hero-name">Gatito</span>
+      </div>
       <span class="stat-pill" id="stat-coins">🪙 0</span>
     </div>
   </header>
@@ -493,13 +468,12 @@
     <!-- MENU -->
     <section id="screen-menu" class="screen">
       <div id="voice-warn" class="voice-warn hidden"></div>
-      <div id="voice-info" class="voice-info hidden"></div>
       <div class="menu-options">
         <button type="button" class="mode-btn" id="btn-practice" onclick="startPractice()">
           <span class="emoji">📘</span>
           <span>
             <strong>Modo Práctica</strong>
-            <span class="desc">Escucha, escribe y revisa la regla. Marca si acertaste. Al final puedes repasar los errores.</span>
+            <span class="desc">Escuchá, escribí y revisá la regla.</span>
           </span>
         </button>
         <button type="button" class="mode-btn" id="btn-exam" onclick="startExam()">
@@ -537,11 +511,6 @@
       <div class="pets-block">
         <div class="filter-title">Mascotas 🐾 · comprá y equipá con tus monedas</div>
         <div class="pet-chips" id="pet-chips"></div>
-      </div>
-      <div class="legend" id="legend"></div>
-      <div class="shortcuts-hint">
-        Atajos: <kbd>Espacio</kbd> escuchar de nuevo · <kbd>Enter</kbd> continuar / revelar ·
-        <kbd>1</kbd> correcta · <kbd>2</kbd> incorrecta · <kbd>+</kbd> +5 s
       </div>
     </section>
 
@@ -1072,7 +1041,6 @@ function pickVoice(){
   voiceChecked = true;
   const lang = (spanishVoice.lang || "").toLowerCase().replace("_","-");
   showVoiceWarning(lang === "es-es" ? "peninsular" : "ok");
-  showVoiceInfo();
 }
 function showVoiceWarning(kind){
   const el = document.getElementById("voice-warn");
@@ -1088,16 +1056,6 @@ function showVoiceWarning(kind){
   }
   el.innerHTML = html;
   el.classList.remove("hidden");
-}
-function showVoiceInfo(){
-  const el = document.getElementById("voice-info");
-  if(!el || !spanishVoice){ if(el) el.classList.add("hidden"); return; }
-  const name = spanishVoice.name || spanishVoice.lang;
-  el.innerHTML = `Voz: <strong>${name}</strong> (${spanishVoice.lang}) <button type="button" onclick="testVoice()">Probar</button>`;
-  el.classList.remove("hidden");
-}
-function testVoice(){
-  speak("Hola. Esta es la voz del dictado.");
 }
 if("speechSynthesis" in window){
   pickVoice();
@@ -1399,7 +1357,7 @@ function paintChips(){
     countEl.classList.add("warn");
     modeBtns.forEach(b => { b.disabled = true; });
   } else {
-    countEl.textContent = total + " palabras disponibles · el examen toma " + Math.min(20, total) + ".";
+    countEl.textContent = "";
     countEl.classList.remove("warn");
     modeBtns.forEach(b => { b.disabled = false; });
   }
@@ -1701,15 +1659,8 @@ function showResults(){
 }
 
 /* ---------------- Init ---------------- */
-function buildLegend(){
-  const el = document.getElementById("legend");
-  el.innerHTML = Object.values(CAT).map(c =>
-    `<span><span class="dot" style="background:${c.color}"></span>${c.label}</span>`
-  ).join("");
-}
 loadPrefs();
 loadProgress();
-buildLegend();
 buildChips();
 buildPetChips();
 applyLoadedPrefs();
