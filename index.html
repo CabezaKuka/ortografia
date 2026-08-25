@@ -387,6 +387,60 @@
     .card{ padding: 20px 16px; }
     .controls-row button{ flex: 1 1 auto; }
   }
+
+  /* ---------- STATS BAR (racha / monedas / mascota) ---------- */
+  .stats-bar{
+    display:flex; align-items:center; justify-content:center;
+    gap: 8px; margin: 10px 0 4px; flex-wrap: wrap;
+  }
+  .stat-pill{
+    display:inline-flex; align-items:center; gap:4px;
+    font-family: var(--font-body); font-weight: 800; font-size: 0.85rem;
+    background: rgba(255,255,255,0.22); color:#fff;
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 999px; padding: 5px 12px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .stat-pill.pop{ animation: stat-pop 0.35s ease; }
+  @keyframes stat-pop{
+    0%{ transform: scale(1); }
+    40%{ transform: scale(1.28); }
+    100%{ transform: scale(1); }
+  }
+
+  /* ---------- MASCOTAS ---------- */
+  .pets-block{ margin-top: 20px; border-top: 1px dashed rgba(43,38,32,0.15); padding-top: 16px; }
+  .pet-chips{ display:flex; flex-wrap:wrap; gap: 8px; justify-content:center; }
+  .pet-chip{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    font-family: var(--font-body);
+    background: #F7F5FF; border: 2px solid rgba(108,92,231,0.2);
+    border-radius: 14px; padding: 10px 12px; min-width: 68px;
+    cursor:pointer; transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .pet-chip:hover{ transform: translateY(-2px); }
+  .pet-chip .pet-emoji{ font-size: 1.7rem; }
+  .pet-chip .pet-name{ font-size: 0.72rem; font-weight:700; color: var(--ink); }
+  .pet-chip .pet-price{ font-size: 0.7rem; font-weight:800; color: var(--ink-dim); }
+  .pet-chip.locked{ opacity: 0.55; }
+  .pet-chip.locked .pet-emoji{ filter: grayscale(0.6); }
+  .pet-chip.equipped{ border-color: var(--good); background: rgba(34,197,94,0.1); }
+  .pet-chip.equipped .pet-price{ color: var(--good); }
+  .pet-chip.owned:not(.equipped) .pet-price{ color: var(--ui-accent); }
+
+  /* ---------- CONFETI ---------- */
+  .confetti-layer{
+    position: fixed; inset:0; pointer-events:none; z-index: 9999; overflow:hidden;
+  }
+  .confetti-piece{
+    position:absolute; top:-12px; width:8px; height:14px; border-radius:2px;
+    opacity:0.95;
+    animation-name: confetti-fall; animation-timing-function: ease-in; animation-fill-mode: forwards;
+  }
+  @keyframes confetti-fall{
+    0%{ transform: translate(0,0) rotate(0deg); opacity:1; }
+    100%{ transform: translate(var(--drift), var(--fall)) rotate(var(--rot)); opacity:0; }
+  }
 </style>
 </head>
 <body>
@@ -395,6 +449,11 @@
   <header class="topbar">
     <h1>✏️ Dictado</h1>
     <p>Práctica de ortografía</p>
+    <div class="stats-bar" id="stats-bar">
+      <span class="stat-pill" id="stat-streak">🔥 0</span>
+      <span class="stat-pill" id="stat-coins">🪙 0</span>
+      <span class="stat-pill" id="stat-pet">🐱</span>
+    </div>
   </header>
 
   <div class="speed-control" id="speed-control" role="group" aria-label="Velocidad de dictado">
@@ -449,6 +508,10 @@
           <button type="button" onclick="setAllCats(false)">Ninguna</button>
         </div>
         <div class="filter-count" id="filter-count"></div>
+      </div>
+      <div class="pets-block">
+        <div class="filter-title">Mascotas 🐾 · comprá y equipá con tus monedas</div>
+        <div class="pet-chips" id="pet-chips"></div>
       </div>
       <div class="legend" id="legend"></div>
       <div class="shortcuts-hint">
@@ -713,6 +776,162 @@ const state = {
 };
 let currentRate = 0.8;
 let selectedCats = new Set(Object.keys(CAT));
+
+/* ---------------- Progreso: monedas, racha, mascotas ---------------- */
+const PROGRESS_KEY = "dictado-progreso-v1";
+const PETS = [
+  { id:"gato",      emoji:"🐱", name:"Gatito",    price:0  },
+  { id:"perro",     emoji:"🐶", name:"Perrito",   price:15 },
+  { id:"conejo",    emoji:"🐰", name:"Conejito",  price:15 },
+  { id:"panda",     emoji:"🐼", name:"Panda",     price:25 },
+  { id:"zorro",     emoji:"🦊", name:"Zorrito",   price:25 },
+  { id:"buho",      emoji:"🦉", name:"Búho",      price:35 },
+  { id:"unicornio", emoji:"🦄", name:"Unicornio", price:50 },
+  { id:"dragon",    emoji:"🐲", name:"Dragón",    price:80 }
+];
+let progress = {
+  coins: 0,
+  streak: 0,
+  lastActiveDate: null,
+  ownedPets: ["gato"],
+  equippedPet: "gato"
+};
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(typeof data.coins === "number") progress.coins = data.coins;
+    if(typeof data.streak === "number") progress.streak = data.streak;
+    if(typeof data.lastActiveDate === "string") progress.lastActiveDate = data.lastActiveDate;
+    if(Array.isArray(data.ownedPets) && data.ownedPets.length) progress.ownedPets = data.ownedPets;
+    if(typeof data.equippedPet === "string") progress.equippedPet = data.equippedPet;
+  }catch(e){}
+}
+function saveProgress(){
+  try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); }catch(e){}
+}
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function daysBetween(dateStrA, dateStrB){
+  const a = new Date(dateStrA + "T00:00:00");
+  const b = new Date(dateStrB + "T00:00:00");
+  return Math.round((b - a) / 86400000);
+}
+function registerActivity(){
+  const key = todayKey();
+  if(progress.lastActiveDate === key) return;
+  if(progress.lastActiveDate && daysBetween(progress.lastActiveDate, key) === 1){
+    progress.streak += 1;
+  } else {
+    progress.streak = 1;
+  }
+  progress.lastActiveDate = key;
+  saveProgress();
+  updateProgressUI();
+  pulsePill("stat-streak");
+}
+function addCoins(n){
+  progress.coins += n;
+  saveProgress();
+  updateProgressUI();
+  pulsePill("stat-coins");
+}
+function pulsePill(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.remove("pop");
+  void el.offsetWidth; // reiniciar animación
+  el.classList.add("pop");
+}
+function updateProgressUI(){
+  const streakEl = document.getElementById("stat-streak");
+  const coinsEl = document.getElementById("stat-coins");
+  const petEl = document.getElementById("stat-pet");
+  if(streakEl) streakEl.textContent = "🔥 " + progress.streak;
+  if(coinsEl) coinsEl.textContent = "🪙 " + progress.coins;
+  if(petEl){
+    const pet = PETS.find(p => p.id === progress.equippedPet) || PETS[0];
+    petEl.textContent = pet.emoji;
+  }
+  paintPetChips();
+}
+function buildPetChips(){
+  const wrap = document.getElementById("pet-chips");
+  if(!wrap) return;
+  wrap.innerHTML = PETS.map(p => `
+    <button type="button" class="pet-chip" data-pet="${p.id}" onclick="onPetClick('${p.id}')">
+      <span class="pet-emoji">${p.emoji}</span>
+      <span class="pet-name">${p.name}</span>
+      <span class="pet-price" id="pet-price-${p.id}"></span>
+    </button>`).join("");
+}
+function paintPetChips(){
+  PETS.forEach(p => {
+    const btn = document.querySelector('.pet-chip[data-pet="' + p.id + '"]');
+    const priceEl = document.getElementById("pet-price-" + p.id);
+    if(!btn || !priceEl) return;
+    const owned = progress.ownedPets.includes(p.id);
+    const equipped = progress.equippedPet === p.id;
+    btn.classList.toggle("owned", owned);
+    btn.classList.toggle("locked", !owned);
+    btn.classList.toggle("equipped", equipped);
+    if(equipped) priceEl.textContent = "Puesta ✓";
+    else if(owned) priceEl.textContent = "Usar";
+    else priceEl.textContent = "🪙 " + p.price;
+  });
+}
+function onPetClick(id){
+  const p = PETS.find(x => x.id === id);
+  if(!p) return;
+  if(progress.ownedPets.includes(id)){
+    if(progress.equippedPet !== id){
+      progress.equippedPet = id;
+      saveProgress();
+      updateProgressUI();
+    }
+    return;
+  }
+  if(progress.coins >= p.price){
+    progress.coins -= p.price;
+    progress.ownedPets.push(id);
+    progress.equippedPet = id;
+    saveProgress();
+    updateProgressUI();
+    burstConfetti(false);
+  } else {
+    const priceEl = document.getElementById("pet-price-" + id);
+    if(!priceEl) return;
+    const old = priceEl.textContent;
+    priceEl.textContent = "Faltan 🪙";
+    setTimeout(() => { if(priceEl.textContent === "Faltan 🪙") priceEl.textContent = old; }, 900);
+  }
+}
+
+/* ---------------- Confeti ---------------- */
+function burstConfetti(big){
+  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const count = big ? 60 : 16;
+  const colors = ["#6C5CE7","#FF6F91","#FFC371","#22C55E","#3A86FF","#FF2D95"];
+  const layer = document.createElement("div");
+  layer.className = "confetti-layer";
+  document.body.appendChild(layer);
+  for(let i = 0; i < count; i++){
+    const el = document.createElement("span");
+    el.className = "confetti-piece";
+    el.style.left = (50 + (Math.random()*46 - 23)) + "vw";
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.setProperty("--rot", (Math.random()*360) + "deg");
+    el.style.setProperty("--drift", (Math.random()*140 - 70) + "px");
+    el.style.setProperty("--fall", (big ? 420 + Math.random()*180 : 240 + Math.random()*90) + "px");
+    el.style.animationDuration = (big ? 1.3 + Math.random()*0.6 : 0.8 + Math.random()*0.35) + "s";
+    el.style.animationDelay = (Math.random()*0.15) + "s";
+    layer.appendChild(el);
+  }
+  setTimeout(() => layer.remove(), big ? 2200 : 1400);
+}
 
 function writeSeconds(item){
   return Math.min(12, Math.max(5, 3.5 + item.w.length * 0.5));
@@ -1248,6 +1467,10 @@ function finishPracticeSession(){
   showScreen("results");
   const total = state.practiceCorrect + state.practiceWrong.length;
   const score = total ? Math.round(state.practiceCorrect / total * 100) : 0;
+  if(total > 0){
+    registerActivity();
+    if(score >= 70) burstConfetti(true);
+  }
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = "de 100 (práctica)";
   let msg;
@@ -1287,6 +1510,8 @@ function markPractice(correct){
   if(state.phase !== "revealed") return;
   if(correct){
     state.practiceCorrect++;
+    addCoins(1);
+    burstConfetti(false);
   } else {
     state.practiceWrong.push(state.current);
   }
@@ -1356,7 +1581,11 @@ function nextExamWord(){
 }
 function markExam(correct){
   if(state.phase !== "revealed") return;
-  if(correct){ state.examCorrect++; }
+  if(correct){
+    state.examCorrect++;
+    addCoins(1);
+    burstConfetti(false);
+  }
   else { state.examWrong.push(state.current); }
   state.examIndex++;
   nextExamWord();
@@ -1404,6 +1633,8 @@ function showResults(){
   showScreen("results");
   const total = state.examWords.length || 1;
   const score = Math.round(state.examCorrect / total * 100);
+  registerActivity();
+  if(score >= 70) burstConfetti(true);
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = "de 100";
   let msg;
@@ -1447,9 +1678,12 @@ function buildLegend(){
   ).join("");
 }
 loadPrefs();
+loadProgress();
 buildLegend();
 buildChips();
+buildPetChips();
 applyLoadedPrefs();
+updateProgressUI();
 ["practice-stage","exam-stage"].forEach(id => {
   document.getElementById(id).setAttribute("aria-live","polite");
 });
