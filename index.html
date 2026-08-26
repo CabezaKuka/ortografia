@@ -1795,8 +1795,12 @@ function markPractice(correct, alreadyRewarded){
   if(correct){
     state.practiceCorrect++;
     state.sessionCorrectStreak++;
-    if(!alreadyRewarded) rewardCorrect();
     checkAchievements();
+    if(!alreadyRewarded){
+      rewardCorrect();
+      setTimeout(nextPracticeWord, 700);
+      return;
+    }
   } else {
     state.practiceWrong.push(state.current);
     state.sessionCorrectStreak = 0;
@@ -1871,8 +1875,13 @@ function markExam(correct, alreadyRewarded){
   if(correct){
     state.examCorrect++;
     state.sessionCorrectStreak++;
-    if(!alreadyRewarded) rewardCorrect();
     checkAchievements();
+    if(!alreadyRewarded){
+      rewardCorrect();
+      state.examIndex++;
+      setTimeout(nextExamWord, 700);
+      return;
+    }
   }
   else { state.examWrong.push(state.current); state.sessionCorrectStreak = 0; }
   state.examIndex++;
