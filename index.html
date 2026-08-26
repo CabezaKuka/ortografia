@@ -863,14 +863,14 @@ let selectedCats = new Set(Object.keys(CAT));
 /* ---------------- Progreso: monedas, racha, mascotas ---------------- */
 const PROGRESS_KEY = "dictado-progreso-v1";
 const PETS = [
-  { id:"gato",      emoji:"🐱", name:"Gatito",    price:0  },
-  { id:"perro",     emoji:"🐶", name:"Perrito",   price:15 },
-  { id:"conejo",    emoji:"🐰", name:"Conejito",  price:15 },
-  { id:"panda",     emoji:"🐼", name:"Panda",     price:25 },
-  { id:"zorro",     emoji:"🦊", name:"Zorrito",   price:25 },
-  { id:"buho",      emoji:"🦉", name:"Búho",      price:35 },
-  { id:"unicornio", emoji:"🦄", name:"Unicornio", price:50 },
-  { id:"dragon",    emoji:"🐲", name:"Dragón",    price:80 }
+  { id:"gato",      emoji:"🐱", name:"Gatito",    price:0,  sound:"Miau, miau" },
+  { id:"perro",     emoji:"🐶", name:"Perrito",   price:15, sound:"Guau, guau" },
+  { id:"conejo",    emoji:"🐰", name:"Conejito",  price:15, sound:"Boing, boing" },
+  { id:"panda",     emoji:"🐼", name:"Panda",     price:25, sound:"Ñam, ñam" },
+  { id:"zorro",     emoji:"🦊", name:"Zorrito",   price:25, sound:"Ring, ding" },
+  { id:"buho",      emoji:"🦉", name:"Búho",      price:35, sound:"Uhu, uhu" },
+  { id:"unicornio", emoji:"🦄", name:"Unicornio", price:50, sound:"Hiii, hiii" },
+  { id:"dragon",    emoji:"🐲", name:"Dragón",    price:80, sound:"Grrr, grrr" }
 ];
 const ACCESSORIES = [
   { id:"ninguno",   emoji:"",   name:"Sin accesorio", price:0,  pos:"none" },
@@ -958,6 +958,20 @@ function addCoins(n){
 function rewardCorrect(){
   addCoins(1);
   burstConfetti(false);
+  playPetSound();
+}
+function playPetSound(){
+  if(!("speechSynthesis" in window)) return;
+  const pet = PETS.find(p => p.id === progress.equippedPet) || PETS[0];
+  if(!pet.sound) return;
+  try{
+    const u = new SpeechSynthesisUtterance(pet.sound);
+    if(spanishVoice) u.voice = spanishVoice;
+    u.lang = spanishVoice ? spanishVoice.lang : "es-ES";
+    u.rate = 1.15;
+    u.pitch = 1.15;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
 }
 function pulse(id){
   const el = document.getElementById(id);
