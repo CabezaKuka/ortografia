@@ -863,14 +863,14 @@ let selectedCats = new Set(Object.keys(CAT));
 /* ---------------- Progreso: monedas, racha, mascotas ---------------- */
 const PROGRESS_KEY = "dictado-progreso-v1";
 const PETS = [
-  { id:"gato",      emoji:"🐱", name:"Gatito",    price:0,  sound:"Miau, miau" },
-  { id:"perro",     emoji:"🐶", name:"Perrito",   price:15, sound:"Guau, guau" },
-  { id:"conejo",    emoji:"🐰", name:"Conejito",  price:15, sound:"Boing, boing" },
-  { id:"panda",     emoji:"🐼", name:"Panda",     price:25, sound:"Ñam, ñam" },
-  { id:"zorro",     emoji:"🦊", name:"Zorrito",   price:25, sound:"Ring, ding" },
-  { id:"buho",      emoji:"🦉", name:"Búho",      price:35, sound:"Uhu, uhu" },
-  { id:"unicornio", emoji:"🦄", name:"Unicornio", price:50, sound:"Hiii, hiii" },
-  { id:"dragon",    emoji:"🐲", name:"Dragón",    price:80, sound:"Grrr, grrr" }
+  { id:"gato",      emoji:"🐱", name:"Gatito",    price:0  },
+  { id:"perro",     emoji:"🐶", name:"Perrito",   price:15 },
+  { id:"conejo",    emoji:"🐰", name:"Conejito",  price:15 },
+  { id:"panda",     emoji:"🐼", name:"Panda",     price:25 },
+  { id:"zorro",     emoji:"🦊", name:"Zorrito",   price:25 },
+  { id:"buho",      emoji:"🦉", name:"Búho",      price:35 },
+  { id:"unicornio", emoji:"🦄", name:"Unicornio", price:50 },
+  { id:"dragon",    emoji:"🐲", name:"Dragón",    price:80 }
 ];
 const ACCESSORIES = [
   { id:"ninguno",   emoji:"",   name:"Sin accesorio", price:0,  pos:"none" },
@@ -960,18 +960,73 @@ function rewardCorrect(){
   burstConfetti(false);
   playPetSound();
 }
+
+/* ---------------- Sonidos de mascota (Web Audio, sin depender de la voz) ---------------- */
+let audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ audioCtx = null; }
+  }
+  if(audioCtx && audioCtx.state === "suspended"){ audioCtx.resume(); }
+  return audioCtx;
+}
+function playBlip(ctx, opts){
+  const t0 = ctx.currentTime + (opts.delay || 0);
+  const dur = opts.duration;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = opts.type || "sine";
+  osc.frequency.setValueAtTime(opts.startFreq, t0);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(opts.endFreq, 1), t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(opts.gain || 0.25, t0 + Math.min(0.03, dur * 0.3));
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(g).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.03);
+}
+const PET_SOUNDS = {
+  // "Miau, miau": glide alegre hacia arriba y una caída juguetona
+  gato: ctx => [0, 0.3].forEach(d => {
+    playBlip(ctx, { startFreq:520, endFreq:880, duration:0.13, type:"triangle", gain:0.24, delay:d });
+    playBlip(ctx, { startFreq:820, endFreq:600, duration:0.11, type:"triangle", gain:0.18, delay:d + 0.12 });
+  }),
+  // "Guau, guau": dos ladridos cortos y graves, bien percusivos
+  perro: ctx => [0, 0.24].forEach(d => {
+    playBlip(ctx, { startFreq:300, endFreq:130, duration:0.11, type:"sawtooth", gain:0.32, delay:d });
+  }),
+  // Salto elástico tipo "boing, boing"
+  conejo: ctx => [0, 0.3].forEach(d => {
+    playBlip(ctx, { startFreq:260, endFreq:950, duration:0.16, type:"sine", gain:0.24, delay:d });
+  }),
+  // Masticando bambú, dos "ñam" suaves y redonditos
+  panda: ctx => [0, 0.26].forEach(d => {
+    playBlip(ctx, { startFreq:200, endFreq:110, duration:0.14, type:"sine", gain:0.28, delay:d });
+  }),
+  // Zorrito pícaro: tres notas brillantes tipo "ring-ding-ding"
+  zorro: ctx => [0, 0.13, 0.28].forEach((d, i) => {
+    playBlip(ctx, { startFreq: i % 2 === 0 ? 760 : 1020, endFreq: i % 2 === 0 ? 1020 : 780, duration:0.1, type:"square", gain:0.16, delay:d });
+  }),
+  // Búho: dos "uhu" graves con caída suave
+  buho: ctx => [0, 0.34].forEach(d => {
+    playBlip(ctx, { startFreq:300, endFreq:190, duration:0.22, type:"sine", gain:0.26, delay:d });
+  }),
+  // Unicornio: mini arpegio brillante y mágico
+  unicornio: ctx => [520, 660, 780, 1040].forEach((f, i) => {
+    playBlip(ctx, { startFreq:f, endFreq:f * 1.18, duration:0.1, type:"triangle", gain:0.18, delay:i * 0.07 });
+  }),
+  // Dragón: dos gruñidos graves y ásperos
+  dragon: ctx => [0, 0.26].forEach(d => {
+    playBlip(ctx, { startFreq:140, endFreq:70, duration:0.2, type:"sawtooth", gain:0.3, delay:d });
+  })
+};
 function playPetSound(){
-  if(!("speechSynthesis" in window)) return;
-  const pet = PETS.find(p => p.id === progress.equippedPet) || PETS[0];
-  if(!pet.sound) return;
-  try{
-    const u = new SpeechSynthesisUtterance(pet.sound);
-    if(spanishVoice) u.voice = spanishVoice;
-    u.lang = spanishVoice ? spanishVoice.lang : "es-ES";
-    u.rate = 1.15;
-    u.pitch = 1.15;
-    window.speechSynthesis.speak(u);
-  }catch(e){}
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  const fn = PET_SOUNDS[progress.equippedPet];
+  if(!fn) return;
+  try{ fn(ctx); }catch(e){}
 }
 function pulse(id){
   const el = document.getElementById(id);
