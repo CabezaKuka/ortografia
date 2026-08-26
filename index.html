@@ -31,9 +31,43 @@
     --good: #22C55E;
     --bad: #FF3B30;
     --paper-line: rgba(43,38,32,0.08);
+    --chip-bg: #F7F5FF;
+    --input-bg: #FAFAFF;
+    --surface: #ffffff;
     --font-display: 'Kalam', 'Segoe Script', cursive;
     --font-body: 'Nunito', -apple-system, 'Segoe UI', sans-serif;
   }
+
+  body.dark{
+    --grad-1: #241E42;
+    --grad-2: #5C2A42;
+    --grad-3: #6B4A1E;
+    --card-bg: #1E1B2E;
+    --ink: #EDEAF7;
+    --ink-dim: #A9A3C2;
+    --paper-line: rgba(255,255,255,0.09);
+    --chip-bg: #2A2640;
+    --input-bg: #241F38;
+    --surface: #241F38;
+  }
+  body.dark .type-box input.ok{ background: rgba(34,197,94,0.16); }
+  body.dark .type-box input.ko{ background: rgba(255,59,48,0.16); }
+  body.dark .voice-warn{ background: rgba(232,166,0,0.14); color:#FFD9A0; }
+  body.dark .timerbar{ background: rgba(255,255,255,0.14); }
+  body.dark .review-item{ background: rgba(255,59,48,0.12); }
+  body.dark .chest-btn:disabled{ background:#2A2640; }
+  body.dark .achievement-toast{ background: var(--card-bg); }
+
+  .theme-toggle{
+    position: fixed; top:14px; right:14px; z-index: 500;
+    width:40px; height:40px; border-radius:50%;
+    background: rgba(255,255,255,0.22); border:1.5px solid rgba(255,255,255,0.4);
+    color:#fff; font-size:1.15rem; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; padding:0; transition: background 0.15s ease;
+  }
+  .theme-toggle:hover{ background: rgba(255,255,255,0.35); }
+  body.dark .theme-toggle{ background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.25); }
+  body.dark .theme-toggle:hover{ background: rgba(0,0,0,0.45); }
 
   *{ box-sizing: border-box; }
 
@@ -109,7 +143,7 @@
     display:flex;
     align-items:center;
     gap: 14px;
-    background: #F7F5FF;
+    background: var(--chip-bg);
     border: 2px solid rgba(108,92,231,0.2);
     border-radius: 14px;
     padding: 16px 18px;
@@ -133,12 +167,16 @@
   .opt-toggle{
     display:flex; align-items:center; gap:6px;
     font-size: 0.74rem; font-weight:700; color: var(--ink);
-    background: #F7F5FF; border: 2px solid rgba(108,92,231,0.18);
+    background: var(--chip-bg); border: 2px solid rgba(108,92,231,0.18);
     border-radius: 999px; padding: 5px 11px; cursor:pointer;
     font-family: var(--font-body);
   }
   .opt-toggle input{ width:13px; height:13px; accent-color: var(--ui-accent); }
   .opt-toggle[aria-pressed="true"]{ border-color: var(--ui-accent); background: rgba(108,92,231,0.1); }
+  .type-tip{
+    text-align:center; font-size: 0.7rem; color: var(--ink-dim);
+    margin-top: 8px; font-family: var(--font-body); line-height:1.4;
+  }
 
   /* ---------- FILTRO DE CATEGORIAS ---------- */
   .filter-block{ margin-top: 22px; border-top: 1px dashed rgba(43,38,32,0.15); padding-top: 16px; }
@@ -150,7 +188,7 @@
   .cat-chip{
     font-family: var(--font-body); font-weight:700; font-size: 0.6rem;
     border-radius: 999px; padding: 3px 7px; cursor:pointer;
-    border: 1.5px solid; background: #fff; transition: all 0.15s ease;
+    border: 1.5px solid; background: var(--surface); transition: all 0.15s ease;
   }
   .cat-chip[aria-pressed="false"]{ opacity: 0.42; }
   .chip-actions{ display:flex; gap:8px; justify-content:center; margin-top:10px; }
@@ -283,7 +321,7 @@
     padding: 12px 14px;
     border: 2px solid rgba(108,92,231,0.35);
     border-radius: 12px;
-    background: #FAFAFF;
+    background: var(--input-bg);
     color: var(--ink);
     letter-spacing: 1px;
   }
@@ -305,7 +343,7 @@
   }
   .timer-actions button{
     font-size: 0.78rem; padding: 6px 12px;
-    background: #F7F5FF; border: 1.5px solid rgba(108,92,231,0.25);
+    background: var(--chip-bg); border: 1.5px solid rgba(108,92,231,0.25);
     color: var(--ink); border-radius: 999px;
   }
 
@@ -325,11 +363,12 @@
   button:active{ transform: scale(0.97); }
   button:focus-visible{ outline: 3px solid var(--ui-accent); outline-offset: 2px; }
 
-  .btn-ghost{ background: #fff; border: 2px solid rgba(43,38,32,0.15); color: var(--ink); }
+  .btn-ghost{ background: var(--surface); border: 2px solid rgba(43,38,32,0.15); color: var(--ink); }
   .btn-ghost:hover{ border-color: var(--ui-accent); }
   .btn-primary{ background: var(--ui-accent); color: #fff; }
   .btn-good{ background: var(--good); color: #fff; padding: 14px 24px; font-size: 1rem; }
   .btn-bad{ background: var(--bad); color: #fff; padding: 14px 24px; font-size: 1rem; }
+  .btn-share{ background: #25D366; color: #fff; }
 
   /* ---------- RESULTS ---------- */
   .score-wrap{ text-align:center; }
@@ -425,7 +464,7 @@
   .pet-chip{
     display:flex; flex-direction:column; align-items:center; gap:2px;
     font-family: var(--font-body);
-    background: #F7F5FF; border: 2px solid rgba(108,92,231,0.2);
+    background: var(--chip-bg); border: 2px solid rgba(108,92,231,0.2);
     border-radius: 14px; padding: 10px 12px; min-width: 68px;
     cursor:pointer; transition: transform 0.15s ease, border-color 0.15s ease;
   }
@@ -444,7 +483,7 @@
   .ach-chips{ display:flex; flex-wrap:wrap; gap: 8px; justify-content:center; }
   .ach-chip{
     font-size: 1.4rem; width:40px; height:40px; display:flex; align-items:center; justify-content:center;
-    border-radius: 50%; background:#F7F5FF; border:2px solid rgba(108,92,231,0.18);
+    border-radius: 50%; background: var(--chip-bg); border:2px solid rgba(108,92,231,0.18);
     filter: grayscale(1); opacity: 0.4; transition: all 0.2s ease; cursor:default;
   }
   .ach-chip.unlocked{ filter:none; opacity:1; border-color:#FFC371; background: rgba(255,195,113,0.18); }
@@ -478,7 +517,7 @@
   .achievement-toast{
     position:fixed; top:-90px; left:50%; transform: translateX(-50%);
     display:flex; align-items:center; gap:10px;
-    background:#fff; border-radius:16px; padding:12px 18px;
+    background: var(--card-bg); border-radius:16px; padding:12px 18px;
     box-shadow: 0 14px 34px rgba(0,0,0,0.28);
     border: 2px solid #FFC371;
     z-index: 10000;
@@ -507,6 +546,8 @@
 </style>
 </head>
 <body>
+
+<button type="button" id="theme-toggle" class="theme-toggle" onclick="toggleDarkMode()" aria-label="Cambiar modo claro/oscuro">🌙</button>
 
 <div class="app">
   <header class="topbar">
@@ -578,6 +619,7 @@
           Escribir en pantalla
         </label>
       </div>
+      <div class="type-tip hidden" id="type-tip">💡 Si el celular corrige solo, apagá el autocorrector del teclado en la Configuración del teléfono.</div>
 
       <div class="filter-block">
         <div class="filter-title">Practicar solo estas reglas</div>
@@ -647,8 +689,11 @@
       </div>
       <div class="controls-row">
         <button type="button" class="btn-primary" id="result-again" onclick="startExam()">🔄 Repetir examen</button>
-        <button type="button" class="btn-ghost" id="result-review-btn" onclick="startReview()" class="hidden">🔁 Repasar errores</button>
+        <button type="button" class="btn-ghost hidden" id="result-review-btn" onclick="startReview()">🔁 Repasar errores</button>
         <button type="button" class="btn-ghost" onclick="exitToMenu()">🏠 Menú principal</button>
+      </div>
+      <div class="controls-row">
+        <button type="button" class="btn-share" onclick="shareResult()">📤 Compartir resultado</button>
       </div>
     </section>
 
@@ -665,7 +710,8 @@ const CAT = {
   gj:    { label:"G / J",           color:"#2ECC71", text:"#fff" },
   lly:   { label:"LL / Y",          color:"#FF2D95", text:"#fff" },
   mp:    { label:"M antes de B/P",  color:"#3A86FF", text:"#fff" },
-  nv:    { label:"N antes de V",    color:"#FB8500", text:"#fff" }
+  nv:    { label:"N antes de V",    color:"#FB8500", text:"#fff" },
+  u:     { label:"Diéresis (Ü)",    color:"#14B8A6", text:"#fff" }
 };
 
 /* ---------------- Word bank (ampliado y con contrastes) ---------------- */
@@ -828,7 +874,115 @@ const WORDS = [
   {w:"investigar", cat:"nv", rule:"Antes de V siempre va N: investigar, invitar."},
   {w:"convencer", cat:"nv", rule:"Antes de V siempre va N: convencer, convivir."},
   {w:"invierno", cat:"nv", rule:"Antes de V siempre va N: invierno, invitar, inventar."},
-  {w:"envidioso", cat:"nv", rule:"Antes de V siempre va N: envidioso, envidia."}
+  {w:"envidioso", cat:"nv", rule:"Antes de V siempre va N: envidioso, envidia."},
+
+  /* H — más palabras */
+  {w:"hueco", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, huevo, huella."},
+  {w:"huérfano", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, huevo, huella."},
+  {w:"exhausto", cat:"h", rule:"Algunas palabras llevan una H intercalada (en medio) que no se pronuncia: exhausto, exhibir, vehículo, búho, zanahoria."},
+  {w:"vehículo", cat:"h", rule:"Algunas palabras llevan una H intercalada (en medio) que no se pronuncia: exhausto, exhibir, vehículo, búho, zanahoria."},
+  {w:"zanahoria", cat:"h", rule:"Algunas palabras llevan una H intercalada (en medio) que no se pronuncia: exhausto, exhibir, vehículo, búho, zanahoria."},
+  {w:"hormiga", cat:"h", rule:"Estas palabras se escriben con H y no siguen una regla fija: hay que memorizarlas: hormiga, hongo, horno, hoja."},
+  {w:"hongo", cat:"h", rule:"Estas palabras se escriben con H y no siguen una regla fija: hay que memorizarlas: hormiga, hongo, horno, hoja."},
+  {w:"hexágono", cat:"h", rule:"Las palabras que empiezan con HEXA- (que indica «seis») se escriben con H: hexágono, hexagonal."},
+
+  /* B / V — más palabras */
+  {w:"bravo", cat:"bv", rule:"Ojo: esta palabra lleva las dos. La regla de los adjetivos llanos en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA solo explica la V del final (bra<em>v</em>o, octavo, activo); el arranque BRA- va con B, como en brazo o bravo."},
+  {w:"breve", cat:"bv", rule:"Ojo: esta palabra lleva las dos. La regla de los adjetivos llanos en -EVE explica la V del final (bre<em>v</em>e, leve); el arranque BRE- va con B, como en brecha o brillo."},
+  {w:"positivo", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"pasivo", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"absoluto", cat:"bv", rule:"Se escribe B antes de consonante: absurdo, abstracto, obtener, absoluto."},
+  {w:"objetivo", cat:"bv", rule:"Se escribe B antes de consonante: absurdo, abstracto, obtener, objetivo."},
+  {w:"hablaba", cat:"bv", rule:"El pretérito imperfecto de los verbos en -AR se escribe con B: cantaba, jugaba, hablaba, caminaba."},
+  {w:"hablábamos", cat:"bv", rule:"Pretérito imperfecto de verbos en -AR → con B: jugábamos, cantábamos, hablábamos."},
+  {w:"movilidad", cat:"bv", rule:"Los sustantivos en -BILIDAD casi siempre llevan B (amabilidad, posibilidad), pero hay dos excepciones con V: movilidad y civilidad."},
+  {w:"civilidad", cat:"bv", rule:"Los sustantivos en -BILIDAD casi siempre llevan B (amabilidad, posibilidad), pero hay dos excepciones con V: movilidad y civilidad."},
+  {w:"adversidad", cat:"bv", rule:"Se escribe V después de AD-: advertir, adverbio, adversario, adversidad."},
+  {w:"bicicleta", cat:"bv", rule:"El prefijo BI- (dos) se escribe con B: bicicleta, bimensual. No lo confundas con VICE- («en lugar de»), que va con V: vicepresidente."},
+
+  /* C · S · Z — más palabras */
+  {w:"dirección", cat:"csz", rule:"Busca un pariente de la palabra: si tiene CT, se escribe -CCIÓN. Directo → dirección."},
+  {w:"protección", cat:"csz", rule:"Busca un pariente: si tiene CT, se escribe -CCIÓN. Protector → protección."},
+  {w:"expresión", cat:"csz", rule:"Busca un pariente: si tiene S, se escribe -SIÓN. Expresivo → expresión."},
+  {w:"confusión", cat:"csz", rule:"Busca un pariente: si tiene S, se escribe -SIÓN. Confuso → confusión."},
+  {w:"rapidez", cat:"csz", rule:"Los sustantivos abstractos terminados en -EZ/-EZA se escriben con Z: niñez, vejez, rapidez."},
+  {w:"timidez", cat:"csz", rule:"Los sustantivos abstractos terminados en -EZ/-EZA se escriben con Z: niñez, vejez, timidez."},
+  {w:"cruces", cat:"csz", rule:"Las palabras terminadas en Z cambian a C en el plural: cruz → cruces."},
+  {w:"veces", cat:"csz", rule:"Las palabras terminadas en Z cambian a C en el plural: vez → veces."},
+  {w:"merecer", cat:"csz", rule:"Los verbos terminados en -CER/-CIR se escriben con C, excepto toser, coser y asir: nacer, crecer, merecer."},
+  {w:"producir", cat:"csz", rule:"Termina en -CIR → se escribe con C: conducir, producir."},
+  {w:"gracioso", cat:"csz", rule:"Los adjetivos terminados en -OSO/-OSA se escriben con S: famoso, hermosa, gracioso."},
+  {w:"curiosa", cat:"csz", rule:"Adjetivo en -OSA → con S: generosa, cariñosa, curiosa."},
+
+  /* Tilde — más palabras */
+  {w:"compás", cat:"tilde", rule:"Palabra aguda terminada en S → lleva tilde: jamás, autobús, compás."},
+  {w:"jabalí", cat:"tilde", rule:"Palabra aguda terminada en vocal → lleva tilde: café, sofá, bebé, jabalí."},
+  {w:"maní", cat:"tilde", rule:"Palabra aguda terminada en vocal → lleva tilde: café, sofá, bebé, maní."},
+  {w:"cráter", cat:"tilde", rule:"Palabra llana (grave) que NO termina en N, S ni vocal → lleva tilde: árbol, cráter."},
+  {w:"túnel", cat:"tilde", rule:"Palabra llana que termina en L → lleva tilde: fácil, difícil, túnel."},
+  {w:"hábil", cat:"tilde", rule:"Palabra llana que termina en L → lleva tilde: fácil, difícil, hábil."},
+  {w:"límite", cat:"tilde", rule:"Las palabras esdrújulas siempre llevan tilde: pájaro, teléfono, música, límite."},
+  {w:"cómico", cat:"tilde", rule:"Palabra esdrújula → siempre lleva tilde: música, rápido, cómico."},
+  {w:"raíz", cat:"tilde", rule:"Hiato: la vocal débil (I) suena más fuerte, por eso lleva tilde: país, raíz."},
+  {w:"tenía", cat:"tilde", rule:"Hiato: la vocal débil tónica lleva tilde: día, tío, tenía."},
+  {w:"ataúd", cat:"tilde", rule:"Hiato: la vocal débil tónica lleva tilde: baúl, oír, ataúd."},
+  {w:"reír", cat:"tilde", rule:"Hiato: la vocal débil tónica lleva tilde: oír, reír."},
+
+  /* G / J — más palabras */
+  {w:"jardín", cat:"gj", rule:"No hay regla fija: hay que memorizarla con J: jardín, joven, jugo."},
+  {w:"joven", cat:"gj", rule:"No hay regla fija: hay que memorizarla con J: jardín, joven, jugo."},
+  {w:"jugo", cat:"gj", rule:"No hay regla fija: hay que memorizarla con J: jardín, joven, jugo."},
+  {w:"exigir", cat:"gj", rule:"Los verbos terminados en -GER/-GIR se escriben con G, excepto tejer y crujir: exigir, elegir, proteger, recoger."},
+  {w:"elegir", cat:"gj", rule:"Los verbos terminados en -GER/-GIR se escriben con G, excepto tejer y crujir: exigir, elegir, proteger, recoger."},
+  {w:"proteger", cat:"gj", rule:"Los verbos terminados en -GER/-GIR se escriben con G, excepto tejer y crujir: exigir, elegir, proteger, recoger."},
+  {w:"recoger", cat:"gj", rule:"Los verbos terminados en -GER/-GIR se escriben con G, excepto tejer y crujir: exigir, elegir, proteger, recoger."},
+  {w:"tejer", cat:"gj", rule:"Los verbos en -GER/-GIR se escriben con G (exigir, elegir, proteger), pero tejer y crujir son excepciones y se escriben con J."},
+  {w:"crujir", cat:"gj", rule:"Los verbos en -GER/-GIR se escriben con G (exigir, elegir, proteger), pero tejer y crujir son excepciones y se escriben con J."},
+  {w:"garaje", cat:"gj", rule:"Termina en -AJE → con J: viaje, mensaje, garaje, personaje."},
+
+  /* LL / Y — más palabras */
+  {w:"amarillo", cat:"lly", rule:"Las palabras terminadas en -ILLO se escriben con LL: cuchillo, ladrillo, amarillo."},
+  {w:"bolsillo", cat:"lly", rule:"Termina en -ILLO → se escribe con LL: ladrillo, cuchillo, bolsillo."},
+  {w:"camilla", cat:"lly", rule:"Termina en -ILLA → se escribe con LL: sombrilla, semilla, camilla."},
+  {w:"mantequilla", cat:"lly", rule:"Termina en -ILLA → se escribe con LL: sombrilla, semilla, mantequilla."},
+  {w:"yema", cat:"lly", rule:"Estas palabras empiezan con Y y hay que memorizarlas: yema, yeso, yogur."},
+  {w:"yogur", cat:"lly", rule:"Estas palabras empiezan con Y y hay que memorizarlas: yema, yeso, yogur."},
+  {w:"estrella", cat:"lly", rule:"Estas palabras se escriben con LL y no siguen ninguna regla fija: hay que memorizarlas: estrella, botella, silla, cepillo."},
+  {w:"botella", cat:"lly", rule:"Estas palabras se escriben con LL y no siguen ninguna regla fija: hay que memorizarlas: estrella, botella, silla, cepillo."},
+
+  /* M antes de B/P — más palabras */
+  {w:"tampoco", cat:"mp", rule:"Antes de P siempre va M: tampoco, importante."},
+  {w:"imponer", cat:"mp", rule:"Antes de P siempre va M: imponer, imposible."},
+  {w:"simpático", cat:"mp", rule:"Antes de P siempre va M: simpático, tiempo."},
+  {w:"temperatura", cat:"mp", rule:"Antes de P siempre va M: temperatura, ejemplo."},
+  {w:"completo", cat:"mp", rule:"Antes de P siempre va M: completo, campo."},
+  {w:"embarcar", cat:"mp", rule:"Antes de B siempre va M: embarcar, tambor, bomba."},
+  {w:"embudo", cat:"mp", rule:"Antes de B siempre va M: embudo, hombre."},
+  {w:"combate", cat:"mp", rule:"Antes de B siempre va M: combate, cambio, tambor."},
+
+  /* N antes de V — más palabras */
+  {w:"convite", cat:"nv", rule:"Antes de V siempre va N: convite, convivir."},
+  {w:"enviudar", cat:"nv", rule:"Antes de V siempre va N: enviudar, enviar."},
+  {w:"convincente", cat:"nv", rule:"Antes de V siempre va N: convincente, convencer."},
+  {w:"invadir", cat:"nv", rule:"Antes de V siempre va N: invadir, invasión."},
+  {w:"convivencia", cat:"nv", rule:"Antes de V siempre va N: convivencia, convivir."},
+  {w:"inversión", cat:"nv", rule:"Antes de V siempre va N: inversión, invertir."},
+  {w:"invento", cat:"nv", rule:"Antes de V siempre va N: invento, inventar."},
+  {w:"convertible", cat:"nv", rule:"Antes de V siempre va N: convertible, convertir."},
+
+  /* Diéresis (Ü) */
+  {w:"pingüino", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"cigüeña", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"vergüenza", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"bilingüe", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"paragüero", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"antigüedad", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"lingüística", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"ambigüedad", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"agüero", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"ungüento", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"pedigüeño", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"desagüe", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."}
 ];
 
 /* ---------------- App state ---------------- */
@@ -847,15 +1001,20 @@ const state = {
   current: null,
   phase: null,
   pendingTimeout: null,
-  keyLock: false,
   speakToken: 0,
+  _lastTyped: "",
+  _lastMatch: false,
+  _typedDraft: "",
   typeMode: false,
   timerRemaining: 0,
   timerPaused: false,
   timerRaf: null,
   timerEndAt: 0,
   lastWrong: [],
-  sessionCorrectStreak: 0
+  sessionCorrectStreak: 0,
+  darkMode: false,
+  lastResultScore: null,
+  lastResultLabel: ""
 };
 let currentRate = 0.8;
 let selectedCats = new Set(Object.keys(CAT));
@@ -1294,6 +1453,14 @@ function hexToRgba(hex, alpha){
 function normalizeAnswer(s){
   return (s || "").trim().toLowerCase().normalize("NFC");
 }
+function escapeHtml(s){
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 /* ---------------- Persistencia ---------------- */
 function loadPrefs(){
@@ -1302,9 +1469,14 @@ function loadPrefs(){
     if(!raw) return;
     const data = JSON.parse(raw);
     if(typeof data.rate === "number") currentRate = data.rate;
-    if(Array.isArray(data.cats) && data.cats.length) selectedCats = new Set(data.cats);
+    if(Array.isArray(data.cats)){
+      // descartar categorías guardadas que ya no existen en CAT
+      const valid = data.cats.filter(k => Object.prototype.hasOwnProperty.call(CAT, k));
+      if(valid.length) selectedCats = new Set(valid);
+    }
     if(typeof data.typeMode === "boolean") state.typeMode = data.typeMode;
     if(Array.isArray(data.lastWrong)) state.lastWrong = data.lastWrong;
+    if(typeof data.darkMode === "boolean") state.darkMode = data.darkMode;
   }catch(e){}
 }
 function savePrefs(){
@@ -1313,11 +1485,23 @@ function savePrefs(){
       rate: currentRate,
       cats: [...selectedCats],
       typeMode: state.typeMode,
-      lastWrong: state.lastWrong.slice(0, 40)
+      lastWrong: state.lastWrong.slice(0, 40),
+      darkMode: state.darkMode
     }));
   }catch(e){}
 }
+function applyTheme(){
+  document.body.classList.toggle("dark", !!state.darkMode);
+  const btn = document.getElementById("theme-toggle");
+  if(btn) btn.textContent = state.darkMode ? "☀️" : "🌙";
+}
+function toggleDarkMode(){
+  state.darkMode = !state.darkMode;
+  savePrefs();
+  applyTheme();
+}
 function applyLoadedPrefs(){
+  applyTheme();
   document.querySelectorAll(".speed-btn").forEach(b => {
     const on = parseFloat(b.dataset.rate) === currentRate;
     b.classList.toggle("active", on);
@@ -1327,6 +1511,8 @@ function applyLoadedPrefs(){
   if(chk){
     chk.checked = state.typeMode;
     document.getElementById("opt-type").setAttribute("aria-pressed", state.typeMode ? "true" : "false");
+    const tip = document.getElementById("type-tip");
+    if(tip) tip.classList.toggle("hidden", !state.typeMode);
   }
   updateReviewButton();
 }
@@ -1346,6 +1532,8 @@ function setRate(rate, btn){
 function toggleTypeMode(on){
   state.typeMode = !!on;
   document.getElementById("opt-type").setAttribute("aria-pressed", on ? "true" : "false");
+  const tip = document.getElementById("type-tip");
+  if(tip) tip.classList.toggle("hidden", !on);
   savePrefs();
 }
 
@@ -1416,11 +1604,15 @@ function speak(text, onend){
   u.onend = finish;
   u.onerror = finish;
   window.speechSynthesis.speak(u);
-  setTimeout(finish, Math.max(2800, text.length * 280 / currentRate));
+  // Red de seguridad por si onend/onerror no dispara (pasa en varios Android/iOS).
+  // 280 ms por carácter dejaba la pantalla congelada en "Dictando..." hasta ~20 s.
+  const budget = text.length * 130 / currentRate;
+  setTimeout(finish, Math.min(15000, Math.max(2500, budget)));
 }
 
 function replayCurrent(){
   if(!state.current) return;
+  if(state.phase === "scoring") return; // ya se está avanzando de palabra
   const item = state.current;
   if(state.phase === "revealed"){ speak(speechTextFor(item)); return; }
   clearPending();
@@ -1442,6 +1634,16 @@ function showScreen(name){
   });
   state.screen = name;
 }
+function shareResult(){
+  const score = state.lastResultScore;
+  if(typeof score !== "number") return;
+  const text = "¡Saqué " + score + "/100 " + (state.lastResultLabel || "en Dictado de ortografía") + "! 🎉📖";
+  if(navigator.share){
+    navigator.share({ text: text }).catch(() => {});
+  } else {
+    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+  }
+}
 function exitToMenu(){
   if(state.screen === "exam" && state.examIndex < state.examWords.length){
     if(!confirm("Vas a perder el avance de este examen. ¿Salir igual?")) return;
@@ -1458,7 +1660,11 @@ function exitToMenu(){
   if("speechSynthesis" in window) window.speechSynthesis.cancel();
   state.current = null;
   state.phase = null;
+  state.mode = null;
   state.timerPaused = false;
+  state._lastTyped = "";
+  state._lastMatch = false;
+  state._typedDraft = "";
   showScreen("menu");
   updateReviewButton();
 }
@@ -1479,7 +1685,7 @@ function runCountdown(fillEl, seconds, cb){
     }
     const left = Math.max(0, (state.timerEndAt - now) / 1000);
     state.timerRemaining = left;
-    fillEl.style.width = (left / seconds * 100) + "%";
+    fillEl.style.width = Math.min(100, left / seconds * 100) + "%";
     if(left <= 0){
       state.timerRaf = null;
       cb();
@@ -1515,12 +1721,10 @@ function togglePause(){
 }
 function addTime(sec){
   if(state.phase !== "waiting") return;
+  if(state.typeMode) return; // en escritura en pantalla no hay timer
   state.timerRemaining += sec;
   state.timerEndAt += sec * 1000;
-  const fill = document.getElementById(state.screen + "-timerfill");
-  if(fill && !state.timerPaused){
-    // width se actualiza en el próximo tick
-  }
+  // el ancho de la barra se recalcula en el próximo tick (ya viene limitado a 100%)
 }
 
 /* ---------------- Shared render helpers ---------------- */
@@ -1611,6 +1815,8 @@ function stageWaitingHTML(item){
       <div class="type-box">
         <input type="text" id="type-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
           placeholder="Escribí la palabra…" aria-label="Escribí la palabra dictada"
+          value="${escapeHtml(state._typedDraft || "")}"
+          oninput="state._typedDraft = this.value;"
           onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();submitTyped();}">
         <div class="type-feedback" id="type-feedback"></div>
       </div>
@@ -1641,8 +1847,8 @@ function setStageClickable(stage, on, handler){
 function maybeAutoCheck(){
   if(!state.typeMode || !state.current) return;
   const inp = document.getElementById("type-input");
-  if(!inp) return;
-  const typed = normalizeAnswer(inp.value);
+  const raw = inp ? inp.value : (state._typedDraft || "");
+  const typed = normalizeAnswer(raw);
   const target = normalizeAnswer(state.current.w);
   // se evalúa al revelar; el feedback se pinta en render
   state._lastTyped = typed;
@@ -1657,9 +1863,9 @@ function typeFeedbackHTML(){
     return `<div class="type-feedback">No escribiste nada en pantalla.</div>`;
   }
   if(state._lastMatch){
-    return `<div class="type-feedback ok">✓ Escribiste bien: «${typed}»</div>`;
+    return `<div class="type-feedback ok">✓ Escribiste bien: «${escapeHtml(typed)}»</div>`;
   }
-  return `<div class="type-feedback ko">✗ Escribiste «${typed}» · correcto: «${state.current.w}»</div>`;
+  return `<div class="type-feedback ko">✗ Escribiste «${escapeHtml(typed)}» · correcto: «${escapeHtml(state.current.w)}»</div>`;
 }
 
 /* ---------------- Filtro de categorias ---------------- */
@@ -1682,7 +1888,8 @@ function paintChips(){
     if(!chip) return;
     const on = selectedCats.has(key);
     chip.setAttribute("aria-pressed", on ? "true" : "false");
-    chip.style.background = on ? hexToRgba(c.color, 0.14) : "#fff";
+    // vacío = usa var(--surface) del CSS, así funciona también en modo oscuro
+    chip.style.background = on ? hexToRgba(c.color, 0.14) : "";
   });
   const total = activeWords().length;
   const countEl = document.getElementById("filter-count");
@@ -1775,6 +1982,7 @@ function nextPracticeWord(){
   state.phase = "dictating";
   state._lastTyped = "";
   state._lastMatch = false;
+  state._typedDraft = "";
   renderPractice();
   const token = ++state.speakToken;
   speak(speechTextFor(state.current), () => {
@@ -1812,6 +2020,8 @@ function finishPracticeSession(){
   }
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = "de 100 (práctica)";
+  state.lastResultScore = score;
+  state.lastResultLabel = "en una práctica";
   let msg;
   if(total === 0){ msg = "No marcaste aciertos ni fallos en esta sesión."; }
   else if(score >= 90){ msg = pickEncouragement("excellent"); }
@@ -1847,13 +2057,15 @@ function finishPracticeSession(){
 }
 function markPractice(correct, alreadyRewarded){
   if(state.phase !== "revealed") return;
+  state.phase = "scoring"; // bloquea un segundo clic dentro de la ventana de 700 ms
   if(correct){
     state.practiceCorrect++;
     state.sessionCorrectStreak++;
     checkAchievements();
     if(!alreadyRewarded){
       rewardCorrect();
-      setTimeout(nextPracticeWord, 700);
+      clearPending();
+      state.pendingTimeout = setTimeout(nextPracticeWord, 700);
       return;
     }
   } else {
@@ -1917,6 +2129,7 @@ function nextExamWord(){
   state.phase = "dictating";
   state._lastTyped = "";
   state._lastMatch = false;
+  state._typedDraft = "";
   renderExam();
   const token = ++state.speakToken;
   speak(speechTextFor(state.current), () => {
@@ -1927,6 +2140,7 @@ function nextExamWord(){
 }
 function markExam(correct, alreadyRewarded){
   if(state.phase !== "revealed") return;
+  state.phase = "scoring"; // bloquea un segundo clic dentro de la ventana de 700 ms
   if(correct){
     state.examCorrect++;
     state.sessionCorrectStreak++;
@@ -1934,7 +2148,8 @@ function markExam(correct, alreadyRewarded){
     if(!alreadyRewarded){
       rewardCorrect();
       state.examIndex++;
-      setTimeout(nextExamWord, 700);
+      clearPending();
+      state.pendingTimeout = setTimeout(nextExamWord, 700);
       return;
     }
   }
@@ -1994,6 +2209,8 @@ function showResults(){
   }
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = "de 100";
+  state.lastResultScore = score;
+  state.lastResultLabel = "en el examen de ortografía";
   let msg;
   if(score >= 90){ msg = pickEncouragement("excellent"); }
   else if(score >= 70){ msg = pickEncouragement("great"); }
@@ -2065,7 +2282,7 @@ document.addEventListener("keydown", (e) => {
   }
 
   // + = sumar tiempo
-  if((e.key === "+" || e.key === "=") && state.phase === "waiting"){
+  if((e.key === "+" || e.key === "=") && state.phase === "waiting" && !typing && !state.typeMode){
     e.preventDefault();
     addTime(5);
     return;
