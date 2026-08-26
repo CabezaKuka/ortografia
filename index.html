@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Dictado de ortografía en español: práctica y examen con reglas, escritura en pantalla y repaso de errores.">
-<title>Dictado — Práctica de ortografía</title>
+<meta name="description" content="Práctica y examen de ortografía en español y de operaciones combinadas con fracciones, potencias y raíces.">
+<title>Dictado — Ortografía y Matemática</title>
 
 <!-- PWA: instalación como app en el celular -->
 <link rel="manifest" href="manifest.json">
@@ -31,9 +31,43 @@
     --good: #22C55E;
     --bad: #FF3B30;
     --paper-line: rgba(43,38,32,0.08);
+    --chip-bg: #F7F5FF;
+    --input-bg: #FAFAFF;
+    --surface: #ffffff;
     --font-display: 'Kalam', 'Segoe Script', cursive;
     --font-body: 'Nunito', -apple-system, 'Segoe UI', sans-serif;
   }
+
+  body.dark{
+    --grad-1: #241E42;
+    --grad-2: #5C2A42;
+    --grad-3: #6B4A1E;
+    --card-bg: #1E1B2E;
+    --ink: #EDEAF7;
+    --ink-dim: #A9A3C2;
+    --paper-line: rgba(255,255,255,0.09);
+    --chip-bg: #2A2640;
+    --input-bg: #241F38;
+    --surface: #241F38;
+  }
+  body.dark .type-box input.ok{ background: rgba(34,197,94,0.16); }
+  body.dark .type-box input.ko{ background: rgba(255,59,48,0.16); }
+  body.dark .voice-warn{ background: rgba(232,166,0,0.14); color:#FFD9A0; }
+  body.dark .timerbar{ background: rgba(255,255,255,0.14); }
+  body.dark .review-item{ background: rgba(255,59,48,0.12); }
+  body.dark .chest-btn:disabled{ background:#2A2640; }
+  body.dark .achievement-toast{ background: var(--card-bg); }
+
+  .theme-toggle{
+    position: fixed; top:14px; right:14px; z-index: 500;
+    width:40px; height:40px; border-radius:50%;
+    background: rgba(255,255,255,0.22); border:1.5px solid rgba(255,255,255,0.4);
+    color:#fff; font-size:1.15rem; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; padding:0; transition: background 0.15s ease;
+  }
+  .theme-toggle:hover{ background: rgba(255,255,255,0.35); }
+  body.dark .theme-toggle{ background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.25); }
+  body.dark .theme-toggle:hover{ background: rgba(0,0,0,0.45); }
 
   *{ box-sizing: border-box; }
 
@@ -109,7 +143,7 @@
     display:flex;
     align-items:center;
     gap: 14px;
-    background: #F7F5FF;
+    background: var(--chip-bg);
     border: 2px solid rgba(108,92,231,0.2);
     border-radius: 14px;
     padding: 16px 18px;
@@ -133,12 +167,16 @@
   .opt-toggle{
     display:flex; align-items:center; gap:6px;
     font-size: 0.74rem; font-weight:700; color: var(--ink);
-    background: #F7F5FF; border: 2px solid rgba(108,92,231,0.18);
+    background: var(--chip-bg); border: 2px solid rgba(108,92,231,0.18);
     border-radius: 999px; padding: 5px 11px; cursor:pointer;
     font-family: var(--font-body);
   }
   .opt-toggle input{ width:13px; height:13px; accent-color: var(--ui-accent); }
   .opt-toggle[aria-pressed="true"]{ border-color: var(--ui-accent); background: rgba(108,92,231,0.1); }
+  .type-tip{
+    text-align:center; font-size: 0.7rem; color: var(--ink-dim);
+    margin-top: 8px; font-family: var(--font-body); line-height:1.4;
+  }
 
   /* ---------- FILTRO DE CATEGORIAS ---------- */
   .filter-block{ margin-top: 22px; border-top: 1px dashed rgba(43,38,32,0.15); padding-top: 16px; }
@@ -150,7 +188,7 @@
   .cat-chip{
     font-family: var(--font-body); font-weight:700; font-size: 0.6rem;
     border-radius: 999px; padding: 3px 7px; cursor:pointer;
-    border: 1.5px solid; background: #fff; transition: all 0.15s ease;
+    border: 1.5px solid; background: var(--surface); transition: all 0.15s ease;
   }
   .cat-chip[aria-pressed="false"]{ opacity: 0.42; }
   .chip-actions{ display:flex; gap:8px; justify-content:center; margin-top:10px; }
@@ -283,7 +321,7 @@
     padding: 12px 14px;
     border: 2px solid rgba(108,92,231,0.35);
     border-radius: 12px;
-    background: #FAFAFF;
+    background: var(--input-bg);
     color: var(--ink);
     letter-spacing: 1px;
   }
@@ -305,7 +343,7 @@
   }
   .timer-actions button{
     font-size: 0.78rem; padding: 6px 12px;
-    background: #F7F5FF; border: 1.5px solid rgba(108,92,231,0.25);
+    background: var(--chip-bg); border: 1.5px solid rgba(108,92,231,0.25);
     color: var(--ink); border-radius: 999px;
   }
 
@@ -325,11 +363,12 @@
   button:active{ transform: scale(0.97); }
   button:focus-visible{ outline: 3px solid var(--ui-accent); outline-offset: 2px; }
 
-  .btn-ghost{ background: #fff; border: 2px solid rgba(43,38,32,0.15); color: var(--ink); }
+  .btn-ghost{ background: var(--surface); border: 2px solid rgba(43,38,32,0.15); color: var(--ink); }
   .btn-ghost:hover{ border-color: var(--ui-accent); }
   .btn-primary{ background: var(--ui-accent); color: #fff; }
   .btn-good{ background: var(--good); color: #fff; padding: 14px 24px; font-size: 1rem; }
   .btn-bad{ background: var(--bad); color: #fff; padding: 14px 24px; font-size: 1rem; }
+  .btn-share{ background: #25D366; color: #fff; }
 
   /* ---------- RESULTS ---------- */
   .score-wrap{ text-align:center; }
@@ -425,7 +464,7 @@
   .pet-chip{
     display:flex; flex-direction:column; align-items:center; gap:2px;
     font-family: var(--font-body);
-    background: #F7F5FF; border: 2px solid rgba(108,92,231,0.2);
+    background: var(--chip-bg); border: 2px solid rgba(108,92,231,0.2);
     border-radius: 14px; padding: 10px 12px; min-width: 68px;
     cursor:pointer; transition: transform 0.15s ease, border-color 0.15s ease;
   }
@@ -444,7 +483,7 @@
   .ach-chips{ display:flex; flex-wrap:wrap; gap: 8px; justify-content:center; }
   .ach-chip{
     font-size: 1.4rem; width:40px; height:40px; display:flex; align-items:center; justify-content:center;
-    border-radius: 50%; background:#F7F5FF; border:2px solid rgba(108,92,231,0.18);
+    border-radius: 50%; background: var(--chip-bg); border:2px solid rgba(108,92,231,0.18);
     filter: grayscale(1); opacity: 0.4; transition: all 0.2s ease; cursor:default;
   }
   .ach-chip.unlocked{ filter:none; opacity:1; border-color:#FFC371; background: rgba(255,195,113,0.18); }
@@ -478,7 +517,7 @@
   .achievement-toast{
     position:fixed; top:-90px; left:50%; transform: translateX(-50%);
     display:flex; align-items:center; gap:10px;
-    background:#fff; border-radius:16px; padding:12px 18px;
+    background: var(--card-bg); border-radius:16px; padding:12px 18px;
     box-shadow: 0 14px 34px rgba(0,0,0,0.28);
     border: 2px solid #FFC371;
     z-index: 10000;
@@ -490,6 +529,58 @@
   .ach-emoji{ font-size: 2rem; }
   .ach-text{ font-family: var(--font-body); font-size: 0.83rem; color: var(--ink); line-height:1.3; }
   .ach-text strong{ font-family: var(--font-display); color: var(--ui-accent); font-size:0.95rem; }
+
+  /* ---------- SELECTOR DE MATERIA ---------- */
+  .subject-tabs{
+    display:flex; gap:6px; background: var(--chip-bg);
+    border:2px solid rgba(108,92,231,0.18); border-radius:999px;
+    padding:5px; margin-bottom:16px;
+  }
+  .subject-tab{
+    flex:1; background:transparent; color: var(--ink-dim);
+    border-radius:999px; padding:9px 8px; font-size:0.9rem;
+  }
+  .subject-tab[aria-pressed="true"]{
+    background: var(--ui-accent); color:#fff;
+    box-shadow: 0 5px 14px rgba(108,92,231,0.35);
+  }
+
+  /* ---------- MATEMATICA ---------- */
+  .expr-box{
+    width:100%; background: var(--input-bg);
+    border:2px dashed rgba(108,92,231,0.32); border-radius:16px;
+    padding:22px 12px; margin-top:6px;
+    text-align:center; color: var(--ink);
+    font-family: var(--font-body); font-weight:700;
+    font-size: clamp(1.3rem, 5.6vw, 1.85rem);
+    line-height:1.95; overflow-x:auto;
+  }
+  .frac{
+    display:inline-flex; flex-direction:column; align-items:center;
+    vertical-align:middle; margin:0 3px; line-height:1.12;
+    font-size:0.82em;
+  }
+  .fnum{ padding:0 6px; }
+  .fden{ padding:0 6px; border-top:2px solid currentColor; }
+  .mop{ margin:0 7px; color: var(--ink-dim); }
+  .msign{ margin-right:1px; }
+  .mpar{ color: var(--ui-accent); margin:0 1px; }
+  .mroot{ margin-right:1px; }
+  .mexp{ font-size:0.6em; vertical-align:super; margin-left:1px; }
+  .mq{ color: var(--ui-accent); }
+  .opt-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
+  .opt-btn{
+    background: var(--chip-bg); color: var(--ink);
+    border:2px solid rgba(108,92,231,0.25); border-radius:14px;
+    min-height:66px; padding:12px 6px;
+    font-family: var(--font-body); font-weight:800; font-size:1.28rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .opt-btn:disabled{ cursor:default; }
+  .opt-btn.ok{ background: rgba(34,197,94,0.18); border-color: var(--good); }
+  .opt-btn.ko{ background: rgba(255,59,48,0.16); border-color: var(--bad); }
+  .opt-btn.dim{ opacity:0.4; }
+  .mini-expr{ font-family: var(--font-body); font-weight:700; font-size:1.02rem; line-height:1.9; }
 
   /* ---------- CONFETI ---------- */
   .confetti-layer{
@@ -508,9 +599,11 @@
 </head>
 <body>
 
+<button type="button" id="theme-toggle" class="theme-toggle" onclick="toggleDarkMode()" aria-label="Cambiar modo claro/oscuro">🌙</button>
+
 <div class="app">
   <header class="topbar">
-    <h1>✏️ Dictado</h1>
+    <h1 id="app-title">✏️ Dictado</h1>
     <div class="hero-row" id="hero-row">
       <span class="stat-pill" id="stat-streak">
         <span class="stat-icon">🔥</span>
@@ -541,13 +634,19 @@
 
     <!-- MENU -->
     <section id="screen-menu" class="screen">
-      <div id="voice-warn" class="voice-warn hidden"></div>
       <div class="chest-wrap" id="chest-wrap">
         <button type="button" class="chest-btn" id="chest-btn" onclick="openChest()">
           <span class="chest-emoji" id="chest-emoji">🎁</span>
           <span class="chest-label" id="chest-label">Cofre diario</span>
         </button>
       </div>
+      <div class="subject-tabs" role="group" aria-label="Materia">
+        <button type="button" class="subject-tab" id="tab-orto" aria-pressed="true" onclick="setSubject('orto')">📖 Ortografía</button>
+        <button type="button" class="subject-tab" id="tab-math" aria-pressed="false" onclick="setSubject('math')">🔢 Matemática</button>
+      </div>
+
+      <div id="menu-orto">
+      <div id="voice-warn" class="voice-warn hidden"></div>
       <div class="menu-options">
         <button type="button" class="mode-btn" id="btn-practice" onclick="startPractice()">
           <span class="emoji">📘</span>
@@ -578,6 +677,7 @@
           Escribir en pantalla
         </label>
       </div>
+      <div class="type-tip hidden" id="type-tip">💡 Si el celular corrige solo, apagá el autocorrector del teclado en la Configuración del teléfono.</div>
 
       <div class="filter-block">
         <div class="filter-title">Practicar solo estas reglas</div>
@@ -588,6 +688,37 @@
         </div>
         <div class="filter-count" id="filter-count"></div>
       </div>
+      </div><!-- /menu-orto -->
+
+      <div id="menu-math" class="hidden">
+        <div class="menu-options">
+          <button type="button" class="mode-btn" id="btn-math-practice" onclick="startMathPractice()">
+            <span class="emoji">🧮</span>
+            <span>
+              <strong>Práctica</strong>
+              <span class="desc">Operaciones sin límite. Elegí el resultado correcto.</span>
+            </span>
+          </button>
+          <button type="button" class="mode-btn" id="btn-math-exam" onclick="startMathExam()">
+            <span class="emoji">📐</span>
+            <span>
+              <strong>Examen</strong>
+              <span class="desc">10 operaciones. Nota sobre 100.<br><span id="best-math-line" class="best-score hidden"></span></span>
+            </span>
+          </button>
+        </div>
+        <div class="filter-block">
+          <div class="filter-title">Operaciones que entran</div>
+          <div class="cat-chips" id="math-op-chips"></div>
+          <div class="filter-count" id="math-op-count"></div>
+        </div>
+        <div class="filter-block">
+          <div class="filter-title">Cantidad de términos</div>
+          <div class="cat-chips" id="math-term-chips"></div>
+          <div class="type-tip">💡 Los resultados pueden ser negativos. Las raíces son siempre exactas.</div>
+        </div>
+      </div>
+
       <div class="pets-block">
         <div class="filter-title">Mascotas 🐾 · comprá y equipá con tus monedas</div>
         <div class="pet-chips" id="pet-chips"></div>
@@ -633,6 +764,20 @@
       </div>
     </section>
 
+    <!-- MATEMATICA -->
+    <section id="screen-math" class="screen hidden">
+      <div class="session-top">
+        <span id="math-badge"></span>
+        <span id="math-progress"></span>
+        <span class="session-stats" id="math-stats"></span>
+      </div>
+      <div id="math-status" class="status-line" aria-live="polite"></div>
+      <div id="math-stage"></div>
+      <div class="controls-row">
+        <button type="button" class="btn-ghost" onclick="endMathSession()">🏠 Terminar</button>
+      </div>
+    </section>
+
     <!-- RESULTS -->
     <section id="screen-results" class="screen hidden">
       <div class="score-wrap">
@@ -647,8 +792,11 @@
       </div>
       <div class="controls-row">
         <button type="button" class="btn-primary" id="result-again" onclick="startExam()">🔄 Repetir examen</button>
-        <button type="button" class="btn-ghost" id="result-review-btn" onclick="startReview()" class="hidden">🔁 Repasar errores</button>
+        <button type="button" class="btn-ghost hidden" id="result-review-btn" onclick="startReview()">🔁 Repasar errores</button>
         <button type="button" class="btn-ghost" onclick="exitToMenu()">🏠 Menú principal</button>
+      </div>
+      <div class="controls-row">
+        <button type="button" class="btn-share" onclick="shareResult()">📤 Compartir resultado</button>
       </div>
     </section>
 
@@ -665,7 +813,8 @@ const CAT = {
   gj:    { label:"G / J",           color:"#2ECC71", text:"#fff" },
   lly:   { label:"LL / Y",          color:"#FF2D95", text:"#fff" },
   mp:    { label:"M antes de B/P",  color:"#3A86FF", text:"#fff" },
-  nv:    { label:"N antes de V",    color:"#FB8500", text:"#fff" }
+  nv:    { label:"N antes de V",    color:"#FB8500", text:"#fff" },
+  u:     { label:"Diéresis (Ü)",    color:"#14B8A6", text:"#fff" }
 };
 
 /* ---------------- Word bank (ampliado y con contrastes) ---------------- */
@@ -828,7 +977,115 @@ const WORDS = [
   {w:"investigar", cat:"nv", rule:"Antes de V siempre va N: investigar, invitar."},
   {w:"convencer", cat:"nv", rule:"Antes de V siempre va N: convencer, convivir."},
   {w:"invierno", cat:"nv", rule:"Antes de V siempre va N: invierno, invitar, inventar."},
-  {w:"envidioso", cat:"nv", rule:"Antes de V siempre va N: envidioso, envidia."}
+  {w:"envidioso", cat:"nv", rule:"Antes de V siempre va N: envidioso, envidia."},
+
+  /* H — más palabras */
+  {w:"hueco", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, huevo, huella."},
+  {w:"huérfano", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, huevo, huella."},
+  {w:"exhausto", cat:"h", rule:"Algunas palabras llevan una H intercalada (en medio) que no se pronuncia: exhausto, exhibir, vehículo, búho, zanahoria."},
+  {w:"vehículo", cat:"h", rule:"Algunas palabras llevan una H intercalada (en medio) que no se pronuncia: exhausto, exhibir, vehículo, búho, zanahoria."},
+  {w:"zanahoria", cat:"h", rule:"Algunas palabras llevan una H intercalada (en medio) que no se pronuncia: exhausto, exhibir, vehículo, búho, zanahoria."},
+  {w:"hormiga", cat:"h", rule:"Estas palabras se escriben con H y no siguen una regla fija: hay que memorizarlas: hormiga, hongo, horno, hoja."},
+  {w:"hongo", cat:"h", rule:"Estas palabras se escriben con H y no siguen una regla fija: hay que memorizarlas: hormiga, hongo, horno, hoja."},
+  {w:"hexágono", cat:"h", rule:"Las palabras que empiezan con HEXA- (que indica «seis») se escriben con H: hexágono, hexagonal."},
+
+  /* B / V — más palabras */
+  {w:"bravo", cat:"bv", rule:"Ojo: esta palabra lleva las dos. La regla de los adjetivos llanos en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA solo explica la V del final (bra<em>v</em>o, octavo, activo); el arranque BRA- va con B, como en brazo o bravo."},
+  {w:"breve", cat:"bv", rule:"Ojo: esta palabra lleva las dos. La regla de los adjetivos llanos en -EVE explica la V del final (bre<em>v</em>e, leve); el arranque BRE- va con B, como en brecha o brillo."},
+  {w:"positivo", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"pasivo", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"absoluto", cat:"bv", rule:"Se escribe B antes de consonante: absurdo, abstracto, obtener, absoluto."},
+  {w:"objetivo", cat:"bv", rule:"Se escribe B antes de consonante: absurdo, abstracto, obtener, objetivo."},
+  {w:"hablaba", cat:"bv", rule:"El pretérito imperfecto de los verbos en -AR se escribe con B: cantaba, jugaba, hablaba, caminaba."},
+  {w:"hablábamos", cat:"bv", rule:"Pretérito imperfecto de verbos en -AR → con B: jugábamos, cantábamos, hablábamos."},
+  {w:"movilidad", cat:"bv", rule:"Los sustantivos en -BILIDAD casi siempre llevan B (amabilidad, posibilidad), pero hay dos excepciones con V: movilidad y civilidad."},
+  {w:"civilidad", cat:"bv", rule:"Los sustantivos en -BILIDAD casi siempre llevan B (amabilidad, posibilidad), pero hay dos excepciones con V: movilidad y civilidad."},
+  {w:"adversidad", cat:"bv", rule:"Se escribe V después de AD-: advertir, adverbio, adversario, adversidad."},
+  {w:"bicicleta", cat:"bv", rule:"El prefijo BI- (dos) se escribe con B: bicicleta, bimensual. No lo confundas con VICE- («en lugar de»), que va con V: vicepresidente."},
+
+  /* C · S · Z — más palabras */
+  {w:"dirección", cat:"csz", rule:"Busca un pariente de la palabra: si tiene CT, se escribe -CCIÓN. Directo → dirección."},
+  {w:"protección", cat:"csz", rule:"Busca un pariente: si tiene CT, se escribe -CCIÓN. Protector → protección."},
+  {w:"expresión", cat:"csz", rule:"Busca un pariente: si tiene S, se escribe -SIÓN. Expresivo → expresión."},
+  {w:"confusión", cat:"csz", rule:"Busca un pariente: si tiene S, se escribe -SIÓN. Confuso → confusión."},
+  {w:"rapidez", cat:"csz", rule:"Los sustantivos abstractos terminados en -EZ/-EZA se escriben con Z: niñez, vejez, rapidez."},
+  {w:"timidez", cat:"csz", rule:"Los sustantivos abstractos terminados en -EZ/-EZA se escriben con Z: niñez, vejez, timidez."},
+  {w:"cruces", cat:"csz", rule:"Las palabras terminadas en Z cambian a C en el plural: cruz → cruces."},
+  {w:"veces", cat:"csz", rule:"Las palabras terminadas en Z cambian a C en el plural: vez → veces."},
+  {w:"merecer", cat:"csz", rule:"Los verbos terminados en -CER/-CIR se escriben con C, excepto toser, coser y asir: nacer, crecer, merecer."},
+  {w:"producir", cat:"csz", rule:"Termina en -CIR → se escribe con C: conducir, producir."},
+  {w:"gracioso", cat:"csz", rule:"Los adjetivos terminados en -OSO/-OSA se escriben con S: famoso, hermosa, gracioso."},
+  {w:"curiosa", cat:"csz", rule:"Adjetivo en -OSA → con S: generosa, cariñosa, curiosa."},
+
+  /* Tilde — más palabras */
+  {w:"compás", cat:"tilde", rule:"Palabra aguda terminada en S → lleva tilde: jamás, autobús, compás."},
+  {w:"jabalí", cat:"tilde", rule:"Palabra aguda terminada en vocal → lleva tilde: café, sofá, bebé, jabalí."},
+  {w:"maní", cat:"tilde", rule:"Palabra aguda terminada en vocal → lleva tilde: café, sofá, bebé, maní."},
+  {w:"cráter", cat:"tilde", rule:"Palabra llana (grave) que NO termina en N, S ni vocal → lleva tilde: árbol, cráter."},
+  {w:"túnel", cat:"tilde", rule:"Palabra llana que termina en L → lleva tilde: fácil, difícil, túnel."},
+  {w:"hábil", cat:"tilde", rule:"Palabra llana que termina en L → lleva tilde: fácil, difícil, hábil."},
+  {w:"límite", cat:"tilde", rule:"Las palabras esdrújulas siempre llevan tilde: pájaro, teléfono, música, límite."},
+  {w:"cómico", cat:"tilde", rule:"Palabra esdrújula → siempre lleva tilde: música, rápido, cómico."},
+  {w:"raíz", cat:"tilde", rule:"Hiato: la vocal débil (I) suena más fuerte, por eso lleva tilde: país, raíz."},
+  {w:"tenía", cat:"tilde", rule:"Hiato: la vocal débil tónica lleva tilde: día, tío, tenía."},
+  {w:"ataúd", cat:"tilde", rule:"Hiato: la vocal débil tónica lleva tilde: baúl, oír, ataúd."},
+  {w:"reír", cat:"tilde", rule:"Hiato: la vocal débil tónica lleva tilde: oír, reír."},
+
+  /* G / J — más palabras */
+  {w:"jardín", cat:"gj", rule:"No hay regla fija: hay que memorizarla con J: jardín, joven, jugo."},
+  {w:"joven", cat:"gj", rule:"No hay regla fija: hay que memorizarla con J: jardín, joven, jugo."},
+  {w:"jugo", cat:"gj", rule:"No hay regla fija: hay que memorizarla con J: jardín, joven, jugo."},
+  {w:"exigir", cat:"gj", rule:"Los verbos terminados en -GER/-GIR se escriben con G, excepto tejer y crujir: exigir, elegir, proteger, recoger."},
+  {w:"elegir", cat:"gj", rule:"Los verbos terminados en -GER/-GIR se escriben con G, excepto tejer y crujir: exigir, elegir, proteger, recoger."},
+  {w:"proteger", cat:"gj", rule:"Los verbos terminados en -GER/-GIR se escriben con G, excepto tejer y crujir: exigir, elegir, proteger, recoger."},
+  {w:"recoger", cat:"gj", rule:"Los verbos terminados en -GER/-GIR se escriben con G, excepto tejer y crujir: exigir, elegir, proteger, recoger."},
+  {w:"tejer", cat:"gj", rule:"Los verbos en -GER/-GIR se escriben con G (exigir, elegir, proteger), pero tejer y crujir son excepciones y se escriben con J."},
+  {w:"crujir", cat:"gj", rule:"Los verbos en -GER/-GIR se escriben con G (exigir, elegir, proteger), pero tejer y crujir son excepciones y se escriben con J."},
+  {w:"garaje", cat:"gj", rule:"Termina en -AJE → con J: viaje, mensaje, garaje, personaje."},
+
+  /* LL / Y — más palabras */
+  {w:"amarillo", cat:"lly", rule:"Las palabras terminadas en -ILLO se escriben con LL: cuchillo, ladrillo, amarillo."},
+  {w:"bolsillo", cat:"lly", rule:"Termina en -ILLO → se escribe con LL: ladrillo, cuchillo, bolsillo."},
+  {w:"camilla", cat:"lly", rule:"Termina en -ILLA → se escribe con LL: sombrilla, semilla, camilla."},
+  {w:"mantequilla", cat:"lly", rule:"Termina en -ILLA → se escribe con LL: sombrilla, semilla, mantequilla."},
+  {w:"yema", cat:"lly", rule:"Estas palabras empiezan con Y y hay que memorizarlas: yema, yeso, yogur."},
+  {w:"yogur", cat:"lly", rule:"Estas palabras empiezan con Y y hay que memorizarlas: yema, yeso, yogur."},
+  {w:"estrella", cat:"lly", rule:"Estas palabras se escriben con LL y no siguen ninguna regla fija: hay que memorizarlas: estrella, botella, silla, cepillo."},
+  {w:"botella", cat:"lly", rule:"Estas palabras se escriben con LL y no siguen ninguna regla fija: hay que memorizarlas: estrella, botella, silla, cepillo."},
+
+  /* M antes de B/P — más palabras */
+  {w:"tampoco", cat:"mp", rule:"Antes de P siempre va M: tampoco, importante."},
+  {w:"imponer", cat:"mp", rule:"Antes de P siempre va M: imponer, imposible."},
+  {w:"simpático", cat:"mp", rule:"Antes de P siempre va M: simpático, tiempo."},
+  {w:"temperatura", cat:"mp", rule:"Antes de P siempre va M: temperatura, ejemplo."},
+  {w:"completo", cat:"mp", rule:"Antes de P siempre va M: completo, campo."},
+  {w:"embarcar", cat:"mp", rule:"Antes de B siempre va M: embarcar, tambor, bomba."},
+  {w:"embudo", cat:"mp", rule:"Antes de B siempre va M: embudo, hombre."},
+  {w:"combate", cat:"mp", rule:"Antes de B siempre va M: combate, cambio, tambor."},
+
+  /* N antes de V — más palabras */
+  {w:"convite", cat:"nv", rule:"Antes de V siempre va N: convite, convivir."},
+  {w:"enviudar", cat:"nv", rule:"Antes de V siempre va N: enviudar, enviar."},
+  {w:"convincente", cat:"nv", rule:"Antes de V siempre va N: convincente, convencer."},
+  {w:"invadir", cat:"nv", rule:"Antes de V siempre va N: invadir, invasión."},
+  {w:"convivencia", cat:"nv", rule:"Antes de V siempre va N: convivencia, convivir."},
+  {w:"inversión", cat:"nv", rule:"Antes de V siempre va N: inversión, invertir."},
+  {w:"invento", cat:"nv", rule:"Antes de V siempre va N: invento, inventar."},
+  {w:"convertible", cat:"nv", rule:"Antes de V siempre va N: convertible, convertir."},
+
+  /* Diéresis (Ü) */
+  {w:"pingüino", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"cigüeña", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"vergüenza", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"bilingüe", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"paragüero", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"antigüedad", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"lingüística", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"ambigüedad", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"agüero", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"ungüento", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"pedigüeño", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"desagüe", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."}
 ];
 
 /* ---------------- App state ---------------- */
@@ -847,15 +1104,26 @@ const state = {
   current: null,
   phase: null,
   pendingTimeout: null,
-  keyLock: false,
   speakToken: 0,
+  _lastTyped: "",
+  _lastMatch: false,
+  _typedDraft: "",
   typeMode: false,
   timerRemaining: 0,
   timerPaused: false,
   timerRaf: null,
   timerEndAt: 0,
   lastWrong: [],
-  sessionCorrectStreak: 0
+  sessionCorrectStreak: 0,
+  darkMode: false,
+  lastResultScore: null,
+  lastResultLabel: "",
+  subject: "orto",
+  mathMode: null,
+  mathIndex: 0,
+  mathCorrect: 0,
+  mathWrong: [],
+  mathCurrent: null
 };
 let currentRate = 0.8;
 let selectedCats = new Set(Object.keys(CAT));
@@ -901,6 +1169,7 @@ let progress = {
   equippedAccessory: "ninguno",
   achievements: [],
   bestExamScore: 0,
+  bestMathScore: 0,
   lastChestDate: null
 };
 function loadProgress(){
@@ -918,6 +1187,7 @@ function loadProgress(){
     if(typeof data.equippedAccessory === "string") progress.equippedAccessory = data.equippedAccessory;
     if(Array.isArray(data.achievements)) progress.achievements = data.achievements;
     if(typeof data.bestExamScore === "number") progress.bestExamScore = data.bestExamScore;
+    if(typeof data.bestMathScore === "number") progress.bestMathScore = data.bestMathScore;
     if(typeof data.lastChestDate === "string") progress.lastChestDate = data.lastChestDate;
   }catch(e){}
 }
@@ -1116,6 +1386,7 @@ function updateProgressUI(){
     accEl.className = "pet-accessory" + (acc.pos && acc.pos !== "none" ? " pos-" + acc.pos : "");
   }
   updateBestScoreUI();
+  updateBestMathUI();
   paintPetChips();
   paintAccessoryChips();
   paintAchievementChips();
@@ -1294,6 +1565,14 @@ function hexToRgba(hex, alpha){
 function normalizeAnswer(s){
   return (s || "").trim().toLowerCase().normalize("NFC");
 }
+function escapeHtml(s){
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 /* ---------------- Persistencia ---------------- */
 function loadPrefs(){
@@ -1302,9 +1581,20 @@ function loadPrefs(){
     if(!raw) return;
     const data = JSON.parse(raw);
     if(typeof data.rate === "number") currentRate = data.rate;
-    if(Array.isArray(data.cats) && data.cats.length) selectedCats = new Set(data.cats);
+    if(Array.isArray(data.cats)){
+      // descartar categorías guardadas que ya no existen en CAT
+      const valid = data.cats.filter(k => Object.prototype.hasOwnProperty.call(CAT, k));
+      if(valid.length) selectedCats = new Set(valid);
+    }
     if(typeof data.typeMode === "boolean") state.typeMode = data.typeMode;
     if(Array.isArray(data.lastWrong)) state.lastWrong = data.lastWrong;
+    if(typeof data.darkMode === "boolean") state.darkMode = data.darkMode;
+    if(data.subject === "math" || data.subject === "orto") state.subject = data.subject;
+    if(Array.isArray(data.mathOps)){
+      const v = data.mathOps.filter(k => Object.prototype.hasOwnProperty.call(MATH_OPS, k));
+      if(v.length) mathOps = new Set(v);
+    }
+    if(typeof data.mathTerms === "number" && [0,2,3,4,5].indexOf(data.mathTerms) !== -1) mathTerms = data.mathTerms;
   }catch(e){}
 }
 function savePrefs(){
@@ -1313,11 +1603,26 @@ function savePrefs(){
       rate: currentRate,
       cats: [...selectedCats],
       typeMode: state.typeMode,
-      lastWrong: state.lastWrong.slice(0, 40)
+      lastWrong: state.lastWrong.slice(0, 40),
+      darkMode: state.darkMode,
+      subject: state.subject,
+      mathOps: [...mathOps],
+      mathTerms: mathTerms
     }));
   }catch(e){}
 }
+function applyTheme(){
+  document.body.classList.toggle("dark", !!state.darkMode);
+  const btn = document.getElementById("theme-toggle");
+  if(btn) btn.textContent = state.darkMode ? "☀️" : "🌙";
+}
+function toggleDarkMode(){
+  state.darkMode = !state.darkMode;
+  savePrefs();
+  applyTheme();
+}
 function applyLoadedPrefs(){
+  applyTheme();
   document.querySelectorAll(".speed-btn").forEach(b => {
     const on = parseFloat(b.dataset.rate) === currentRate;
     b.classList.toggle("active", on);
@@ -1327,6 +1632,8 @@ function applyLoadedPrefs(){
   if(chk){
     chk.checked = state.typeMode;
     document.getElementById("opt-type").setAttribute("aria-pressed", state.typeMode ? "true" : "false");
+    const tip = document.getElementById("type-tip");
+    if(tip) tip.classList.toggle("hidden", !state.typeMode);
   }
   updateReviewButton();
 }
@@ -1346,6 +1653,8 @@ function setRate(rate, btn){
 function toggleTypeMode(on){
   state.typeMode = !!on;
   document.getElementById("opt-type").setAttribute("aria-pressed", on ? "true" : "false");
+  const tip = document.getElementById("type-tip");
+  if(tip) tip.classList.toggle("hidden", !on);
   savePrefs();
 }
 
@@ -1416,11 +1725,15 @@ function speak(text, onend){
   u.onend = finish;
   u.onerror = finish;
   window.speechSynthesis.speak(u);
-  setTimeout(finish, Math.max(2800, text.length * 280 / currentRate));
+  // Red de seguridad por si onend/onerror no dispara (pasa en varios Android/iOS).
+  // 280 ms por carácter dejaba la pantalla congelada en "Dictando..." hasta ~20 s.
+  const budget = text.length * 130 / currentRate;
+  setTimeout(finish, Math.min(15000, Math.max(2500, budget)));
 }
 
 function replayCurrent(){
   if(!state.current) return;
+  if(state.phase === "scoring") return; // ya se está avanzando de palabra
   const item = state.current;
   if(state.phase === "revealed"){ speak(speechTextFor(item)); return; }
   clearPending();
@@ -1437,10 +1750,20 @@ function replayCurrent(){
 
 /* ---------------- Screen switching ---------------- */
 function showScreen(name){
-  ["menu","practice","exam","results"].forEach(s => {
+  ["menu","practice","exam","math","results"].forEach(s => {
     document.getElementById("screen-" + s).classList.toggle("hidden", s !== name);
   });
   state.screen = name;
+}
+function shareResult(){
+  const score = state.lastResultScore;
+  if(typeof score !== "number") return;
+  const text = "¡Saqué " + score + "/100 " + (state.lastResultLabel || "en Dictado de ortografía") + "! 🎉📖";
+  if(navigator.share){
+    navigator.share({ text: text }).catch(() => {});
+  } else {
+    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+  }
 }
 function exitToMenu(){
   if(state.screen === "exam" && state.examIndex < state.examWords.length){
@@ -1458,8 +1781,15 @@ function exitToMenu(){
   if("speechSynthesis" in window) window.speechSynthesis.cancel();
   state.current = null;
   state.phase = null;
+  state.mode = null;
   state.timerPaused = false;
+  state._lastTyped = "";
+  state._lastMatch = false;
+  state._typedDraft = "";
+  state.mathCurrent = null;
+  state.mathMode = null;
   showScreen("menu");
+  applySubjectUI();
   updateReviewButton();
 }
 
@@ -1479,7 +1809,7 @@ function runCountdown(fillEl, seconds, cb){
     }
     const left = Math.max(0, (state.timerEndAt - now) / 1000);
     state.timerRemaining = left;
-    fillEl.style.width = (left / seconds * 100) + "%";
+    fillEl.style.width = Math.min(100, left / seconds * 100) + "%";
     if(left <= 0){
       state.timerRaf = null;
       cb();
@@ -1515,12 +1845,10 @@ function togglePause(){
 }
 function addTime(sec){
   if(state.phase !== "waiting") return;
+  if(state.typeMode) return; // en escritura en pantalla no hay timer
   state.timerRemaining += sec;
   state.timerEndAt += sec * 1000;
-  const fill = document.getElementById(state.screen + "-timerfill");
-  if(fill && !state.timerPaused){
-    // width se actualiza en el próximo tick
-  }
+  // el ancho de la barra se recalcula en el próximo tick (ya viene limitado a 100%)
 }
 
 /* ---------------- Shared render helpers ---------------- */
@@ -1611,6 +1939,8 @@ function stageWaitingHTML(item){
       <div class="type-box">
         <input type="text" id="type-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
           placeholder="Escribí la palabra…" aria-label="Escribí la palabra dictada"
+          value="${escapeHtml(state._typedDraft || "")}"
+          oninput="state._typedDraft = this.value;"
           onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();submitTyped();}">
         <div class="type-feedback" id="type-feedback"></div>
       </div>
@@ -1641,8 +1971,8 @@ function setStageClickable(stage, on, handler){
 function maybeAutoCheck(){
   if(!state.typeMode || !state.current) return;
   const inp = document.getElementById("type-input");
-  if(!inp) return;
-  const typed = normalizeAnswer(inp.value);
+  const raw = inp ? inp.value : (state._typedDraft || "");
+  const typed = normalizeAnswer(raw);
   const target = normalizeAnswer(state.current.w);
   // se evalúa al revelar; el feedback se pinta en render
   state._lastTyped = typed;
@@ -1657,9 +1987,9 @@ function typeFeedbackHTML(){
     return `<div class="type-feedback">No escribiste nada en pantalla.</div>`;
   }
   if(state._lastMatch){
-    return `<div class="type-feedback ok">✓ Escribiste bien: «${typed}»</div>`;
+    return `<div class="type-feedback ok">✓ Escribiste bien: «${escapeHtml(typed)}»</div>`;
   }
-  return `<div class="type-feedback ko">✗ Escribiste «${typed}» · correcto: «${state.current.w}»</div>`;
+  return `<div class="type-feedback ko">✗ Escribiste «${escapeHtml(typed)}» · correcto: «${escapeHtml(state.current.w)}»</div>`;
 }
 
 /* ---------------- Filtro de categorias ---------------- */
@@ -1682,11 +2012,12 @@ function paintChips(){
     if(!chip) return;
     const on = selectedCats.has(key);
     chip.setAttribute("aria-pressed", on ? "true" : "false");
-    chip.style.background = on ? hexToRgba(c.color, 0.14) : "#fff";
+    // vacío = usa var(--surface) del CSS, así funciona también en modo oscuro
+    chip.style.background = on ? hexToRgba(c.color, 0.14) : "";
   });
   const total = activeWords().length;
   const countEl = document.getElementById("filter-count");
-  const modeBtns = document.querySelectorAll(".mode-btn:not(#btn-review)");
+  const modeBtns = document.querySelectorAll("#menu-orto .mode-btn:not(#btn-review)");
   if(total === 0){
     countEl.textContent = "Elige al menos una regla para empezar.";
     countEl.classList.add("warn");
@@ -1775,6 +2106,7 @@ function nextPracticeWord(){
   state.phase = "dictating";
   state._lastTyped = "";
   state._lastMatch = false;
+  state._typedDraft = "";
   renderPractice();
   const token = ++state.speakToken;
   speak(speechTextFor(state.current), () => {
@@ -1785,14 +2117,25 @@ function nextPracticeWord(){
 }
 /* ---------------- Frases de aliento ---------------- */
 const ENCOURAGEMENT = {
-  excellent: ["¡Excelente! 🌟 Dominás estas palabras.", "¡Sos una máquina! 🚀 Ortografía impecable.", "¡Perfecto! 🏆 No fallaste casi nada."],
+  excellent: ["¡Excelente! 🌟 Lo estás dominando.", "¡Sos una máquina! 🚀 Resultado impecable.", "¡Perfecto! 🏆 No fallaste casi nada."],
   great:     ["¡Muy bien! 👏 Vas por muy buen camino.", "¡Gran trabajo! 💪 Cada vez mejor.", "¡Así se hace! 🔥 Seguí así."],
   good:      ["Bien, seguí practicando un poco más. 💪", "Vas bien, un poco más y la sacás. 📈", "Buen intento, ya casi lo tenés. 🙂"],
   keep:      ["Sigamos practicando, cada intento suma. 📖", "No te desanimes, la próxima sale mejor. 🌱", "Practicando es como se aprende. ¡De nuevo! 🔁"]
 };
+// Mínimo de respuestas para que la nota/frase de práctica "cuenten" — con 1 o 2
+// intentos, 100/100 no significa nada y menos aún amerita "¡sos una máquina!".
+const MIN_CELEBRATE = 5;
 function pickEncouragement(tier){
   const arr = ENCOURAGEMENT[tier];
   return arr[Math.floor(Math.random() * arr.length)];
+}
+function tierMessage(score, total){
+  if(total === 0) return null;
+  if(total < MIN_CELEBRATE) return "Recién arrancás. Seguí un poco más para tener una nota real. 🙂";
+  if(score >= 90) return pickEncouragement("excellent");
+  if(score >= 70) return pickEncouragement("great");
+  if(score >= 51) return pickEncouragement("good");
+  return pickEncouragement("keep");
 }
 function finishPracticeSession(){
   clearPending();
@@ -1808,16 +2151,13 @@ function finishPracticeSession(){
   const score = total ? Math.round(state.practiceCorrect / total * 100) : 0;
   if(total > 0){
     registerActivity();
-    if(score >= 70) burstConfetti(true);
+    if(score >= 70 && total >= MIN_CELEBRATE) burstConfetti(true);
   }
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = "de 100 (práctica)";
-  let msg;
-  if(total === 0){ msg = "No marcaste aciertos ni fallos en esta sesión."; }
-  else if(score >= 90){ msg = pickEncouragement("excellent"); }
-  else if(score >= 70){ msg = pickEncouragement("great"); }
-  else if(score >= 51){ msg = pickEncouragement("good"); }
-  else { msg = pickEncouragement("keep"); }
+  state.lastResultScore = score;
+  state.lastResultLabel = "en una práctica";
+  const msg = total === 0 ? "No marcaste aciertos ni fallos en esta sesión." : tierMessage(score, total);
   document.getElementById("result-msg").textContent = msg;
   document.getElementById("result-sub").textContent = state.practiceCorrect + " de " + total + " marcadas como correctas";
 
@@ -1847,13 +2187,15 @@ function finishPracticeSession(){
 }
 function markPractice(correct, alreadyRewarded){
   if(state.phase !== "revealed") return;
+  state.phase = "scoring"; // bloquea un segundo clic dentro de la ventana de 700 ms
   if(correct){
     state.practiceCorrect++;
     state.sessionCorrectStreak++;
     checkAchievements();
     if(!alreadyRewarded){
       rewardCorrect();
-      setTimeout(nextPracticeWord, 700);
+      clearPending();
+      state.pendingTimeout = setTimeout(nextPracticeWord, 700);
       return;
     }
   } else {
@@ -1917,6 +2259,7 @@ function nextExamWord(){
   state.phase = "dictating";
   state._lastTyped = "";
   state._lastMatch = false;
+  state._typedDraft = "";
   renderExam();
   const token = ++state.speakToken;
   speak(speechTextFor(state.current), () => {
@@ -1927,6 +2270,7 @@ function nextExamWord(){
 }
 function markExam(correct, alreadyRewarded){
   if(state.phase !== "revealed") return;
+  state.phase = "scoring"; // bloquea un segundo clic dentro de la ventana de 700 ms
   if(correct){
     state.examCorrect++;
     state.sessionCorrectStreak++;
@@ -1934,7 +2278,8 @@ function markExam(correct, alreadyRewarded){
     if(!alreadyRewarded){
       rewardCorrect();
       state.examIndex++;
-      setTimeout(nextExamWord, 700);
+      clearPending();
+      state.pendingTimeout = setTimeout(nextExamWord, 700);
       return;
     }
   }
@@ -1994,6 +2339,8 @@ function showResults(){
   }
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = "de 100";
+  state.lastResultScore = score;
+  state.lastResultLabel = "en el examen de ortografía";
   let msg;
   if(score >= 90){ msg = pickEncouragement("excellent"); }
   else if(score >= 70){ msg = pickEncouragement("great"); }
@@ -2027,6 +2374,477 @@ function showResults(){
   updateReviewButton();
 }
 
+/* ================= MATEMATICA: motor de fracciones exacto ================= */
+/* Todo con enteros y gcd: cero decimales, cero errores de punto flotante. */
+function mgcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=a%b; a=b; b=t; } return a||1; }
+function fr(n,d){
+  if(d === undefined) d = 1;
+  if(!Number.isInteger(n) || !Number.isInteger(d) || d === 0) return null;
+  if(!Number.isSafeInteger(n) || !Number.isSafeInteger(d)) return null;
+  if(d < 0){ n = -n; d = -d; }
+  const g = mgcd(n,d);
+  return { n: n/g, d: d/g };
+}
+function fAdd(a,b){ return (a&&b) ? fr(a.n*b.d + b.n*a.d, a.d*b.d) : null; }
+function fSub(a,b){ return (a&&b) ? fr(a.n*b.d - b.n*a.d, a.d*b.d) : null; }
+function fMul(a,b){ return (a&&b) ? fr(a.n*b.n, a.d*b.d) : null; }
+function fDiv(a,b){ return (a&&b&&b.n!==0) ? fr(a.n*b.d, a.d*b.n) : null; }
+function fNeg(a){ return a ? fr(-a.n, a.d) : null; }
+function fEq(a,b){ return !!(a&&b&&a.n===b.n&&a.d===b.d); }
+function fPow(a,e){
+  if(!a) return null;
+  if(e === 0) return a.n === 0 ? null : fr(1,1);
+  if(e < 0){ return a.n === 0 ? null : fPow(fr(a.d,a.n), -e); }
+  let r = fr(1,1);
+  for(let i=0;i<e;i++){
+    r = fMul(r,a);
+    if(!r || Math.abs(r.n) > 1e6 || r.d > 1e6) return null;
+  }
+  return r;
+}
+function isqrt(x){ if(x < 0) return -1; const r = Math.round(Math.sqrt(x)); return r*r === x ? r : -1; }
+function fSqrt(a){
+  if(!a || a.n < 0) return null;           // sin raíces de negativos
+  const rn = isqrt(a.n), rd = isqrt(a.d);
+  if(rn < 0 || rd < 0) return null;        // solo raíces exactas
+  return fr(rn, rd);
+}
+
+/* ---------------- Configuración del modo ---------------- */
+const MATH_OPS = {
+  add:  { label:"+ −",       color:"#3A86FF" },
+  mul:  { label:"×",         color:"#2ECC71" },
+  div:  { label:"÷",         color:"#FF2D95" },
+  pow:  { label:"Potencias", color:"#9D4EDD" },
+  sqrt: { label:"Raíces",    color:"#E8A600" }
+};
+const TERM_OPTS = [{v:0,l:"Mezcla"},{v:2,l:"2"},{v:3,l:"3"},{v:4,l:"4"},{v:5,l:"5"}];
+const MATH_EXAM_N = 10;
+let mathOps = new Set(Object.keys(MATH_OPS));
+let mathTerms = 0; // 0 = mezcla de 2 a 5
+
+function mathReady(){ return mathOps.has("add") || mathOps.has("mul") || mathOps.has("div"); }
+
+/* ---------------- Generación del ejercicio ---------------- */
+/* Enfoque: generar hacia adelante con pools acotados y RECHAZAR lo feo.
+   Construir hacia atrás garantiza un resultado lindo, pero no controla los
+   pasos intermedios; con rechazo valido cada nodo del árbol. */
+function mrand(n){ return Math.floor(Math.random()*n); }
+function mpick(arr){ return arr[mrand(arr.length)]; }
+
+const DEN_POOL = [1,2,2,3,3,4,4,5,6,8];
+
+function randLeafValue(){
+  const d = mpick(DEN_POOL);
+  let n = 1 + mrand(d === 1 ? 9 : d*2);
+  if(d !== 1 && n % d === 0) n += 1;
+  if(Math.random() < 0.35) n = -n;
+  return fr(n,d);
+}
+function buildLeaf(){
+  const canPow = mathOps.has("pow"), canSqrt = mathOps.has("sqrt");
+  const r = Math.random();
+  if(canSqrt && r < 0.18){
+    // evitar radicandos triviales: √1 no enseña nada
+    let a, b, guard = 0;
+    do { a = 1 + mrand(6); b = 1 + mrand(4); guard++; }
+    while(guard < 20 && (a === b || (a === 1 && b === 1)));
+    if(a === b) a = b + 1;
+    return { t:"sqrt", a:{ t:"num", v: fr(a*a, b*b) } };
+  }
+  if(canPow && r < 0.38){
+    const d = mpick([1,2,2,3,4]);
+    let n = 1 + mrand(d === 1 ? 4 : d + 2);
+    if(d !== 1 && n % d === 0) n += 1;
+    if(Math.random() < 0.3) n = -n;
+    return { t:"pow", a:{ t:"num", v: fr(n,d) }, e: mpick([2,2,2,3,-1,-2]) };
+  }
+  return { t:"num", v: randLeafValue() };
+}
+function binOpPool(){
+  const p = [];
+  if(mathOps.has("add")) p.push("+","+","-","-");
+  if(mathOps.has("mul")) p.push("*","*");
+  if(mathOps.has("div")) p.push("/");
+  return p;
+}
+function buildTree(k, pool, ctx){
+  if(!ctx) ctx = { divs: 0 };
+  if(k <= 1) return buildLeaf();
+  const noDiv = pool.filter(o => o !== "/");
+  // Sin divisiones anidadas y máximo 2 por ejercicio: encadenarlas lo vuelve
+  // pesado de resolver a mano sin agregar nada nuevo.
+  const usable = (ctx.divs >= 2 && noDiv.length) ? noDiv : pool;
+  const op = mpick(usable);
+  const childPool = (op === "/" && noDiv.length) ? noDiv : pool;
+  if(op === "/") ctx.divs++;
+  // Si ÷ es la única operación disponible, encadenar en línea (a÷b÷c) en vez de
+  // anidar ((a÷b)÷(c÷d)): mismo ejercicio, sin paréntesis que lo compliquen.
+  const kl = (op === "/" && noDiv.length === 0) ? k - 1 : 1 + mrand(k-1);
+  return { t:"op", op, a: buildTree(kl, childPool, ctx), b: buildTree(k-kl, childPool, ctx) };
+}
+/* Evalúa y va apilando TODOS los valores intermedios para poder validarlos */
+function evalNode(node, acc){
+  let v;
+  if(node.t === "num"){ v = node.v; }
+  else if(node.t === "sqrt"){ const a = evalNode(node.a, acc); v = a ? fSqrt(a) : null; }
+  else if(node.t === "pow"){ const a = evalNode(node.a, acc); v = a ? fPow(a, node.e) : null; }
+  else{
+    const a = evalNode(node.a, acc); if(!a) return null;
+    const b = evalNode(node.b, acc); if(!b) return null;
+    v = node.op === "+" ? fAdd(a,b) : node.op === "-" ? fSub(a,b)
+      : node.op === "*" ? fMul(a,b) : fDiv(a,b);
+  }
+  if(!v) return null;
+  if(acc) acc.push(v);
+  return v;
+}
+function tryProblem(k, pool){
+  const tree = buildTree(k, pool);
+  const acc = [];
+  const val = evalNode(tree, acc);
+  if(!val) return null;
+  for(const v of acc){ if(Math.abs(v.n) > 400 || v.d > 36) return null; }  // paso intermedio impracticable
+  if(Math.abs(val.n) > 144 || val.d > 24) return null;                     // resultado feo
+  return { tree, val, html: renderNode(tree, 0, false, null, true), terms:k };
+}
+function makeProblem(){
+  const pool = binOpPool();
+  if(pool.length === 0) return null;
+  for(let i=0;i<400;i++){
+    const k = mathTerms > 0 ? mathTerms : 2 + mrand(4);
+    const p = tryProblem(k, pool);
+    if(p) return p;
+  }
+  for(let i=0;i<200;i++){            // red de seguridad: bajar a 2 términos
+    const p = tryProblem(2, pool);
+    if(p) return p;
+  }
+  return null;
+}
+
+/* ---------------- Dibujo de la expresión ---------------- */
+function fracHTML(f){
+  if(!f) return "?";
+  if(f.d === 1) return '<span class="mwhole">' + (f.n < 0 ? "−" + Math.abs(f.n) : f.n) + '</span>';
+  const s = f.n < 0 ? '<span class="msign">−</span>' : '';
+  return s + '<span class="frac"><span class="fnum">' + Math.abs(f.n) + '</span><span class="fden">' + f.d + '</span></span>';
+}
+function mwrap(html){ return '<span class="mpar">(</span>' + html + '<span class="mpar">)</span>'; }
+function precOf(n){
+  if(n.t === "num") return 5;
+  if(n.t === "pow" || n.t === "sqrt") return 4;
+  return (n.op === "+" || n.op === "-") ? 1 : 2;
+}
+function renderNode(n, parentPrec, isRight, parentOp, isFirst){
+  let html, needs = false;
+  const p = precOf(n);
+  if(n.t === "num"){
+    html = fracHTML(n.v);
+    if(n.v.n < 0 && !isFirst) needs = true;      // 3/4 + (−2/5)
+  } else if(n.t === "sqrt"){
+    html = '<span class="mroot">√</span>' + mwrap(renderNode(n.a, 0, false, null, true));
+  } else if(n.t === "pow"){
+    const base = renderNode(n.a, 0, false, null, true);
+    const plain = n.a.t === "num" && n.a.v.d === 1 && n.a.v.n >= 0;
+    html = (plain ? base : mwrap(base)) +
+           '<span class="mexp">' + (n.e < 0 ? "−" + Math.abs(n.e) : n.e) + '</span>';
+  } else {
+    const sym = n.op === "+" ? "+" : n.op === "-" ? "−" : n.op === "*" ? "×" : "÷";
+    html = renderNode(n.a, p, false, n.op, isFirst) +
+           '<span class="mop">' + sym + '</span>' +
+           renderNode(n.b, p, true, n.op, false);
+    if(p < parentPrec) needs = true;
+    else if(p === parentPrec && isRight && (parentOp === "-" || parentOp === "/")) needs = true;
+  }
+  return needs ? mwrap(html) : html;
+}
+
+/* ---------------- Opciones incorrectas (errores típicos) ---------------- */
+function flattenTree(node, out){
+  if(node.t === "op"){ flattenTree(node.a,out); out.push(node.op); flattenTree(node.b,out); }
+  else out.push(node);
+}
+function evalLeftToRight(tree){
+  const toks = []; flattenTree(tree, toks);
+  let acc = null, pend = null;
+  for(const tk of toks){
+    if(typeof tk === "string"){ pend = tk; continue; }
+    const v = evalNode(tk, null);
+    if(!v) return null;
+    if(acc === null){ acc = v; continue; }
+    acc = pend === "+" ? fAdd(acc,v) : pend === "-" ? fSub(acc,v)
+        : pend === "*" ? fMul(acc,v) : fDiv(acc,v);
+    if(!acc) return null;
+  }
+  return acc;
+}
+function makeDistractors(prob){
+  const c = prob.val, out = [], seen = {};
+  const push = (v) => {
+    if(!v || (v.n === c.n && v.d === c.d)) return;
+    if(Math.abs(v.n) > 400 || v.d > 48) return;
+    const k = v.n + "/" + v.d;
+    if(seen[k]) return;
+    seen[k] = 1; out.push(v);
+  };
+  const t = prob.tree;
+  // 1) sumar/restar numeradores y denominadores por separado
+  if(t.t === "op" && (t.op === "+" || t.op === "-")){
+    const a = evalNode(t.a, null), b = evalNode(t.b, null);
+    if(a && b) push(fr(t.op === "+" ? a.n + b.n : a.n - b.n, a.d + b.d));
+  }
+  // 2) resolver de izquierda a derecha, ignorando la precedencia
+  push(evalLeftToRight(t));
+  // 3) error de signo   4) fracción invertida
+  push(fNeg(c));
+  if(c.n !== 0) push(fr(c.d, c.n));
+  // 5) vecinos plausibles
+  push(fAdd(c, fr(1,1))); push(fSub(c, fr(1,1)));
+  push(fAdd(c, fr(1,2))); push(fSub(c, fr(1,2)));
+  push(fMul(c, fr(2,1))); push(fMul(c, fr(1,2)));
+  let k = 1;
+  while(out.length < 3 && k < 30){
+    push(fAdd(c, fr(k, Math.max(2, c.d))));
+    push(fSub(c, fr(k, Math.max(2, c.d))));
+    k++;
+  }
+  return shuffle(out).slice(0,3);
+}
+
+/* ---------------- Menú de matemática ---------------- */
+function buildMathOpChips(){
+  const el = document.getElementById("math-op-chips");
+  if(!el) return;
+  el.innerHTML = Object.entries(MATH_OPS).map(([k,c]) =>
+    `<button type="button" class="cat-chip" id="mchip-${k}" aria-pressed="true"
+      style="border-color:${c.color}; color:${c.color}"
+      onclick="toggleMathOp('${k}')">${c.label}</button>`).join("");
+}
+function buildMathTermChips(){
+  const el = document.getElementById("math-term-chips");
+  if(!el) return;
+  el.innerHTML = TERM_OPTS.map(t =>
+    `<button type="button" class="cat-chip" id="tchip-${t.v}" aria-pressed="false"
+      style="border-color:#6C5CE7; color:#6C5CE7"
+      onclick="setMathTerms(${t.v})">${t.l}</button>`).join("");
+}
+function paintMathChips(){
+  Object.entries(MATH_OPS).forEach(([k,c]) => {
+    const ch = document.getElementById("mchip-" + k);
+    if(!ch) return;
+    const on = mathOps.has(k);
+    ch.setAttribute("aria-pressed", on ? "true" : "false");
+    ch.style.background = on ? hexToRgba(c.color, 0.14) : "";
+  });
+  TERM_OPTS.forEach(t => {
+    const ch = document.getElementById("tchip-" + t.v);
+    if(!ch) return;
+    const on = mathTerms === t.v;
+    ch.setAttribute("aria-pressed", on ? "true" : "false");
+    ch.style.background = on ? hexToRgba("#6C5CE7", 0.14) : "";
+  });
+  const warn = document.getElementById("math-op-count");
+  const btns = document.querySelectorAll("#menu-math .mode-btn");
+  const ready = mathReady();
+  if(warn){
+    warn.textContent = ready ? "" : "Elegí al menos una de +−, × o ÷.";
+    warn.classList.toggle("warn", !ready);
+  }
+  btns.forEach(b => { b.disabled = !ready; });
+  savePrefs();
+}
+function toggleMathOp(k){
+  if(mathOps.has(k)) mathOps.delete(k); else mathOps.add(k);
+  paintMathChips();
+}
+function setMathTerms(v){ mathTerms = v; paintMathChips(); }
+
+function setSubject(s){
+  state.subject = (s === "math") ? "math" : "orto";
+  applySubjectUI();
+  savePrefs();
+}
+function applySubjectUI(){
+  const isMath = state.subject === "math";
+  const orto = document.getElementById("menu-orto");
+  const math = document.getElementById("menu-math");
+  if(orto) orto.classList.toggle("hidden", isMath);
+  if(math) math.classList.toggle("hidden", !isMath);
+  const to = document.getElementById("tab-orto"), tm = document.getElementById("tab-math");
+  if(to) to.setAttribute("aria-pressed", isMath ? "false" : "true");
+  if(tm) tm.setAttribute("aria-pressed", isMath ? "true" : "false");
+  const sc = document.getElementById("speed-control");   // la velocidad de voz no aplica a mates
+  if(sc) sc.classList.toggle("hidden", isMath);
+  const title = document.getElementById("app-title");
+  if(title) title.textContent = isMath ? "🔢 Matemática" : "✏️ Dictado";
+}
+function updateBestMathUI(){
+  const el = document.getElementById("best-math-line");
+  if(!el) return;
+  if(progress.bestMathScore > 0){
+    el.textContent = "🏅 Mejor puntaje: " + progress.bestMathScore + "/100";
+    el.classList.remove("hidden");
+  } else {
+    el.classList.add("hidden");
+  }
+}
+
+/* ---------------- Sesión de matemática ---------------- */
+function resetMathSession(mode){
+  state.mathMode = mode;
+  state.mathIndex = 0;
+  state.mathCorrect = 0;
+  state.mathWrong = [];
+  state.mathCurrent = null;
+  state.sessionCorrectStreak = 0;
+}
+function startMathPractice(){
+  if(!mathReady()) return;
+  state.subject = "math";
+  resetMathSession("practice");
+  showScreen("math");
+  nextMathProblem();
+}
+function startMathExam(){
+  if(!mathReady()) return;
+  state.subject = "math";
+  resetMathSession("exam");
+  showScreen("math");
+  nextMathProblem();
+}
+function nextMathProblem(){
+  clearPending();
+  if(state.mathMode === "exam" && state.mathIndex >= MATH_EXAM_N){ showMathResults(); return; }
+  const p = makeProblem();
+  if(!p){
+    alert("No pude generar una operación con esa combinación. Probá activar más operaciones o menos términos.");
+    exitToMenu();
+    return;
+  }
+  state.mathCurrent = { p, opts: shuffle([p.val].concat(makeDistractors(p))), picked:-1, answered:false };
+  renderMath();
+}
+function renderMath(){
+  const cur = state.mathCurrent;
+  if(!cur) return;
+  const isExam = state.mathMode === "exam";
+  document.getElementById("math-badge").innerHTML =
+    '<span class="badge" style="background:#3A86FF;color:#fff">' + (isExam ? "Examen" : "Práctica") + '</span>';
+  document.getElementById("math-progress").textContent =
+    "Operación " + (state.mathIndex + 1) + (isExam ? " / " + MATH_EXAM_N : "");
+  document.getElementById("math-stats").innerHTML =
+    `<span class="ok">✓ ${state.mathCorrect}</span> · <span class="ko">✗ ${state.mathWrong.length}</span>`;
+
+  const status = document.getElementById("math-status");
+  const stage  = document.getElementById("math-stage");
+  let html = '<div class="expr-box">' + cur.p.html + '<span class="mop">=</span><span class="mq">?</span></div>';
+  html += '<div class="opt-grid">';
+  cur.opts.forEach((o,i) => {
+    let cls = "opt-btn";
+    if(cur.answered){
+      if(fEq(o, cur.p.val)) cls += " ok";
+      else if(i === cur.picked) cls += " ko";
+      else cls += " dim";
+    }
+    html += '<button type="button" class="' + cls + '"' + (cur.answered ? " disabled" : "") +
+            ' onclick="pickMath(' + i + ')">' + fracHTML(o) + '</button>';
+  });
+  html += '</div>';
+
+  if(cur.answered){
+    const ok = fEq(cur.opts[cur.picked], cur.p.val);
+    status.textContent = ok ? "¡Bien! 🎉" : "Esta era la correcta 👆";
+    html += '<div class="controls-row" style="margin-top:16px;">' +
+            '<button type="button" class="btn-primary" onclick="nextMathTap()">➡️ Siguiente</button></div>' +
+            '<div class="hint-text"><kbd>Enter</kbd> para seguir</div>';
+  } else {
+    status.textContent = "Resolvé y elegí el resultado";
+    html += '<div class="hint-text">Teclas <kbd>1</kbd>–<kbd>' + cur.opts.length + '</kbd> para elegir</div>';
+  }
+  stage.innerHTML = html;
+}
+function pickMath(i){
+  const cur = state.mathCurrent;
+  if(!cur || cur.answered || i < 0 || i >= cur.opts.length) return;
+  cur.picked = i;
+  cur.answered = true;
+  if(fEq(cur.opts[i], cur.p.val)){
+    state.mathCorrect++;
+    state.sessionCorrectStreak++;
+    rewardCorrect();
+    checkAchievements();
+  } else {
+    state.mathWrong.push({ html: cur.p.html, val: cur.p.val });
+    state.sessionCorrectStreak = 0;
+  }
+  renderMath();
+}
+function nextMathTap(){
+  const cur = state.mathCurrent;
+  if(!cur || !cur.answered) return;
+  state.mathIndex++;
+  nextMathProblem();
+}
+function endMathSession(){
+  if(state.mathMode === "exam" && state.mathIndex < MATH_EXAM_N){
+    if(!confirm("Vas a perder el avance de este examen. ¿Salir igual?")) return;
+  }
+  // Igual que en ortografía: salir de la práctica antes de tiempo nunca muestra
+  // nota ni frase de cierre — eso quedaría rarísimo con solo 1 o 2 operaciones
+  // hechas. La pantalla de resultados es exclusiva del examen completo.
+  exitToMenu();
+}
+function showMathResults(){
+  clearPending();
+  state.mathCurrent = null;
+  const isExam = state.mathMode === "exam";
+  showScreen("results");
+  const total = state.mathCorrect + state.mathWrong.length;
+  const score = total ? Math.round(state.mathCorrect / total * 100) : 0;
+  if(total > 0){
+    registerActivity();
+    if(score >= 70 && (isExam || total >= MIN_CELEBRATE)) burstConfetti(true);
+  }
+  if(isExam && score > progress.bestMathScore){
+    progress.bestMathScore = score;
+    saveProgress();
+    updateBestMathUI();
+  }
+  document.getElementById("result-score").textContent = score;
+  document.getElementById("result-den").textContent = isExam ? "de 100" : "de 100 (práctica)";
+  state.lastResultScore = score;
+  state.lastResultLabel = isExam ? "en el examen de matemática" : "en una práctica de matemática";
+  const msg = total === 0 ? "No resolviste ninguna operación."
+    : isExam ? (score >= 90 ? pickEncouragement("excellent") : score >= 70 ? pickEncouragement("great")
+        : score >= 51 ? pickEncouragement("good") : pickEncouragement("keep"))
+    : tierMessage(score, total);
+  document.getElementById("result-msg").textContent = msg;
+  document.getElementById("result-sub").textContent = state.mathCorrect + " de " + total + " correctas";
+
+  const listEl    = document.getElementById("result-review-list");
+  const titleEl   = document.getElementById("result-review-title");
+  const reviewBtn = document.getElementById("result-review-btn");
+  const againBtn  = document.getElementById("result-again");
+  listEl.innerHTML = "";
+  againBtn.textContent = isExam ? "🔄 Repetir examen" : "🧮 Seguir practicando";
+  againBtn.onclick = isExam ? (() => startMathExam()) : (() => startMathPractice());
+  reviewBtn.classList.add("hidden");   // el repaso de errores es solo de ortografía
+  if(state.mathWrong.length > 0){
+    titleEl.classList.remove("hidden");
+    titleEl.textContent = "Para repasar:";
+    state.mathWrong.forEach(it => {
+      const div = document.createElement("div");
+      div.className = "review-item";
+      div.innerHTML = '<div class="mini-expr">' + it.html +
+                      '<span class="mop">=</span>' + fracHTML(it.val) + '</div>';
+      listEl.appendChild(div);
+    });
+  } else {
+    titleEl.classList.add("hidden");
+  }
+}
+
 /* ---------------- Init ---------------- */
 loadPrefs();
 loadProgress();
@@ -2034,10 +2852,14 @@ buildChips();
 buildPetChips();
 buildAccessoryChips();
 buildAchievementChips();
+buildMathOpChips();
+buildMathTermChips();
+paintMathChips();
 applyLoadedPrefs();
+applySubjectUI();
 updateProgressUI();
 updateChestUI();
-["practice-stage","exam-stage"].forEach(id => {
+["practice-stage","exam-stage","math-stage"].forEach(id => {
   document.getElementById(id).setAttribute("aria-live","polite");
 });
 
@@ -2057,6 +2879,18 @@ document.addEventListener("keydown", (e) => {
   const ae = document.activeElement;
   const typing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
 
+  // Matemática: 1-4 elige opción, Enter pasa a la siguiente
+  if(state.screen === "math" && !typing){
+    const cur = state.mathCurrent;
+    if(cur && !cur.answered && e.key >= "1" && e.key <= "9"){
+      const i = parseInt(e.key, 10) - 1;
+      if(i < cur.opts.length){ e.preventDefault(); pickMath(i); }
+      return;
+    }
+    if(cur && cur.answered && e.key === "Enter"){ e.preventDefault(); nextMathTap(); return; }
+    return;
+  }
+
   // Espacio = replay (si no estamos escribiendo)
   if(e.key === " " && !typing && (state.screen === "practice" || state.screen === "exam")){
     e.preventDefault();
@@ -2065,7 +2899,7 @@ document.addEventListener("keydown", (e) => {
   }
 
   // + = sumar tiempo
-  if((e.key === "+" || e.key === "=") && state.phase === "waiting"){
+  if((e.key === "+" || e.key === "=") && state.phase === "waiting" && !typing && !state.typeMode){
     e.preventDefault();
     addTime(5);
     return;
