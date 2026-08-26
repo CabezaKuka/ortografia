@@ -1117,6 +1117,7 @@ const state = {
   sessionCorrectStreak: 0,
   darkMode: false,
   lastResultScore: null,
+<<<<<<< HEAD
   lastResultLabel: "",
   subject: "orto",
   mathMode: null,
@@ -1124,6 +1125,9 @@ const state = {
   mathCorrect: 0,
   mathWrong: [],
   mathCurrent: null
+=======
+  lastResultLabel: ""
+>>>>>>> 3dbe5d94d32d5f5267dea37869d00942d8ace068
 };
 let currentRate = 0.8;
 let selectedCats = new Set(Object.keys(CAT));
@@ -1589,12 +1593,15 @@ function loadPrefs(){
     if(typeof data.typeMode === "boolean") state.typeMode = data.typeMode;
     if(Array.isArray(data.lastWrong)) state.lastWrong = data.lastWrong;
     if(typeof data.darkMode === "boolean") state.darkMode = data.darkMode;
+<<<<<<< HEAD
     if(data.subject === "math" || data.subject === "orto") state.subject = data.subject;
     if(Array.isArray(data.mathOps)){
       const v = data.mathOps.filter(k => Object.prototype.hasOwnProperty.call(MATH_OPS, k));
       if(v.length) mathOps = new Set(v);
     }
     if(typeof data.mathTerms === "number" && [0,2,3,4,5].indexOf(data.mathTerms) !== -1) mathTerms = data.mathTerms;
+=======
+>>>>>>> 3dbe5d94d32d5f5267dea37869d00942d8ace068
   }catch(e){}
 }
 function savePrefs(){
@@ -1604,10 +1611,14 @@ function savePrefs(){
       cats: [...selectedCats],
       typeMode: state.typeMode,
       lastWrong: state.lastWrong.slice(0, 40),
+<<<<<<< HEAD
       darkMode: state.darkMode,
       subject: state.subject,
       mathOps: [...mathOps],
       mathTerms: mathTerms
+=======
+      darkMode: state.darkMode
+>>>>>>> 3dbe5d94d32d5f5267dea37869d00942d8ace068
     }));
   }catch(e){}
 }
@@ -1786,8 +1797,11 @@ function exitToMenu(){
   state._lastTyped = "";
   state._lastMatch = false;
   state._typedDraft = "";
+<<<<<<< HEAD
   state.mathCurrent = null;
   state.mathMode = null;
+=======
+>>>>>>> 3dbe5d94d32d5f5267dea37869d00942d8ace068
   showScreen("menu");
   applySubjectUI();
   updateReviewButton();
@@ -2157,7 +2171,16 @@ function finishPracticeSession(){
   document.getElementById("result-den").textContent = "de 100 (práctica)";
   state.lastResultScore = score;
   state.lastResultLabel = "en una práctica";
+<<<<<<< HEAD
   const msg = total === 0 ? "No marcaste aciertos ni fallos en esta sesión." : tierMessage(score, total);
+=======
+  let msg;
+  if(total === 0){ msg = "No marcaste aciertos ni fallos en esta sesión."; }
+  else if(score >= 90){ msg = pickEncouragement("excellent"); }
+  else if(score >= 70){ msg = pickEncouragement("great"); }
+  else if(score >= 51){ msg = pickEncouragement("good"); }
+  else { msg = pickEncouragement("keep"); }
+>>>>>>> 3dbe5d94d32d5f5267dea37869d00942d8ace068
   document.getElementById("result-msg").textContent = msg;
   document.getElementById("result-sub").textContent = state.practiceCorrect + " de " + total + " marcadas como correctas";
 

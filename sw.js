@@ -3,7 +3,11 @@
 //  - Siempre intenta la red primero → nunca queda pegado en una versión vieja.
 //  - Guarda copia de lo que descarga → si no hay internet, la app igual abre.
 // Para forzar que todos los dispositivos descarten la caché vieja, subí el número.
+<<<<<<< HEAD
 const CACHE = "dictado-shell-v15";
+=======
+const CACHE = "dictado-shell-v14";
+>>>>>>> 3dbe5d94d32d5f5267dea37869d00942d8ace068
 
 // Lo mínimo para que la app arranque sin conexión.
 const SHELL = [
