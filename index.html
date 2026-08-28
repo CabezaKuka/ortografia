@@ -196,6 +196,17 @@
   .filter-count{ text-align:center; font-size:0.78rem; color: var(--ink-dim); margin-top: 10px; }
   .filter-count.warn{ color: var(--bad); font-weight:700; }
 
+  /* ---------- FORTALEZAS POR REGLA ---------- */
+  .stats-chips{ display:flex; flex-wrap:wrap; gap: 7px; justify-content:center; }
+  .stat-chip{
+    font-family: var(--font-body); font-weight:700; font-size: 0.68rem;
+    border-radius: 999px; padding: 4px 10px; cursor:default;
+    border: 1.5px solid; background: var(--surface);
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  .stat-chip.empty{ opacity:0.42; }
+  .stat-dot{ width:7px; height:7px; border-radius:50%; display:inline-block; flex:none; }
+
   /* ---------- AVISO DE VOZ ---------- */
   .voice-warn{
     background: #FFF4E5; border:2px solid #E8A600; border-radius: 12px;
@@ -424,6 +435,14 @@
     0%{ transform: scale(1); }
     40%{ transform: scale(1.3); }
     100%{ transform: scale(1); }
+  }
+  .shake{ animation: pet-shake 0.45s ease; }
+  @keyframes pet-shake{
+    0%,100%{ transform: translateX(0) rotate(0deg); }
+    20%{ transform: translateX(-7px) rotate(-6deg); }
+    40%{ transform: translateX(6px) rotate(5deg); }
+    60%{ transform: translateX(-4px) rotate(-3deg); }
+    80%{ transform: translateX(3px) rotate(2deg); }
   }
 
   /* ---------- MASCOTA PROTAGONISTA ---------- */
@@ -687,6 +706,11 @@
           <button type="button" onclick="setAllCats(false)">Ninguna</button>
         </div>
         <div class="filter-count" id="filter-count"></div>
+      </div>
+
+      <div class="filter-block" id="stats-block">
+        <div class="filter-title">Tu progreso por regla 📊</div>
+        <div class="stats-chips" id="stats-chips"></div>
       </div>
       </div><!-- /menu-orto -->
 
@@ -1073,6 +1097,73 @@ const WORDS = [
   {w:"invento", cat:"nv", rule:"Antes de V siempre va N: invento, inventar."},
   {w:"convertible", cat:"nv", rule:"Antes de V siempre va N: convertible, convertir."},
 
+  /* H — ampliación */
+  {w:"hierba", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hielo, hierro, hueso, hierba, huerto."},
+  {w:"huerto", cat:"h", rule:"Las palabras que empiezan con los diptongos IE o UE se escriben con H: hueso, huevo, huella, huerto."},
+  {w:"hospedaje", cat:"h", rule:"Las palabras que empiezan con HOSP- se escriben con H: hospital, hospedaje, hospicio."},
+  {w:"hidrógeno", cat:"h", rule:"Las palabras que empiezan con HIDR- se escriben con H: hidratar, hidráulico, hidrógeno."},
+  {w:"hidráulico", cat:"h", rule:"Las palabras que empiezan con HIDR- se escriben con H: hidratar, hidráulico, hidrógeno."},
+  {w:"humano", cat:"h", rule:"Las palabras que empiezan con HUM- seguido de vocal se escriben con H: húmedo, humano, humor."},
+  {w:"humor", cat:"h", rule:"Las palabras que empiezan con HUM- seguido de vocal se escriben con H: húmedo, humano, humor."},
+  {w:"ahí", cat:"h", rule:"Se escribe con H: ahora, ahí, ahíto. No lleva H «aí» (no existe)."},
+  {w:"exhibir", cat:"h", rule:"Algunas palabras llevan una H intercalada (en medio) que no se pronuncia: exhausto, exhibir, vehículo, búho, zanahoria."},
+  {w:"búho", cat:"h", rule:"Algunas palabras llevan una H intercalada (en medio) que no se pronuncia: exhausto, exhibir, vehículo, búho, zanahoria."},
+
+  /* B / V — ampliación */
+  {w:"esclava", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"suave", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"leve", cat:"bv", rule:"Los adjetivos llanos terminados en -AVO/-AVA, -AVE, -EVO/-EVA, -EVE, -IVO/-IVA se escriben con V: octavo, esclava, suave, grave, nueva, leve, activo."},
+  {w:"posibilidad", cat:"bv", rule:"Los sustantivos terminados en -BILIDAD se escriben con B, excepto movilidad y civilidad: amabilidad, posibilidad."},
+  {w:"subterráneo", cat:"bv", rule:"Se escribe B antes de consonante: absurdo, abstracto, obtener, subrayar, subterráneo."},
+
+  /* C · S · Z — ampliación */
+  {w:"atracción", cat:"csz", rule:"Busca un pariente de la palabra: si tiene CT, se escribe -CCIÓN. Atractivo → atracción."},
+  {w:"explosión", cat:"csz", rule:"Busca un pariente: si tiene S, se escribe -SIÓN. Explosivo → explosión."},
+  {w:"vejez", cat:"csz", rule:"Los sustantivos abstractos terminados en -EZ/-EZA se escriben con Z: niñez, vejez, rapidez."},
+  {w:"pequeñez", cat:"csz", rule:"Los sustantivos abstractos terminados en -EZ/-EZA se escriben con Z: niñez, vejez, pequeñez."},
+  {w:"gaseoso", cat:"csz", rule:"Los adjetivos terminados en -OSO/-OSA se escriben con S: famoso, hermosa, gaseoso."},
+
+  /* Tilde — ampliación */
+  {w:"según", cat:"tilde", rule:"Palabra aguda terminada en N → lleva tilde: canción, corazón, según."},
+  {w:"volcán", cat:"tilde", rule:"Palabra aguda terminada en N → lleva tilde: canción, corazón, volcán."},
+  {w:"álbum", cat:"tilde", rule:"Palabra llana (grave) que NO termina en N, S ni vocal → lleva tilde: árbol, cráter, álbum."},
+
+  /* G / J — ampliación */
+  {w:"girasol", cat:"gj", rule:"Palabra de memoria: gigante, gigantesco y girasol van con G, aunque suenen como J."},
+  {w:"gimnasio", cat:"gj", rule:"No hay regla fija: hay que memorizarla con G, aunque suene como J: gimnasio, gimnasta."},
+  {w:"jamón", cat:"gj", rule:"No hay regla fija: hay que memorizarla con J: jardín, joven, jugo, jamón."},
+  {w:"cajero", cat:"gj", rule:"Las palabras terminadas en -JERO, -JERA o -JERÍA se escriben con J: extranjero, mensajero, cajero. La única excepción es ligero."},
+  {w:"berenjena", cat:"gj", rule:"El grupo GEN se escribe con G (general, urgente, imagen), pero hay tres excepciones con J que hay que memorizar: jengibre, berenjena y ajeno."},
+  {w:"jengibre", cat:"gj", rule:"El grupo GEN se escribe con G (general, urgente, imagen), pero hay tres excepciones con J que hay que memorizar: jengibre, berenjena y ajeno."},
+  {w:"ajeno", cat:"gj", rule:"El grupo GEN se escribe con G (general, urgente, imagen), pero hay tres excepciones con J que hay que memorizar: jengibre, berenjena y ajeno."},
+
+  /* LL / Y — ampliación */
+  {w:"silla", cat:"lly", rule:"Estas palabras se escriben con LL y no siguen ninguna regla fija: hay que memorizarlas: estrella, botella, silla, cepillo."},
+  {w:"cepillo", cat:"lly", rule:"Estas palabras se escriben con LL y no siguen ninguna regla fija: hay que memorizarlas: estrella, botella, silla, cepillo."},
+  {w:"arroyo", cat:"lly", rule:"El oído no distingue LL de Y: hay que memorizarlas. Con Y: mayo, playa, ayuda, arroyo. Con LL: calle, caballo."},
+  {w:"huyendo", cat:"lly", rule:"Los verbos terminados en -UIR cambian la I por Y en el gerundio: construyendo, huyendo."},
+  {w:"cayendo", cat:"lly", rule:"El gerundio de leer y caer cambia la I por Y entre vocales: leyendo, oyendo, cayendo."},
+
+  /* M antes de B/P — ampliación */
+  {w:"ejemplar", cat:"mp", rule:"Antes de P siempre va M: ejemplar, ejemplo."},
+  {w:"imperio", cat:"mp", rule:"Antes de P siempre va M: imperio, importante."},
+  {w:"compra", cat:"mp", rule:"Antes de P siempre va M: compra, compañero."},
+  {w:"cumpleaños", cat:"mp", rule:"Antes de P siempre va M: cumpleaños, campo."},
+  {w:"empujar", cat:"mp", rule:"Antes de P siempre va M: empujar, empezar."},
+  {w:"hambre", cat:"mp", rule:"Se escribe M antes de B, nunca N: hambre, hombre, bomba."},
+  {w:"sombra", cat:"mp", rule:"Se escribe M antes de B, nunca N: sombra, hombre, tambor."},
+  {w:"bombero", cat:"mp", rule:"Antes de B siempre va M: bombero, bomba, tambor."},
+
+  /* N antes de V — ampliación */
+  {w:"invisible", cat:"nv", rule:"Antes de V siempre va N: invisible, investigar."},
+  {w:"convento", cat:"nv", rule:"Antes de V siempre va N: convento, convivir."},
+  {w:"invasión", cat:"nv", rule:"Antes de V siempre va N: invasión, invadir."},
+  {w:"inventor", cat:"nv", rule:"Antes de V siempre va N: inventor, inventar."},
+  {w:"enviado", cat:"nv", rule:"Antes de V siempre va N: enviado, enviar."},
+  {w:"convocatoria", cat:"nv", rule:"Antes de V siempre va N: convocatoria, convocar."},
+  {w:"invencible", cat:"nv", rule:"Antes de V siempre va N: invencible, invadir."},
+  {w:"envolver", cat:"nv", rule:"Antes de V siempre va N: envolver, envidia."},
+
   /* Diéresis (Ü) */
   {w:"pingüino", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
   {w:"cigüeña", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
@@ -1085,7 +1176,9 @@ const WORDS = [
   {w:"agüero", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
   {w:"ungüento", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
   {w:"pedigüeño", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
-  {w:"desagüe", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."}
+  {w:"desagüe", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): pingüino, cigüeña, vergüenza, bilingüe. Sin diéresis la U es muda: guerra, guitarra."},
+  {w:"argüir", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): argüir, argüido. Sin diéresis la U es muda: seguir, guitarra."},
+  {w:"halagüeño", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): halagüeño, pingüino, cigüeña. Sin diéresis la U es muda: guerra, guitarra."}
 ];
 
 /* ---------------- App state ---------------- */
@@ -1148,16 +1241,45 @@ const ACCESSORIES = [
   { id:"bufanda",   emoji:"🧣", name:"Bufanda",   price:20, pos:"bottom" },
   { id:"corona",    emoji:"👑", name:"Corona",    price:40, pos:"top" }
 ];
+// Un logro "Experto en <regla>" por cada categoría de ortografía: se arma
+// dinámicamente a partir de CAT para no repetir manualmente cada entrada.
+const CATEGORY_ACHIEVEMENTS = Object.keys(CAT).map(key => ({
+  id: "maestro_" + key,
+  emoji: "🎓",
+  name: "Experto en " + CAT[key].label,
+  desc: "Acertá 20 palabras de la categoría " + CAT[key].label + ".",
+  check: (p) => !!(p.catStats && p.catStats[key] && p.catStats[key].correct >= 20)
+}));
 const ACHIEVEMENTS = [
+  { id:"racha3",     emoji:"✨", name:"Primeros pasos",    desc:"Practicá 3 días seguidos.",
+    check:(p,s) => p.streak >= 3 },
   { id:"racha7",     emoji:"🔥", name:"Semana completa",  desc:"Practicá 7 días seguidos.",
     check:(p,s) => p.streak >= 7 },
   { id:"racha30",    emoji:"🌟", name:"Mes entero",        desc:"Practicá 30 días seguidos.",
     check:(p,s) => p.streak >= 30 },
   { id:"monedas100", emoji:"💰", name:"Alcancía llena",    desc:"Juntá 100 monedas en total.",
     check:(p,s) => p.totalCoinsEarned >= 100 },
+  { id:"monedas500", emoji:"🏦", name:"Tesoro",            desc:"Juntá 500 monedas en total.",
+    check:(p,s) => p.totalCoinsEarned >= 500 },
   { id:"racha10",    emoji:"🎯", name:"10 sin fallar",     desc:"Acertá 10 palabras seguidas en una sesión.",
-    check:(p,s) => s.sessionCorrectStreak >= 10 }
-];
+    check:(p,s) => s.sessionCorrectStreak >= 10 },
+  { id:"racha20",    emoji:"🏹", name:"20 sin fallar",     desc:"Acertá 20 respuestas seguidas en una sesión.",
+    check:(p,s) => s.sessionCorrectStreak >= 20 },
+  { id:"cienpalabras", emoji:"📚", name:"Cien palabras",   desc:"Acertá 100 palabras de ortografía en total.",
+    check:(p,s) => (p.totalWordsCorrect || 0) >= 100 },
+  { id:"quinientaspalabras", emoji:"🦉", name:"Quinientas palabras", desc:"Acertá 500 palabras de ortografía en total.",
+    check:(p,s) => (p.totalWordsCorrect || 0) >= 500 },
+  { id:"examenperfecto", emoji:"💯", name:"Examen perfecto", desc:"Sacá 100/100 en un examen de ortografía.",
+    check:(p,s) => p.bestExamScore >= 100 },
+  { id:"matematico50", emoji:"🧮", name:"Cerebrito matemático", desc:"Resolvé 50 operaciones correctas en total.",
+    check:(p,s) => (p.totalMathCorrect || 0) >= 50 },
+  { id:"matematico200", emoji:"🧠", name:"Genio del cálculo", desc:"Resolvé 200 operaciones correctas en total.",
+    check:(p,s) => (p.totalMathCorrect || 0) >= 200 },
+  { id:"examenmateperfecto", emoji:"🏅", name:"Examen de mate perfecto", desc:"Sacá 100/100 en un examen de matemática.",
+    check:(p,s) => p.bestMathScore >= 100 },
+  { id:"todaslasmascotas", emoji:"🐾", name:"Coleccionista", desc:"Desbloqueá todas las mascotas.",
+    check:(p,s) => p.ownedPets && p.ownedPets.length >= PETS.length }
+].concat(CATEGORY_ACHIEVEMENTS);
 let progress = {
   coins: 0,
   totalCoinsEarned: 0,
@@ -1170,7 +1292,10 @@ let progress = {
   achievements: [],
   bestExamScore: 0,
   bestMathScore: 0,
-  lastChestDate: null
+  lastChestDate: null,
+  catStats: {},          // { bv: {correct, wrong}, ... } — para "fortalezas por regla" y logros de categoría
+  totalWordsCorrect: 0,  // acumulado histórico de palabras acertadas (práctica + examen + repaso)
+  totalMathCorrect: 0    // acumulado histórico de operaciones acertadas
 };
 function loadProgress(){
   try{
@@ -1189,7 +1314,23 @@ function loadProgress(){
     if(typeof data.bestExamScore === "number") progress.bestExamScore = data.bestExamScore;
     if(typeof data.bestMathScore === "number") progress.bestMathScore = data.bestMathScore;
     if(typeof data.lastChestDate === "string") progress.lastChestDate = data.lastChestDate;
+    if(data.catStats && typeof data.catStats === "object"){
+      Object.keys(data.catStats).forEach(key => {
+        if(!Object.prototype.hasOwnProperty.call(CAT, key)) return; // descartar categorías que ya no existen
+        const s = data.catStats[key];
+        if(s && typeof s.correct === "number" && typeof s.wrong === "number") progress.catStats[key] = { correct:s.correct, wrong:s.wrong };
+      });
+    }
+    if(typeof data.totalWordsCorrect === "number") progress.totalWordsCorrect = data.totalWordsCorrect;
+    if(typeof data.totalMathCorrect === "number") progress.totalMathCorrect = data.totalMathCorrect;
   }catch(e){}
+}
+function recordCategoryStat(cat, correct){
+  if(!progress.catStats[cat]) progress.catStats[cat] = { correct:0, wrong:0 };
+  if(correct){ progress.catStats[cat].correct++; progress.totalWordsCorrect++; }
+  else{ progress.catStats[cat].wrong++; }
+  saveProgress();
+  paintStatsChips();
 }
 function saveProgress(){
   try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); }catch(e){}
@@ -1225,10 +1366,33 @@ function addCoins(n){
   pulse("stat-coins");
   checkAchievements();
 }
+// Bono de monedas por racha de días activos: incentiva sostener la racha, no solo tenerla.
+function streakCoinBonus(){
+  if(progress.streak >= 30) return 2;
+  if(progress.streak >= 7) return 1;
+  return 0;
+}
 function rewardCorrect(){
-  addCoins(1);
+  addCoins(1 + streakCoinBonus());
   burstConfetti(false);
   playPetSound();
+}
+function playWrongSound(){
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  try{ playBlip(ctx, { startFreq:300, endFreq:150, duration:0.22, type:"sine", gain:0.14 }); }catch(e){}
+}
+function shakeEl(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.remove("shake");
+  void el.offsetWidth; // reiniciar animación
+  el.classList.add("shake");
+}
+// Reacción suave de la mascota al fallar: nada punitivo, solo un poco de feedback vivo.
+function reactWrong(){
+  shakeEl("pet-hero-emoji");
+  playWrongSound();
 }
 
 /* ---------------- Sonidos de mascota (Web Audio, sin depender de la voz) ---------------- */
@@ -1353,11 +1517,18 @@ function updateChestUI(){
   wrap.classList.remove("hidden");
   btn.disabled = false;
   emoji.textContent = "🎁";
-  label.textContent = "Cofre diario";
+  label.textContent = "Cofre diario" + (chestStreakBonus() > 0 ? " 🔥" : "");
+}
+// El cofre premia sostener la racha: más días seguidos, mejor recompensa.
+function chestStreakBonus(){
+  if(progress.streak >= 30) return 6;
+  if(progress.streak >= 14) return 3;
+  if(progress.streak >= 7) return 1;
+  return 0;
 }
 function openChest(){
   if(progress.lastChestDate === todayKey()) return;
-  const reward = 3 + Math.floor(Math.random()*3); // 3..5
+  const reward = 3 + Math.floor(Math.random()*3) + chestStreakBonus(); // 3..5 base + bono de racha
   progress.lastChestDate = todayKey();
   addCoins(reward);
   burstConfetti(true);
@@ -1366,7 +1537,7 @@ function openChest(){
   const label = document.getElementById("chest-label");
   if(btn) btn.disabled = true;
   if(emoji) emoji.textContent = "🎉";
-  if(label) label.textContent = "+" + reward + " 💰";
+  if(label) label.textContent = "+" + reward + " 💰" + (chestStreakBonus() > 0 ? " (racha 🔥)" : "");
   setTimeout(updateChestUI, 1100);
 }
 function updateProgressUI(){
@@ -2006,6 +2177,40 @@ function buildChips(){
   }).join("");
   paintChips();
 }
+/* ---------------- Fortalezas por regla ---------------- */
+function catAccuracy(key){
+  const s = progress.catStats && progress.catStats[key];
+  if(!s || (s.correct + s.wrong) === 0) return null;
+  return Math.round(s.correct / (s.correct + s.wrong) * 100);
+}
+function buildStatsChips(){
+  const wrap = document.getElementById("stats-chips");
+  if(!wrap) return;
+  wrap.innerHTML = Object.entries(CAT).map(([key, c]) => `
+    <span class="stat-chip" id="stat-chip-${key}" style="border-color:${c.color}; color:${c.color}">
+      <span class="stat-dot" id="stat-dot-${key}"></span>${c.label}
+      <span id="stat-pct-${key}"></span>
+    </span>`).join("");
+  paintStatsChips();
+}
+function paintStatsChips(){
+  Object.keys(CAT).forEach(key => {
+    const chip = document.getElementById("stat-chip-" + key);
+    const dot  = document.getElementById("stat-dot-" + key);
+    const pctEl = document.getElementById("stat-pct-" + key);
+    if(!chip || !dot || !pctEl) return;
+    const pct = catAccuracy(key);
+    if(pct === null){
+      chip.classList.add("empty");
+      dot.style.background = "#B9B4C9";
+      pctEl.textContent = "sin datos";
+    } else {
+      chip.classList.remove("empty");
+      dot.style.background = pct >= 80 ? "#22C55E" : pct >= 50 ? "#E8A600" : "#FF3B30";
+      pctEl.textContent = pct + "%";
+    }
+  });
+}
 function paintChips(){
   Object.entries(CAT).forEach(([key, c]) => {
     const chip = document.getElementById("chip-" + key);
@@ -2188,6 +2393,7 @@ function finishPracticeSession(){
 function markPractice(correct, alreadyRewarded){
   if(state.phase !== "revealed") return;
   state.phase = "scoring"; // bloquea un segundo clic dentro de la ventana de 700 ms
+  recordCategoryStat(state.current.cat, correct);
   if(correct){
     state.practiceCorrect++;
     state.sessionCorrectStreak++;
@@ -2201,6 +2407,7 @@ function markPractice(correct, alreadyRewarded){
   } else {
     state.practiceWrong.push(state.current);
     state.sessionCorrectStreak = 0;
+    reactWrong();
   }
   nextPracticeWord();
 }
@@ -2271,6 +2478,7 @@ function nextExamWord(){
 function markExam(correct, alreadyRewarded){
   if(state.phase !== "revealed") return;
   state.phase = "scoring"; // bloquea un segundo clic dentro de la ventana de 700 ms
+  recordCategoryStat(state.current.cat, correct);
   if(correct){
     state.examCorrect++;
     state.sessionCorrectStreak++;
@@ -2283,7 +2491,7 @@ function markExam(correct, alreadyRewarded){
       return;
     }
   }
-  else { state.examWrong.push(state.current); state.sessionCorrectStreak = 0; }
+  else { state.examWrong.push(state.current); state.sessionCorrectStreak = 0; reactWrong(); }
   state.examIndex++;
   nextExamWord();
 }
@@ -2337,6 +2545,7 @@ function showResults(){
     saveProgress();
     updateBestScoreUI();
   }
+  checkAchievements(); // por si el examen perfecto se logró recién ahora
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = "de 100";
   state.lastResultScore = score;
@@ -2772,11 +2981,14 @@ function pickMath(i){
   if(fEq(cur.opts[i], cur.p.val)){
     state.mathCorrect++;
     state.sessionCorrectStreak++;
+    progress.totalMathCorrect = (progress.totalMathCorrect || 0) + 1;
+    saveProgress();
     rewardCorrect();
     checkAchievements();
   } else {
     state.mathWrong.push({ html: cur.p.html, val: cur.p.val });
     state.sessionCorrectStreak = 0;
+    reactWrong();
   }
   renderMath();
 }
@@ -2811,6 +3023,7 @@ function showMathResults(){
     saveProgress();
     updateBestMathUI();
   }
+  if(total > 0) checkAchievements(); // por si el examen de mate perfecto se logró recién ahora
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = isExam ? "de 100" : "de 100 (práctica)";
   state.lastResultScore = score;
@@ -2849,6 +3062,7 @@ function showMathResults(){
 loadPrefs();
 loadProgress();
 buildChips();
+buildStatsChips();
 buildPetChips();
 buildAccessoryChips();
 buildAchievementChips();
