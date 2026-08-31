@@ -2625,11 +2625,14 @@ const MATH_OPS = {
   mul:  { label:"×",         color:"#2ECC71" },
   div:  { label:"÷",         color:"#FF2D95" },
   pow:  { label:"Potencias", color:"#9D4EDD" },
-  sqrt: { label:"Raíces",    color:"#E8A600" }
+  sqrt: { label:"Raíces",    color:"#E8A600" },
+  dec:  { label:"Decimales", color:"#00B4D8" }
 };
 const TERM_OPTS = [{v:0,l:"Mezcla"},{v:2,l:"2"},{v:3,l:"3"},{v:4,l:"4"},{v:5,l:"5"}];
 const MATH_EXAM_N = 10;
-let mathOps = new Set(Object.keys(MATH_OPS));
+// "dec" arranca apagado: si no, todo usuario nuevo heredaría el modo Decimales
+// activado (Object.keys incluiría "dec" por defecto) y cambiaría la experiencia actual.
+let mathOps = new Set(Object.keys(MATH_OPS).filter(k => k !== "dec"));
 let mathTerms = 0; // 0 = mezcla de 2 a 5
 
 function mathReady(){ return mathOps.has("add") || mathOps.has("mul") || mathOps.has("div"); }
@@ -2650,7 +2653,26 @@ function randLeafValue(){
   if(Math.random() < 0.35) n = -n;
   return fr(n,d);
 }
-function buildLeaf(){
+// Números con coma: mayormente 1 decimal, a veces 2, ocasionalmente un entero
+// "disfrazado" de decimal para variar. Siempre representables exactamente en base 10.
+const DEC_PLACES_POOL = [1,1,1,2,2];
+function randLeafValueDecimal(){
+  const places = mpick(DEC_PLACES_POOL);
+  const scale = places === 1 ? 10 : 100;
+  const maxWhole = places === 1 ? 12 : 8;
+  const whole = mrand(maxWhole + 1);
+  let frac = 1 + mrand(scale - 1);
+  if(Math.random() < 0.12) frac = 0; // a veces cae un entero, para no ver siempre coma
+  let n = whole*scale + frac;
+  if(n === 0) n = frac || 1; // evitar 0,00
+  if(Math.random() < 0.35) n = -n;
+  return fr(n, scale);
+}
+function buildLeaf(ctx){
+  if(ctx && ctx.dec){
+    // Modo Decimales: solo números con coma, nunca potencias ni raíces.
+    return { t:"num", v: randLeafValueDecimal(), dec:true };
+  }
   const canPow = mathOps.has("pow"), canSqrt = mathOps.has("sqrt");
   const r = Math.random();
   if(canSqrt && r < 0.18){
@@ -2679,7 +2701,7 @@ function binOpPool(){
 }
 function buildTree(k, pool, ctx){
   if(!ctx) ctx = { divs: 0 };
-  if(k <= 1) return buildLeaf();
+  if(k <= 1) return buildLeaf(ctx);
   const noDiv = pool.filter(o => o !== "/");
   // Sin divisiones anidadas y máximo 2 por ejercicio: encadenarlas lo vuelve
   // pesado de resolver a mano sin agregar nada nuevo.
@@ -2708,25 +2730,39 @@ function evalNode(node, acc){
   if(acc) acc.push(v);
   return v;
 }
-function tryProblem(k, pool){
-  const tree = buildTree(k, pool);
+function tryProblem(k, pool, useDec){
+  const tree = buildTree(k, pool, useDec ? { divs:0, dec:true } : undefined);
   const acc = [];
   const val = evalNode(tree, acc);
   if(!val) return null;
-  for(const v of acc){ if(Math.abs(v.n) > 400 || v.d > 36) return null; }  // paso intermedio impracticable
-  if(Math.abs(val.n) > 144 || val.d > 24) return null;                     // resultado feo
-  return { tree, val, html: renderNode(tree, 0, false, null, true), terms:k };
+  if(useDec){
+    // Cada paso intermedio y el resultado final tienen que ser decimales
+    // exactos (nunca periódicos) de hasta 2 cifras, con magnitud razonable.
+    for(const v of acc){
+      const info = decimalInfo(v);
+      if(!info || info.places > 2 || Math.abs(v.n)/v.d > 500) return null;
+    }
+    const info = decimalInfo(val);
+    if(!info || info.places > 2 || Math.abs(val.n)/val.d > 200) return null;
+  } else {
+    for(const v of acc){ if(Math.abs(v.n) > 400 || v.d > 36) return null; }  // paso intermedio impracticable
+    if(Math.abs(val.n) > 144 || val.d > 24) return null;                     // resultado feo
+  }
+  return { tree, val, html: renderNode(tree, 0, false, null, true), terms:k, dec: !!useDec };
 }
 function makeProblem(){
   const pool = binOpPool();
   if(pool.length === 0) return null;
+  // Se decide una sola vez por ejercicio: si "Decimales" está activo, el
+  // ejercicio entero es decimal (nunca mezclado con fracciones/potencias/raíces).
+  const useDec = mathOps.has("dec");
   for(let i=0;i<400;i++){
     const k = mathTerms > 0 ? mathTerms : 2 + mrand(4);
-    const p = tryProblem(k, pool);
+    const p = tryProblem(k, pool, useDec);
     if(p) return p;
   }
   for(let i=0;i<200;i++){            // red de seguridad: bajar a 2 términos
-    const p = tryProblem(2, pool);
+    const p = tryProblem(2, pool, useDec);
     if(p) return p;
   }
   return null;
@@ -2739,6 +2775,32 @@ function fracHTML(f){
   const s = f.n < 0 ? '<span class="msign">−</span>' : '';
   return s + '<span class="frac"><span class="fnum">' + Math.abs(f.n) + '</span><span class="fden">' + f.d + '</span></span>';
 }
+// Info de representación decimal de una fracción exacta: null si el denominador
+// (ya reducido) tiene algún factor primo que no sea 2 ni 5 (decimal periódico).
+function decimalInfo(f){
+  if(!f) return null;
+  let d = f.d, c2 = 0, c5 = 0;
+  while(d % 2 === 0){ d /= 2; c2++; }
+  while(d % 5 === 0){ d /= 5; c5++; }
+  if(d !== 1) return null;
+  return { places: Math.max(c2, c5) };
+}
+// Muestra la fracción como número con coma (3,4) en vez de fracción apilada.
+// Si no es representable como decimal exacto (no debería pasar en modo Decimales
+// validado), cae de vuelta a la fracción para no romper la UI.
+function decHTML(f){
+  if(!f) return "?";
+  const info = decimalInfo(f);
+  if(!info) return fracHTML(f);
+  if(info.places === 0) return fracHTML(f); // entero: mismo estilo que el resto
+  const scale = Math.pow(10, info.places);
+  const scaled = Math.round(Math.abs(f.n) * scale / f.d);
+  const str = String(scaled).padStart(info.places + 1, "0");
+  const intPart = str.slice(0, -info.places) || "0";
+  const decPart = str.slice(-info.places);
+  const sign = f.n < 0 ? "−" : "";
+  return '<span class="mwhole">' + sign + intPart + ',' + decPart + '</span>';
+}
 function mwrap(html){ return '<span class="mpar">(</span>' + html + '<span class="mpar">)</span>'; }
 function precOf(n){
   if(n.t === "num") return 5;
@@ -2749,7 +2811,7 @@ function renderNode(n, parentPrec, isRight, parentOp, isFirst){
   let html, needs = false;
   const p = precOf(n);
   if(n.t === "num"){
-    html = fracHTML(n.v);
+    html = n.dec ? decHTML(n.v) : fracHTML(n.v);
     if(n.v.n < 0 && !isFirst) needs = true;      // 3/4 + (−2/5)
   } else if(n.t === "sqrt"){
     html = '<span class="mroot">√</span>' + mwrap(renderNode(n.a, 0, false, null, true));
@@ -2790,9 +2852,13 @@ function evalLeftToRight(tree){
 }
 function makeDistractors(prob){
   const c = prob.val, out = [], seen = {};
+  const dec = !!prob.dec;
+  const maxN = dec ? 50000 : 400;
+  const maxD = dec ? 1000 : 48;
   const push = (v) => {
     if(!v || (v.n === c.n && v.d === c.d)) return;
-    if(Math.abs(v.n) > 400 || v.d > 48) return;
+    if(Math.abs(v.n) > maxN || v.d > maxD) return;
+    if(dec){ const info = decimalInfo(v); if(!info || info.places > 3) return; } // debe seguir siendo decimal exacto y legible
     const k = v.n + "/" + v.d;
     if(seen[k]) return;
     seen[k] = 1; out.push(v);
@@ -2808,10 +2874,16 @@ function makeDistractors(prob){
   // 3) error de signo   4) fracción invertida
   push(fNeg(c));
   if(c.n !== 0) push(fr(c.d, c.n));
-  // 5) vecinos plausibles
-  push(fAdd(c, fr(1,1))); push(fSub(c, fr(1,1)));
-  push(fAdd(c, fr(1,2))); push(fSub(c, fr(1,2)));
-  push(fMul(c, fr(2,1))); push(fMul(c, fr(1,2)));
+  if(dec){
+    // 5) error típico de decimales: correr la coma un lugar de más o de menos
+    push(fMul(c, fr(10,1)));
+    push(fMul(c, fr(1,10)));
+  } else {
+    // 5) vecinos plausibles
+    push(fAdd(c, fr(1,1))); push(fSub(c, fr(1,1)));
+    push(fAdd(c, fr(1,2))); push(fSub(c, fr(1,2)));
+    push(fMul(c, fr(2,1))); push(fMul(c, fr(1,2)));
+  }
   let k = 1;
   while(out.length < 3 && k < 30){
     push(fAdd(c, fr(k, Math.max(2, c.d))));
@@ -2957,7 +3029,7 @@ function renderMath(){
       else cls += " dim";
     }
     html += '<button type="button" class="' + cls + '"' + (cur.answered ? " disabled" : "") +
-            ' onclick="pickMath(' + i + ')">' + fracHTML(o) + '</button>';
+            ' onclick="pickMath(' + i + ')">' + (cur.p.dec ? decHTML(o) : fracHTML(o)) + '</button>';
   });
   html += '</div>';
 
@@ -2986,7 +3058,7 @@ function pickMath(i){
     rewardCorrect();
     checkAchievements();
   } else {
-    state.mathWrong.push({ html: cur.p.html, val: cur.p.val });
+    state.mathWrong.push({ html: cur.p.html, val: cur.p.val, dec: cur.p.dec });
     state.sessionCorrectStreak = 0;
     reactWrong();
   }
@@ -3050,7 +3122,7 @@ function showMathResults(){
       const div = document.createElement("div");
       div.className = "review-item";
       div.innerHTML = '<div class="mini-expr">' + it.html +
-                      '<span class="mop">=</span>' + fracHTML(it.val) + '</div>';
+                      '<span class="mop">=</span>' + (it.dec ? decHTML(it.val) : fracHTML(it.val)) + '</div>';
       listEl.appendChild(div);
     });
   } else {
