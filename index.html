@@ -551,13 +551,13 @@
 
   /* ---------- SELECTOR DE MATERIA ---------- */
   .subject-tabs{
-    display:flex; gap:6px; background: var(--chip-bg);
+    display:flex; flex-wrap:wrap; gap:6px; background: var(--chip-bg);
     border:2px solid rgba(108,92,231,0.18); border-radius:999px;
     padding:5px; margin-bottom:16px;
   }
   .subject-tab{
-    flex:1; background:transparent; color: var(--ink-dim);
-    border-radius:999px; padding:9px 8px; font-size:0.9rem;
+    flex:1; min-width:88px; background:transparent; color: var(--ink-dim);
+    border-radius:999px; padding:9px 6px; font-size:0.82rem;
   }
   .subject-tab[aria-pressed="true"]{
     background: var(--ui-accent); color:#fff;
@@ -662,6 +662,7 @@
       <div class="subject-tabs" role="group" aria-label="Materia">
         <button type="button" class="subject-tab" id="tab-orto" aria-pressed="true" onclick="setSubject('orto')">📖 Ortografía</button>
         <button type="button" class="subject-tab" id="tab-math" aria-pressed="false" onclick="setSubject('math')">🔢 Matemática</button>
+        <button type="button" class="subject-tab" id="tab-verbos" aria-pressed="false" onclick="setSubject('verbos')">🔤 Verbos</button>
       </div>
 
       <div id="menu-orto">
@@ -743,6 +744,50 @@
         </div>
       </div>
 
+      <div id="menu-verbos" class="hidden">
+        <div class="menu-options">
+          <button type="button" class="mode-btn" id="btn-verb-practice" onclick="startVerbPractice()">
+            <span class="emoji">🔤</span>
+            <span>
+              <strong>Modo Práctica</strong>
+              <span class="desc">Escuchá y escribí la forma conjugada del verbo.</span>
+            </span>
+          </button>
+          <button type="button" class="mode-btn" id="btn-verb-exam" onclick="startVerbExam()">
+            <span class="emoji">📝</span>
+            <span>
+              <strong>Modo Examen</strong>
+              <span class="desc">15 conjugaciones. Obtené tu nota sobre 100.<br><span id="best-verb-line" class="best-score hidden"></span></span>
+            </span>
+          </button>
+          <button type="button" class="mode-btn hidden" id="btn-verb-review" onclick="startVerbReview()">
+            <span class="emoji">🔁</span>
+            <span>
+              <strong>Repasar errores</strong>
+              <span class="desc" id="verb-review-desc">Solo las conjugaciones que fallaste la última vez.</span>
+            </span>
+          </button>
+        </div>
+        <div class="filter-block">
+          <div class="filter-title">Tiempos que entran</div>
+          <div class="cat-chips" id="verb-tense-chips"></div>
+          <div class="chip-actions">
+            <button type="button" onclick="setAllVerbTenses(true)">Todos</button>
+            <button type="button" onclick="setAllVerbTenses(false)">Ninguno</button>
+          </div>
+          <div class="filter-count" id="verb-tense-count"></div>
+        </div>
+        <div class="filter-block">
+          <div class="filter-title">Verbos que entran</div>
+          <div class="cat-chips" id="verb-kind-chips"></div>
+          <div class="type-tip">💡 Los irregulares (ser, estar, tener, ir, hacer, poder, querer, decir) hay que memorizarlos: no siguen las reglas.</div>
+        </div>
+        <div class="filter-block" id="verb-stats-block">
+          <div class="filter-title">Tu progreso por tiempo verbal 📊</div>
+          <div class="stats-chips" id="verb-stats-chips"></div>
+        </div>
+      </div>
+
       <div class="pets-block">
         <div class="filter-title">Mascotas 🐾 · comprá y equipá con tus monedas</div>
         <div class="pet-chips" id="pet-chips"></div>
@@ -799,6 +844,22 @@
       <div id="math-stage"></div>
       <div class="controls-row">
         <button type="button" class="btn-ghost" onclick="endMathSession()">🏠 Terminar</button>
+      </div>
+    </section>
+
+    <!-- VERBOS -->
+    <section id="screen-verbs" class="screen hidden">
+      <div class="session-top">
+        <span id="verb-badge"></span>
+        <span id="verb-counter"></span>
+        <span class="session-stats" id="verb-stats"></span>
+      </div>
+      <div class="timerbar hidden" id="verb-progressbar"><div id="verb-progressfill" class="timerbar-fill"></div></div>
+      <div id="verb-status" class="status-line" aria-live="polite"></div>
+      <div id="verb-stage" class="stage"></div>
+      <div class="controls-row">
+        <button type="button" class="btn-ghost" onclick="replayVerbPrompt()">🔊 Escuchar de nuevo</button>
+        <button type="button" class="btn-ghost" onclick="endVerbSession()">🏠 Terminar</button>
       </div>
     </section>
 
@@ -1181,6 +1242,229 @@ const WORDS = [
   {w:"halagüeño", cat:"u", rule:"Cuando el sonido /gu/ va seguido de E o I y la U SÍ se pronuncia, hay que ponerle diéresis (¨): halagüeño, pingüino, cigüeña. Sin diéresis la U es muda: guerra, guitarra."}
 ];
 
+/* ---------------- Verbos: tiempos, banco y conjugación ---------------- */
+// Solo verbos regulares (sin cambios de raíz ni ortográficos) para que la
+// conjugación se pueda calcular con una simple regla de terminaciones,
+// siguiendo el manual de tiempos verbales.
+const PRONOUNS = ["yo", "tú", "él/ella", "nosotros", "ustedes", "ellos/ellas"];
+const PERSON_DESC = [
+  "1ª persona del singular",
+  "2ª persona del singular",
+  "3ª persona del singular",
+  "1ª persona del plural",
+  "2ª persona del plural",
+  "3ª persona del plural"
+];
+const PERSON_SPEECH = [
+  "primera persona del singular: yo",
+  "segunda persona del singular: tú",
+  "tercera persona del singular: él o ella",
+  "primera persona del plural: nosotros",
+  "segunda persona del plural: ustedes",
+  "tercera persona del plural: ellos o ellas"
+];
+const VERB_TENSES = {
+  presente:       { label:"Presente",             promptName:"presente del indicativo",   color:"#FF6B6B", text:"#fff" },
+  pretPerfecto:   { label:"Pret. perfecto simple", promptName:"pretérito perfecto simple", color:"#0FA3A3", text:"#fff" },
+  pretImperfecto: { label:"Pret. imperfecto",      promptName:"pretérito imperfecto",      color:"#E8A600", text:"#2b2620" },
+  futuro:         { label:"Futuro simple",         promptName:"futuro simple",             color:"#6A4C93", text:"#fff" },
+  condicional:    { label:"Condicional simple",    promptName:"condicional simple",        color:"#1B998B", text:"#fff" },
+  imperativo:     { label:"Imperativo (tú)",       promptName:"imperativo",                color:"#EF476F", text:"#fff", singlePerson:1 },
+  subjPresente:   { label:"Subjuntivo presente",   promptName:"presente del subjuntivo",   color:"#118AB2", text:"#fff" }
+};
+// Verbos totalmente regulares (sin diptongación ni cambios ortográficos como
+// leer→leyó), agrupados por conjugación, para variar sin repetir siempre
+// hablar/comer/vivir.
+const VERB_BANK = {
+  ar: ["hablar","cantar","caminar","estudiar","escuchar","mirar","comprar","bailar","saltar","dibujar",
+       "cocinar","llamar","terminar","trabajar","ayudar","lavar","limpiar","pintar","cortar","marcar"],
+  er: ["comer","correr","aprender","beber","temer","vender","deber","romper","toser","meter",
+       "sorprender","esconder","comprender"],
+  ir: ["vivir","escribir","abrir","subir","decidir","describir","permitir","recibir","insistir",
+       "existir","discutir","definir","admitir","compartir","cumplir"]
+};
+const VERB_LIST = [].concat(VERB_BANK.ar, VERB_BANK.er, VERB_BANK.ir);
+// Terminaciones para yo/tú/él-ella/nosotros/ustedes/ellos-ellas, por conjugación.
+const CONJ_ENDINGS = {
+  presente:       { ar:["o","as","a","amos","an","an"],
+                     er:["o","es","e","emos","en","en"],
+                     ir:["o","es","e","imos","en","en"] },
+  pretPerfecto:   { ar:["é","aste","ó","amos","aron","aron"],
+                     er:["í","iste","ió","imos","ieron","ieron"],
+                     ir:["í","iste","ió","imos","ieron","ieron"] },
+  pretImperfecto: { ar:["aba","abas","aba","ábamos","aban","aban"],
+                     er:["ía","ías","ía","íamos","ían","ían"],
+                     ir:["ía","ías","ía","íamos","ían","ían"] },
+  subjPresente:   { ar:["e","es","e","emos","en","en"],
+                     er:["a","as","a","amos","an","an"],
+                     ir:["a","as","a","amos","an","an"] }
+};
+// Futuro y condicional se arman con el infinitivo completo, igual para las 3 conjugaciones.
+const FUTURO_END = ["é","ás","á","emos","án","án"];
+const COND_END   = ["ía","ías","ía","íamos","ían","ían"];
+
+// Irregulares de los grupos 9 y 10 del manual. No salen por regla de
+// terminaciones, así que se cargan a mano. Solo se listan los tiempos que
+// realmente son irregulares; los que faltan se calculan con las reglas
+// normales (ej. el imperfecto de TENER es regular: tenía, tenías...).
+const IRREGULAR_VERBS = {
+  ser: {
+    presente:       ["soy","eres","es","somos","son","son"],
+    pretPerfecto:   ["fui","fuiste","fue","fuimos","fueron","fueron"],
+    pretImperfecto: ["era","eras","era","éramos","eran","eran"],
+    subjPresente:   ["sea","seas","sea","seamos","sean","sean"],
+    imperativo:     "sé"
+  },
+  estar: {
+    presente:       ["estoy","estás","está","estamos","están","están"],
+    pretPerfecto:   ["estuve","estuviste","estuvo","estuvimos","estuvieron","estuvieron"],
+    subjPresente:   ["esté","estés","esté","estemos","estén","estén"],
+    imperativo:     "está"
+  },
+  tener: {
+    presente:       ["tengo","tienes","tiene","tenemos","tienen","tienen"],
+    pretPerfecto:   ["tuve","tuviste","tuvo","tuvimos","tuvieron","tuvieron"],
+    futuro:         ["tendré","tendrás","tendrá","tendremos","tendrán","tendrán"],
+    condicional:    ["tendría","tendrías","tendría","tendríamos","tendrían","tendrían"],
+    subjPresente:   ["tenga","tengas","tenga","tengamos","tengan","tengan"],
+    imperativo:     "ten"
+  },
+  ir: {
+    presente:       ["voy","vas","va","vamos","van","van"],
+    pretPerfecto:   ["fui","fuiste","fue","fuimos","fueron","fueron"],
+    pretImperfecto: ["iba","ibas","iba","íbamos","iban","iban"],
+    subjPresente:   ["vaya","vayas","vaya","vayamos","vayan","vayan"],
+    imperativo:     "ve"
+  },
+  hacer: {
+    presente:       ["hago","haces","hace","hacemos","hacen","hacen"],
+    pretPerfecto:   ["hice","hiciste","hizo","hicimos","hicieron","hicieron"],
+    futuro:         ["haré","harás","hará","haremos","harán","harán"],
+    condicional:    ["haría","harías","haría","haríamos","harían","harían"],
+    subjPresente:   ["haga","hagas","haga","hagamos","hagan","hagan"],
+    imperativo:     "haz"
+  },
+  poder: {
+    presente:       ["puedo","puedes","puede","podemos","pueden","pueden"],
+    pretPerfecto:   ["pude","pudiste","pudo","pudimos","pudieron","pudieron"],
+    futuro:         ["podré","podrás","podrá","podremos","podrán","podrán"],
+    condicional:    ["podría","podrías","podría","podríamos","podrían","podrían"],
+    subjPresente:   ["pueda","puedas","pueda","podamos","puedan","puedan"],
+    imperativo:     "puede"
+  },
+  querer: {
+    presente:       ["quiero","quieres","quiere","queremos","quieren","quieren"],
+    pretPerfecto:   ["quise","quisiste","quiso","quisimos","quisieron","quisieron"],
+    futuro:         ["querré","querrás","querrá","querremos","querrán","querrán"],
+    condicional:    ["querría","querrías","querría","querríamos","querrían","querrían"],
+    subjPresente:   ["quiera","quieras","quiera","queramos","quieran","quieran"],
+    imperativo:     "quiere"
+  },
+  decir: {
+    presente:       ["digo","dices","dice","decimos","dicen","dicen"],
+    pretPerfecto:   ["dije","dijiste","dijo","dijimos","dijeron","dijeron"],
+    futuro:         ["diré","dirás","dirá","diremos","dirán","dirán"],
+    condicional:    ["diría","dirías","diría","diríamos","dirían","dirían"],
+    subjPresente:   ["diga","digas","diga","digamos","digan","digan"],
+    imperativo:     "di"
+  }
+};
+const IRREGULAR_LIST = Object.keys(IRREGULAR_VERBS);
+
+function verbGroup(inf){ return inf.endsWith("ar") ? "ar" : (inf.endsWith("er") ? "er" : "ir"); }
+function verbRoot(inf){ return inf.slice(0, -2); }
+function isIrregular(inf){ return Object.prototype.hasOwnProperty.call(IRREGULAR_VERBS, inf); }
+function conjugate(inf, tenseId, personIdx){
+  // Los irregulares mandan: si el verbo tiene forma cargada para ese tiempo, se usa esa.
+  if(isIrregular(inf)){
+    const forms = IRREGULAR_VERBS[inf][tenseId];
+    if(typeof forms === "string") return forms;          // imperativo: una sola forma (tú)
+    if(Array.isArray(forms)) return forms[personIdx];
+    // sin entrada para ese tiempo → ese tiempo es regular en este verbo (ej. imperfecto de tener)
+  }
+  const group = verbGroup(inf), root = verbRoot(inf);
+  if(tenseId === "futuro") return inf + FUTURO_END[personIdx];
+  if(tenseId === "condicional") return inf + COND_END[personIdx];
+  if(tenseId === "imperativo") return root + (group === "ar" ? "a" : "e"); // quitar -s del presente tú
+  return root + CONJ_ENDINGS[tenseId][group][personIdx];
+}
+
+// En los verbos -AR e -IR, el presente y el pretérito perfecto simple coinciden
+// en "nosotros" (hablamos = hablamos, vivimos = vivimos). Preguntar eso no evalúa
+// nada: la respuesta es la misma sin importar el tiempo. Se descarta al sortear.
+function isAmbiguousCombo(inf, tenseId, personIdx){
+  if(personIdx !== 3) return false;
+  if(tenseId !== "presente" && tenseId !== "pretPerfecto") return false;
+  if(isIrregular(inf)) return conjugate(inf, "presente", 3) === conjugate(inf, "pretPerfecto", 3);
+  return verbGroup(inf) !== "er"; // en -ER sí se distinguen: comemos / comimos
+}
+
+/* ---------------- Reglas explicativas por tiempo ---------------- */
+// Igual que la nota de regla de ortografía: cuando falla, tiene que entender
+// POR QUÉ, no solo ver la forma correcta. Texto tomado del manual.
+const TENSE_RULES = {
+  presente: {
+    ar:"Presente de los verbos en -AR: a la raíz se le agrega <strong>-o, -as, -a, -amos, -an, -an</strong>. Hablar → hablo, hablas, habla, hablamos, hablan.",
+    er:"Presente de los verbos en -ER: a la raíz se le agrega <strong>-o, -es, -e, -emos, -en, -en</strong>. Comer → como, comes, come, comemos, comen.",
+    ir:"Presente de los verbos en -IR: a la raíz se le agrega <strong>-o, -es, -e, -imos, -en, -en</strong>. Vivir → vivo, vives, vive, vivimos, viven. Ojo: en «nosotros» es <em>-imos</em>, no <em>-emos</em>."
+  },
+  pretPerfecto: {
+    ar:"Pretérito perfecto simple de los verbos en -AR: <strong>-é, -aste, -ó, -amos, -aron, -aron</strong>. Hablar → hablé, hablaste, habló. Es una acción que ya terminó: «ayer hablé con ella».",
+    er:"Pretérito perfecto simple de los verbos en -ER: <strong>-í, -iste, -ió, -imos, -ieron, -ieron</strong>. Comer → comí, comiste, comió. Es una acción que ya terminó.",
+    ir:"Pretérito perfecto simple de los verbos en -IR: <strong>-í, -iste, -ió, -imos, -ieron, -ieron</strong> (igual que los -ER). Vivir → viví, viviste, vivió."
+  },
+  pretImperfecto: {
+    ar:"Pretérito imperfecto de los verbos en -AR: <strong>-aba, -abas, -aba, -ábamos, -aban, -aban</strong>. Siempre con <strong>B</strong>: hablaba, jugábamos. Describe algo habitual: «cuando era chica, jugaba todos los días».",
+    er:"Pretérito imperfecto de los verbos en -ER: <strong>-ía, -ías, -ía, -íamos, -ían, -ían</strong>, siempre con tilde en la í: comía, comíamos.",
+    ir:"Pretérito imperfecto de los verbos en -IR: <strong>-ía, -ías, -ía, -íamos, -ían, -ían</strong> (igual que los -ER), siempre con tilde en la í: vivía, vivíamos."
+  },
+  futuro: {
+    all:"El futuro simple se arma con el <strong>infinitivo completo</strong> + la terminación <strong>-é, -ás, -á, -emos, -án, -án</strong>. Es igual para -AR, -ER e -IR: hablaré, comeré, viviré. No se quita la terminación del infinitivo."
+  },
+  condicional: {
+    all:"El condicional simple también usa el <strong>infinitivo completo</strong> + <strong>-ía, -ías, -ía, -íamos, -ían, -ían</strong>. Igual para las tres conjugaciones: hablaría, comería, viviría. Expresa algo hipotético: «yo iría, pero...»."
+  },
+  imperativo: {
+    all:"El imperativo de «tú» en los verbos regulares se forma <strong>quitando la -s del presente</strong>: hablas → habla, comes → come, vives → vive. Sirve para dar una orden o un pedido."
+  },
+  subjPresente: {
+    ar:"Presente del subjuntivo de los verbos en -AR: se cambia la A por la <strong>E</strong> → <strong>-e, -es, -e, -emos, -en, -en</strong>. Hablar → que hable, que hables. Se usa con duda o deseo: «espero que hable».",
+    er:"Presente del subjuntivo de los verbos en -ER: se cambia la E por la <strong>A</strong> → <strong>-a, -as, -a, -amos, -an, -an</strong>. Comer → que coma, que comas.",
+    ir:"Presente del subjuntivo de los verbos en -IR: <strong>-a, -as, -a, -amos, -an, -an</strong> (igual que los -ER). Vivir → que viva, que vivas. Se usa con duda o deseo: «ojalá viva cerca»."
+  }
+};
+// Notas propias de cada verbo irregular: lo que hay que memorizar sí o sí.
+const IRREGULAR_NOTES = {
+  ser:    "<strong>SER</strong> es irregular: cambia de raíz por completo (soy, eres, es / fui, fuiste, fue / era, eras, era). <em>Ser</em> indica una característica permanente: «es alta».",
+  estar:  "<strong>ESTAR</strong> es irregular y lleva tilde en casi todo el presente: estoy, est<strong>á</strong>s, est<strong>á</strong>, estamos, est<strong>á</strong>n. <em>Estar</em> indica estado o ubicación: «está cansada», «está en casa».",
+  tener:  "<strong>TENER</strong> es irregular: en «yo» es tengo, y la E cambia a <strong>IE</strong> en t<strong>ie</strong>nes, t<strong>ie</strong>ne, t<strong>ie</strong>nen — pero no en «nosotros» (tenemos). En futuro y condicional agrega una D: tendré, tendría. Imperativo: <strong>ten</strong>.",
+  ir:     "<strong>IR</strong> es el más irregular de todos: presente voy, vas, va; pasado fui, fuiste, fue (igual que SER); imperfecto iba, ibas, íbamos (con B). Imperativo: <strong>ve</strong>.",
+  hacer:  "<strong>HACER</strong>: en «yo» del presente es hago. En pasado cambia a hic-, y en «él/ella» se escribe <strong>hizo</strong> con Z. Futuro y condicional se acortan: haré, haría. Imperativo: <strong>haz</strong>.",
+  poder:  "<strong>PODER</strong> es irregular: la O cambia a <strong>UE</strong> en p<strong>ue</strong>do, puedes, puede, pueden — pero no en «nosotros» (podemos). En pasado cambia a pud-: pude, pudiste, pudo. Futuro: podré.",
+  querer: "<strong>QUERER</strong> es irregular: la E cambia a <strong>IE</strong> en qu<strong>ie</strong>ro, quieres, quiere, quieren — pero no en «nosotros» (queremos). En pasado cambia a quis-: quise, quisiste, quiso. Futuro con doble R: querré.",
+  decir:  "<strong>DECIR</strong>: en «yo» del presente es digo, y el resto cambia la E por I (dices, dice, dicen), salvo «nosotros» (decimos). En pasado: dije, dijiste, dijo. Imperativo: <strong>di</strong>."
+};
+function tenseRuleHTML(inf, tenseId){
+  const byTense = TENSE_RULES[tenseId];
+  const base = byTense.all ? byTense.all : byTense[verbGroup(inf)];
+  if(isIrregular(inf)){
+    const irregularForThisTense = IRREGULAR_VERBS[inf][tenseId] !== undefined;
+    // Si este tiempo del verbo es regular, vale la regla general; si no, manda la nota del irregular.
+    return irregularForThisTense ? IRREGULAR_NOTES[inf] : (IRREGULAR_NOTES[inf] + "<br><br>Pero <strong>este tiempo sí es regular</strong> en este verbo: " + base);
+  }
+  return base;
+}
+// Compara la respuesta con la correcta ignorando tildes, para poder decir
+// "era solo la tilde" en vez de un ✗ genérico que no enseña nada.
+function stripAccents(s){
+  return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+function isAccentOnlyError(typed, correct){
+  const a = normalizeAnswer(typed), b = normalizeAnswer(correct);
+  if(a === b) return false;
+  return stripAccents(a) === stripAccents(b);
+}
+
 /* ---------------- App state ---------------- */
 const STORAGE_KEY = "dictado-ortografia-v2";
 const state = {
@@ -1216,10 +1500,24 @@ const state = {
   mathIndex: 0,
   mathCorrect: 0,
   mathWrong: [],
-  mathCurrent: null
+  mathCurrent: null,
+  verbCount: 0,
+  verbCorrect: 0,
+  verbWrong: [],
+  verbCurrent: null,
+  verbPhase: null,      // "waiting" | "revealed"
+  verbTypedDraft: "",
+  verbLastTyped: "",
+  verbLastMatch: false,
+  verbMode: null,       // "practice" | "exam" | "review"
+  verbQueue: [],        // cola fija para examen y repaso
+  verbIndex: 0,
+  verbLastWrong: []     // {inf, tenseId, personIdx} de la última sesión, para repasar
 };
 let currentRate = 0.8;
 let selectedCats = new Set(Object.keys(CAT));
+let selectedTenses = new Set(Object.keys(VERB_TENSES));
+let verbKinds = new Set(["regular"]); // "regular" | "irregular" — los irregulares se activan aparte
 
 /* ---------------- Progreso: monedas, racha, mascotas ---------------- */
 const PROGRESS_KEY = "dictado-progreso-v1";
@@ -1250,6 +1548,14 @@ const CATEGORY_ACHIEVEMENTS = Object.keys(CAT).map(key => ({
   desc: "Acertá 20 palabras de la categoría " + CAT[key].label + ".",
   check: (p) => !!(p.catStats && p.catStats[key] && p.catStats[key].correct >= 20)
 }));
+// Un logro "Experto en <tiempo>" por cada tiempo verbal, mismo patrón que CATEGORY_ACHIEVEMENTS.
+const VERB_ACHIEVEMENTS = Object.keys(VERB_TENSES).map(key => ({
+  id: "verbo_" + key,
+  emoji: "📗",
+  name: "Experto en " + VERB_TENSES[key].label,
+  desc: "Acertá 20 conjugaciones de " + VERB_TENSES[key].label.toLowerCase() + ".",
+  check: (p) => !!(p.verbStats && p.verbStats[key] && p.verbStats[key].correct >= 20)
+}));
 const ACHIEVEMENTS = [
   { id:"racha3",     emoji:"✨", name:"Primeros pasos",    desc:"Practicá 3 días seguidos.",
     check:(p,s) => p.streak >= 3 },
@@ -1278,8 +1584,14 @@ const ACHIEVEMENTS = [
   { id:"examenmateperfecto", emoji:"🏅", name:"Examen de mate perfecto", desc:"Sacá 100/100 en un examen de matemática.",
     check:(p,s) => p.bestMathScore >= 100 },
   { id:"todaslasmascotas", emoji:"🐾", name:"Coleccionista", desc:"Desbloqueá todas las mascotas.",
-    check:(p,s) => p.ownedPets && p.ownedPets.length >= PETS.length }
-].concat(CATEGORY_ACHIEVEMENTS);
+    check:(p,s) => p.ownedPets && p.ownedPets.length >= PETS.length },
+  { id:"cienverbos", emoji:"🗣️", name:"Cien verbos", desc:"Conjugá correctamente 100 verbos en total.",
+    check:(p,s) => (p.totalVerbsCorrect || 0) >= 100 },
+  { id:"quinientosverbos", emoji:"🎤", name:"Quinientos verbos", desc:"Conjugá correctamente 500 verbos en total.",
+    check:(p,s) => (p.totalVerbsCorrect || 0) >= 500 },
+  { id:"examenverboperfecto", emoji:"🥇", name:"Examen de verbos perfecto", desc:"Sacá 100/100 en un examen de verbos.",
+    check:(p,s) => p.bestVerbScore >= 100 }
+].concat(CATEGORY_ACHIEVEMENTS).concat(VERB_ACHIEVEMENTS);
 let progress = {
   coins: 0,
   totalCoinsEarned: 0,
@@ -1292,10 +1604,13 @@ let progress = {
   achievements: [],
   bestExamScore: 0,
   bestMathScore: 0,
+  bestVerbScore: 0,
   lastChestDate: null,
   catStats: {},          // { bv: {correct, wrong}, ... } — para "fortalezas por regla" y logros de categoría
+  verbStats: {},         // { presente: {correct, wrong}, ... } — mismo patrón, para tiempos verbales
   totalWordsCorrect: 0,  // acumulado histórico de palabras acertadas (práctica + examen + repaso)
-  totalMathCorrect: 0    // acumulado histórico de operaciones acertadas
+  totalMathCorrect: 0,   // acumulado histórico de operaciones acertadas
+  totalVerbsCorrect: 0   // acumulado histórico de conjugaciones acertadas
 };
 function loadProgress(){
   try{
@@ -1313,6 +1628,7 @@ function loadProgress(){
     if(Array.isArray(data.achievements)) progress.achievements = data.achievements;
     if(typeof data.bestExamScore === "number") progress.bestExamScore = data.bestExamScore;
     if(typeof data.bestMathScore === "number") progress.bestMathScore = data.bestMathScore;
+    if(typeof data.bestVerbScore === "number") progress.bestVerbScore = data.bestVerbScore;
     if(typeof data.lastChestDate === "string") progress.lastChestDate = data.lastChestDate;
     if(data.catStats && typeof data.catStats === "object"){
       Object.keys(data.catStats).forEach(key => {
@@ -1323,6 +1639,14 @@ function loadProgress(){
     }
     if(typeof data.totalWordsCorrect === "number") progress.totalWordsCorrect = data.totalWordsCorrect;
     if(typeof data.totalMathCorrect === "number") progress.totalMathCorrect = data.totalMathCorrect;
+    if(data.verbStats && typeof data.verbStats === "object"){
+      Object.keys(data.verbStats).forEach(key => {
+        if(!Object.prototype.hasOwnProperty.call(VERB_TENSES, key)) return; // descartar tiempos que ya no existen
+        const s = data.verbStats[key];
+        if(s && typeof s.correct === "number" && typeof s.wrong === "number") progress.verbStats[key] = { correct:s.correct, wrong:s.wrong };
+      });
+    }
+    if(typeof data.totalVerbsCorrect === "number") progress.totalVerbsCorrect = data.totalVerbsCorrect;
   }catch(e){}
 }
 function recordCategoryStat(cat, correct){
@@ -1331,6 +1655,13 @@ function recordCategoryStat(cat, correct){
   else{ progress.catStats[cat].wrong++; }
   saveProgress();
   paintStatsChips();
+}
+function recordVerbStat(tenseId, correct){
+  if(!progress.verbStats[tenseId]) progress.verbStats[tenseId] = { correct:0, wrong:0 };
+  if(correct){ progress.verbStats[tenseId].correct++; progress.totalVerbsCorrect++; }
+  else{ progress.verbStats[tenseId].wrong++; }
+  saveProgress();
+  paintVerbStatsChips();
 }
 function saveProgress(){
   try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); }catch(e){}
@@ -1760,12 +2091,25 @@ function loadPrefs(){
     if(typeof data.typeMode === "boolean") state.typeMode = data.typeMode;
     if(Array.isArray(data.lastWrong)) state.lastWrong = data.lastWrong;
     if(typeof data.darkMode === "boolean") state.darkMode = data.darkMode;
-    if(data.subject === "math" || data.subject === "orto") state.subject = data.subject;
+    if(data.subject === "math" || data.subject === "orto" || data.subject === "verbos") state.subject = data.subject;
     if(Array.isArray(data.mathOps)){
       const v = data.mathOps.filter(k => Object.prototype.hasOwnProperty.call(MATH_OPS, k));
       if(v.length) mathOps = new Set(v);
     }
     if(typeof data.mathTerms === "number" && [0,2,3,4,5].indexOf(data.mathTerms) !== -1) mathTerms = data.mathTerms;
+    if(Array.isArray(data.verbTenses)){
+      const vt = data.verbTenses.filter(k => Object.prototype.hasOwnProperty.call(VERB_TENSES, k));
+      if(vt.length) selectedTenses = new Set(vt);
+    }
+    if(Array.isArray(data.verbKinds)){
+      const vk = data.verbKinds.filter(k => k === "regular" || k === "irregular");
+      if(vk.length) verbKinds = new Set(vk);
+    }
+    if(Array.isArray(data.verbLastWrong)){
+      state.verbLastWrong = data.verbLastWrong.filter(x =>
+        x && typeof x.inf === "string" && typeof x.personIdx === "number" &&
+        Object.prototype.hasOwnProperty.call(VERB_TENSES, x.tenseId));
+    }
   }catch(e){}
 }
 function savePrefs(){
@@ -1778,7 +2122,10 @@ function savePrefs(){
       darkMode: state.darkMode,
       subject: state.subject,
       mathOps: [...mathOps],
-      mathTerms: mathTerms
+      mathTerms: mathTerms,
+      verbTenses: [...selectedTenses],
+      verbKinds: [...verbKinds],
+      verbLastWrong: state.verbLastWrong.slice(0, 40)
     }));
   }catch(e){}
 }
@@ -1921,7 +2268,7 @@ function replayCurrent(){
 
 /* ---------------- Screen switching ---------------- */
 function showScreen(name){
-  ["menu","practice","exam","math","results"].forEach(s => {
+  ["menu","practice","exam","math","verbs","results"].forEach(s => {
     document.getElementById("screen-" + s).classList.toggle("hidden", s !== name);
   });
   state.screen = name;
@@ -1959,9 +2306,13 @@ function exitToMenu(){
   state._typedDraft = "";
   state.mathCurrent = null;
   state.mathMode = null;
+  state.verbCurrent = null;
+  state.verbPhase = null;
+  state.verbMode = null;
   showScreen("menu");
   applySubjectUI();
   updateReviewButton();
+  updateVerbReviewButton();
 }
 
 /* ---------------- Timer (JS, pausable) ---------------- */
@@ -2942,23 +3293,27 @@ function toggleMathOp(k){
 function setMathTerms(v){ mathTerms = v; paintMathChips(); }
 
 function setSubject(s){
-  state.subject = (s === "math") ? "math" : "orto";
+  state.subject = (s === "math") ? "math" : (s === "verbos" ? "verbos" : "orto");
   applySubjectUI();
   savePrefs();
 }
 function applySubjectUI(){
   const isMath = state.subject === "math";
+  const isVerbos = state.subject === "verbos";
   const orto = document.getElementById("menu-orto");
   const math = document.getElementById("menu-math");
-  if(orto) orto.classList.toggle("hidden", isMath);
+  const verbos = document.getElementById("menu-verbos");
+  if(orto) orto.classList.toggle("hidden", isMath || isVerbos);
   if(math) math.classList.toggle("hidden", !isMath);
-  const to = document.getElementById("tab-orto"), tm = document.getElementById("tab-math");
-  if(to) to.setAttribute("aria-pressed", isMath ? "false" : "true");
+  if(verbos) verbos.classList.toggle("hidden", !isVerbos);
+  const to = document.getElementById("tab-orto"), tm = document.getElementById("tab-math"), tv = document.getElementById("tab-verbos");
+  if(to) to.setAttribute("aria-pressed", (!isMath && !isVerbos) ? "true" : "false");
   if(tm) tm.setAttribute("aria-pressed", isMath ? "true" : "false");
-  const sc = document.getElementById("speed-control");   // la velocidad de voz no aplica a mates
+  if(tv) tv.setAttribute("aria-pressed", isVerbos ? "true" : "false");
+  const sc = document.getElementById("speed-control");   // la velocidad de voz no aplica a mates, pero sí a verbos (también se dictan)
   if(sc) sc.classList.toggle("hidden", isMath);
   const title = document.getElementById("app-title");
-  if(title) title.textContent = isMath ? "🔢 Matemática" : "✏️ Dictado";
+  title && (title.textContent = isMath ? "🔢 Matemática" : (isVerbos ? "🔤 Verbos" : "✏️ Dictado"));
 }
 function updateBestMathUI(){
   const el = document.getElementById("best-math-line");
@@ -3130,6 +3485,442 @@ function showMathResults(){
   }
 }
 
+/* ---------------- Menú de verbos: chips de tiempos y progreso ---------------- */
+function buildVerbTenseChips(){
+  const el = document.getElementById("verb-tense-chips");
+  if(!el) return;
+  el.innerHTML = Object.entries(VERB_TENSES).map(([k,t]) =>
+    `<button type="button" class="cat-chip" id="vchip-${k}" aria-pressed="true"
+      style="border-color:${t.color}; color:${t.color}"
+      onclick="toggleVerbTense('${k}')">${t.label}</button>`).join("");
+  paintVerbTenseChips();
+}
+function paintVerbTenseChips(){
+  Object.entries(VERB_TENSES).forEach(([k,t]) => {
+    const ch = document.getElementById("vchip-" + k);
+    if(!ch) return;
+    const on = selectedTenses.has(k);
+    ch.setAttribute("aria-pressed", on ? "true" : "false");
+    ch.style.background = on ? hexToRgba(t.color, 0.14) : "";
+  });
+  const countEl = document.getElementById("verb-tense-count");
+  const modeBtns = document.querySelectorAll("#menu-verbos .mode-btn:not(#btn-verb-review)");
+  const ready = verbsReady();
+  if(countEl){
+    countEl.textContent = selectedTenses.size === 0
+      ? "Elegí al menos un tiempo verbal para empezar."
+      : (activeVerbPool().length === 0 ? "Elegí al menos un tipo de verbo (regulares o irregulares)." : "");
+    countEl.classList.toggle("warn", !ready);
+  }
+  modeBtns.forEach(b => { b.disabled = !ready; });
+  savePrefs();
+}
+const VERB_KINDS = {
+  regular:   { label:"Regulares",   color:"#2ECC71" },
+  irregular: { label:"Irregulares", color:"#B5179E" }
+};
+function buildVerbKindChips(){
+  const el = document.getElementById("verb-kind-chips");
+  if(!el) return;
+  el.innerHTML = Object.entries(VERB_KINDS).map(([k,c]) => {
+    const n = k === "regular" ? VERB_LIST.length : IRREGULAR_LIST.length;
+    return `<button type="button" class="cat-chip" id="vkchip-${k}" aria-pressed="true"
+      style="border-color:${c.color}; color:${c.color}"
+      onclick="toggleVerbKind('${k}')">${c.label} <span style="opacity:.6">${n}</span></button>`;
+  }).join("");
+  paintVerbKindChips();
+}
+function paintVerbKindChips(){
+  Object.entries(VERB_KINDS).forEach(([k,c]) => {
+    const ch = document.getElementById("vkchip-" + k);
+    if(!ch) return;
+    const on = verbKinds.has(k);
+    ch.setAttribute("aria-pressed", on ? "true" : "false");
+    ch.style.background = on ? hexToRgba(c.color, 0.14) : "";
+  });
+}
+function toggleVerbKind(k){
+  if(verbKinds.has(k)) verbKinds.delete(k); else verbKinds.add(k);
+  paintVerbKindChips();
+  paintVerbTenseChips();  // revalida los botones y el mensaje de aviso
+}
+function toggleVerbTense(key){
+  if(selectedTenses.has(key)) selectedTenses.delete(key); else selectedTenses.add(key);
+  paintVerbTenseChips();
+}
+function setAllVerbTenses(on){
+  selectedTenses = on ? new Set(Object.keys(VERB_TENSES)) : new Set();
+  paintVerbTenseChips();
+}
+function verbTenseAccuracy(key){
+  const s = progress.verbStats && progress.verbStats[key];
+  if(!s || (s.correct + s.wrong) === 0) return null;
+  return Math.round(s.correct / (s.correct + s.wrong) * 100);
+}
+function buildVerbStatsChips(){
+  const wrap = document.getElementById("verb-stats-chips");
+  if(!wrap) return;
+  wrap.innerHTML = Object.entries(VERB_TENSES).map(([key, t]) => `
+    <span class="stat-chip" id="verb-stat-chip-${key}" style="border-color:${t.color}; color:${t.color}">
+      <span class="stat-dot" id="verb-stat-dot-${key}"></span>${t.label}
+      <span id="verb-stat-pct-${key}"></span>
+    </span>`).join("");
+  paintVerbStatsChips();
+}
+function paintVerbStatsChips(){
+  Object.keys(VERB_TENSES).forEach(key => {
+    const chip = document.getElementById("verb-stat-chip-" + key);
+    const dot  = document.getElementById("verb-stat-dot-" + key);
+    const pctEl = document.getElementById("verb-stat-pct-" + key);
+    if(!chip || !dot || !pctEl) return;
+    const pct = verbTenseAccuracy(key);
+    if(pct === null){
+      chip.classList.add("empty");
+      dot.style.background = "#B9B4C9";
+      pctEl.textContent = "sin datos";
+    } else {
+      chip.classList.remove("empty");
+      dot.style.background = pct >= 80 ? "#22C55E" : pct >= 50 ? "#E8A600" : "#FF3B30";
+      pctEl.textContent = pct + "%";
+    }
+  });
+}
+
+/* ---------------- Sesión de verbos ---------------- */
+const VERB_EXAM_N = 15;
+
+function verbPromptLabel(item){
+  const tense = VERB_TENSES[item.tenseId];
+  const personText = tense.singlePerson != null
+    ? PERSON_DESC[item.personIdx] + " (tú)"
+    : PERSON_DESC[item.personIdx] + " (" + PRONOUNS[item.personIdx] + ")";
+  return { tenseLabel: tense.promptName, personLabel: personText };
+}
+function verbSpeechText(item){
+  const tense = VERB_TENSES[item.tenseId];
+  const personSpeech = tense.singlePerson != null ? PERSON_SPEECH[1] : PERSON_SPEECH[item.personIdx];
+  return "Conjugá el verbo " + item.inf + ". " + tense.promptName + ". " + personSpeech + ".";
+}
+function verbBadgeHTML(item){
+  const t = VERB_TENSES[item.tenseId];
+  const irr = isIrregular(item.inf) ? ` <span class="badge" style="background:#B5179E;color:#fff">irregular</span>` : "";
+  return `<span class="badge" style="background:${t.color};color:${t.text}">${t.label}</span>` + irr;
+}
+// Pool de infinitivos según los chips de tipo de verbo (regulares / irregulares).
+function activeVerbPool(){
+  let pool = [];
+  if(verbKinds.has("regular")) pool = pool.concat(VERB_LIST);
+  if(verbKinds.has("irregular")) pool = pool.concat(IRREGULAR_LIST);
+  return pool;
+}
+function verbsReady(){ return selectedTenses.size > 0 && activeVerbPool().length > 0; }
+// Sortea una consigna válida: respeta los chips y descarta las combinaciones
+// ambiguas (presente vs. perfecto simple en "nosotros" de -AR/-IR).
+function makeVerbItem(){
+  const tenseKeys = [...selectedTenses];
+  const pool = activeVerbPool();
+  if(tenseKeys.length === 0 || pool.length === 0) return null;
+  for(let attempt = 0; attempt < 60; attempt++){
+    const tenseId = tenseKeys[Math.floor(Math.random() * tenseKeys.length)];
+    const tense = VERB_TENSES[tenseId];
+    const inf = pool[Math.floor(Math.random() * pool.length)];
+    const personIdx = tense.singlePerson != null ? tense.singlePerson : Math.floor(Math.random() * 6);
+    if(isAmbiguousCombo(inf, tenseId, personIdx)) continue;
+    return { inf, tenseId, personIdx, answer: conjugate(inf, tenseId, personIdx) };
+  }
+  // Fallback: si todo lo sorteable resultó ambiguo, aceptar igual para no colgar la sesión.
+  const tenseId = tenseKeys[0];
+  const tense = VERB_TENSES[tenseId];
+  const inf = pool[0];
+  const personIdx = tense.singlePerson != null ? tense.singlePerson : 0;
+  return { inf, tenseId, personIdx, answer: conjugate(inf, tenseId, personIdx) };
+}
+function resetVerbSession(mode){
+  state.subject = "verbos";
+  state.verbMode = mode;
+  state.verbCount = 0;
+  state.verbCorrect = 0;
+  state.verbWrong = [];
+  state.verbQueue = [];
+  state.verbIndex = 0;
+  state.sessionCorrectStreak = 0;
+}
+function startVerbPractice(){
+  if(!verbsReady()) return;
+  resetVerbSession("practice");
+  showScreen("verbs");
+  nextVerbItem();
+}
+function startVerbExam(){
+  if(!verbsReady()) return;
+  resetVerbSession("exam");
+  // Cola fija: reparte los tiempos elegidos lo más parejo posible.
+  const tenseKeys = [...selectedTenses];
+  const queue = [];
+  for(let k = 0; k < VERB_EXAM_N; k++){
+    const tenseId = tenseKeys[k % tenseKeys.length];
+    const tense = VERB_TENSES[tenseId];
+    const pool = activeVerbPool();
+    let item = null;
+    for(let attempt = 0; attempt < 60 && !item; attempt++){
+      const inf = pool[Math.floor(Math.random() * pool.length)];
+      const personIdx = tense.singlePerson != null ? tense.singlePerson : Math.floor(Math.random() * 6);
+      if(isAmbiguousCombo(inf, tenseId, personIdx)) continue;
+      item = { inf, tenseId, personIdx, answer: conjugate(inf, tenseId, personIdx) };
+    }
+    if(item) queue.push(item);
+  }
+  state.verbQueue = shuffle(queue);
+  showScreen("verbs");
+  nextVerbItem();
+}
+function startVerbReview(){
+  if(state.verbLastWrong.length === 0){
+    alert("No hay errores guardados para repasar.");
+    return;
+  }
+  resetVerbSession("review");
+  // Se reconstruye la respuesta al vuelo por si cambió el motor de conjugación.
+  state.verbQueue = shuffle(state.verbLastWrong.map(x => ({
+    inf: x.inf, tenseId: x.tenseId, personIdx: x.personIdx,
+    answer: conjugate(x.inf, x.tenseId, x.personIdx)
+  })));
+  showScreen("verbs");
+  nextVerbItem();
+}
+function nextVerbItem(){
+  clearPending();
+  const usesQueue = state.verbMode === "exam" || state.verbMode === "review";
+  if(usesQueue && state.verbIndex >= state.verbQueue.length){
+    showVerbResults();
+    return;
+  }
+  const item = usesQueue ? state.verbQueue[state.verbIndex] : makeVerbItem();
+  if(!item){
+    alert("No pude armar una consigna con esa combinación. Probá activar más tiempos o más verbos.");
+    exitToMenu();
+    return;
+  }
+  state.verbCount++;
+  state.verbCurrent = item;
+  state.verbTypedDraft = "";
+  state.verbLastTyped = "";
+  state.verbLastMatch = false;
+  state.verbPhase = "waiting";
+  renderVerbs();
+  speak(verbSpeechText(item));
+  setTimeout(() => {
+    const inp = document.getElementById("verb-input");
+    if(inp) inp.focus();
+  }, 50);
+}
+function replayVerbPrompt(){
+  if(!state.verbCurrent) return;
+  speak(verbSpeechText(state.verbCurrent));
+}
+function submitVerbAnswer(){
+  if(state.verbPhase !== "waiting" || !state.verbCurrent) return;
+  const item = state.verbCurrent;
+  const inp = document.getElementById("verb-input");
+  const raw = inp ? inp.value : (state.verbTypedDraft || "");
+  const typed = normalizeAnswer(raw);
+  const target = normalizeAnswer(item.answer);
+  state.verbLastTyped = raw.trim();
+  state.verbLastMatch = typed.length > 0 && typed === target;
+  state.verbPhase = "revealed";
+  recordVerbStat(item.tenseId, state.verbLastMatch);
+  if(state.verbLastMatch){
+    state.verbCorrect++;
+    state.sessionCorrectStreak++;
+    rewardCorrect();
+    checkAchievements();
+  } else {
+    state.verbWrong.push(item);
+    state.sessionCorrectStreak = 0;
+    reactWrong();
+  }
+  renderVerbs();
+}
+function advanceVerb(){
+  if(state.verbPhase !== "revealed") return;
+  if(state.verbMode === "exam" || state.verbMode === "review") state.verbIndex++;
+  nextVerbItem();
+}
+function syncVerbProgressBar(){
+  const bar = document.getElementById("verb-progressbar");
+  const fill = document.getElementById("verb-progressfill");
+  if(!bar || !fill) return;
+  const usesQueue = state.verbMode === "exam" || state.verbMode === "review";
+  bar.classList.toggle("hidden", !usesQueue);
+  if(!usesQueue) return;
+  const total = state.verbQueue.length || 1;
+  fill.style.width = Math.min(100, (state.verbIndex / total) * 100) + "%";
+}
+function renderVerbs(){
+  const item = state.verbCurrent;
+  const badge = document.getElementById("verb-badge");
+  const counter = document.getElementById("verb-counter");
+  const stats = document.getElementById("verb-stats");
+  const status = document.getElementById("verb-status");
+  const stage = document.getElementById("verb-stage");
+  if(!item || !stage) return;
+  badge.innerHTML = verbBadgeHTML(item);
+  const usesQueue = state.verbMode === "exam" || state.verbMode === "review";
+  const label = state.verbMode === "review" ? "Repaso" : "Verbo";
+  counter.textContent = usesQueue
+    ? label + " " + (state.verbIndex + 1) + " de " + state.verbQueue.length
+    : label + " " + state.verbCount;
+  stats.innerHTML = `<span class="ok">✓ ${state.verbCorrect}</span> · <span class="ko">✗ ${state.verbWrong.length}</span>`;
+  setStageClickable(stage, false, null);
+  syncVerbProgressBar();
+  const lbl = verbPromptLabel(item);
+  const tenseColor = VERB_TENSES[item.tenseId].color;
+  if(state.verbPhase === "waiting"){
+    status.textContent = "✍️ Escuchá y escribí la forma conjugada";
+    stage.innerHTML = `
+      <div class="word-reveal" style="color:${tenseColor}">${item.inf}</div>
+      <div class="context-frase">${lbl.tenseLabel} · ${lbl.personLabel}</div>
+      <div class="type-box">
+        <input type="text" id="verb-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          placeholder="Escribí la forma conjugada…" aria-label="Escribí la forma conjugada"
+          value="${escapeHtml(state.verbTypedDraft || "")}"
+          oninput="state.verbTypedDraft = this.value;"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();submitVerbAnswer();}">
+        <div class="type-feedback" id="verb-feedback"></div>
+      </div>
+      <div class="timer-actions">
+        <button type="button" class="btn-primary" style="padding:9px 20px;" onclick="submitVerbAnswer()">✅ Corregir</button>
+      </div>
+      <div class="hint-text"><kbd>Enter</kbd> o el botón para corregir</div>`;
+  } else if(state.verbPhase === "revealed"){
+    const accentOnly = !state.verbLastMatch && state.verbLastTyped &&
+                       isAccentOnlyError(state.verbLastTyped, item.answer);
+    status.textContent = state.verbLastMatch ? "¡Bien! 🎉"
+                       : (accentOnly ? "¡Casi! Era solo la tilde ✍️" : "Fijate la regla 👇");
+    let fb;
+    if(state.verbLastMatch){
+      fb = `<div class="type-feedback ok">✓ Escribiste bien: «${escapeHtml(state.verbLastTyped)}»</div>`;
+    } else if(accentOnly){
+      fb = `<div class="type-feedback ko">✗ Escribiste «${escapeHtml(state.verbLastTyped)}» · te faltó la tilde: «${item.answer}»</div>`;
+    } else {
+      fb = `<div class="type-feedback ko">✗ Escribiste «${escapeHtml(state.verbLastTyped || "(nada)")}» · correcto: «${item.answer}»</div>`;
+    }
+    // Al fallar se muestra la regla del tiempo, igual que la nota de ortografía.
+    const tint = hexToRgba(tenseColor, 0.10);
+    const ruleNote = state.verbLastMatch ? "" :
+      `<div class="paper-note" style="background-color:${tint}; border-left:5px solid ${tenseColor}; --note-accent:${tenseColor};">${tenseRuleHTML(item.inf, item.tenseId)}</div>`;
+    stage.innerHTML = `
+      <div class="word-reveal" style="color:${tenseColor}">${item.answer}</div>
+      <div class="context-frase">${item.inf} · ${lbl.tenseLabel} · ${lbl.personLabel}</div>
+      ${fb}
+      ${ruleNote}
+      <div class="controls-row" style="margin-top:18px;">
+        <button type="button" class="btn-ghost" onclick="advanceVerb()">➡️ Siguiente</button>
+      </div>
+      <div class="hint-text">Ya se corrigió solo · <kbd>Enter</kbd>, tocá o el botón para seguir</div>`;
+    setStageClickable(stage, true, advanceVerb);
+  }
+}
+function saveVerbWrong(){
+  if(state.verbWrong.length){
+    state.verbLastWrong = state.verbWrong.map(x => ({ inf:x.inf, tenseId:x.tenseId, personIdx:x.personIdx }));
+    savePrefs();
+  }
+}
+function updateVerbReviewButton(){
+  const btn = document.getElementById("btn-verb-review");
+  const desc = document.getElementById("verb-review-desc");
+  if(!btn || !desc) return;
+  const n = state.verbLastWrong.length;
+  if(n > 0){
+    btn.classList.remove("hidden");
+    desc.textContent = n + " conjugación" + (n === 1 ? "" : "es") + " de la última sesión.";
+  } else {
+    btn.classList.add("hidden");
+  }
+}
+function updateBestVerbUI(){
+  const el = document.getElementById("best-verb-line");
+  if(!el) return;
+  if(progress.bestVerbScore > 0){
+    el.textContent = "🏅 Mejor puntaje: " + progress.bestVerbScore + "/100";
+    el.classList.remove("hidden");
+  } else {
+    el.classList.add("hidden");
+  }
+}
+function showVerbResults(){
+  clearPending();
+  state.verbCurrent = null;
+  state.verbPhase = null;
+  const isExam = state.verbMode === "exam";
+  saveVerbWrong();
+  showScreen("results");
+  const total = state.verbCorrect + state.verbWrong.length;
+  const score = total ? Math.round(state.verbCorrect / total * 100) : 0;
+  if(total > 0){
+    registerActivity();
+    if(score >= 70 && (isExam || total >= MIN_CELEBRATE)) burstConfetti(true);
+  }
+  if(isExam && score > progress.bestVerbScore){
+    progress.bestVerbScore = score;
+    saveProgress();
+    updateBestVerbUI();
+  }
+  if(total > 0) checkAchievements();
+  document.getElementById("result-score").textContent = score;
+  document.getElementById("result-den").textContent = isExam ? "de 100" : "de 100 (práctica)";
+  state.lastResultScore = score;
+  state.lastResultLabel = isExam ? "en el examen de verbos" : "practicando verbos";
+  const msg = total === 0 ? "No respondiste ninguna conjugación."
+    : isExam ? (score >= 90 ? pickEncouragement("excellent") : score >= 70 ? pickEncouragement("great")
+        : score >= 51 ? pickEncouragement("good") : pickEncouragement("keep"))
+    : tierMessage(score, total);
+  document.getElementById("result-msg").textContent = msg;
+  document.getElementById("result-sub").textContent = state.verbCorrect + " de " + total + " correctas";
+
+  const listEl    = document.getElementById("result-review-list");
+  const titleEl   = document.getElementById("result-review-title");
+  const reviewBtn = document.getElementById("result-review-btn");
+  const againBtn  = document.getElementById("result-again");
+  listEl.innerHTML = "";
+  againBtn.textContent = isExam ? "🔄 Repetir examen" : "🔤 Seguir practicando";
+  againBtn.onclick = isExam ? (() => startVerbExam()) : (() => startVerbPractice());
+  if(state.verbWrong.length > 0){
+    titleEl.classList.remove("hidden");
+    titleEl.textContent = "Para repasar:";
+    state.verbWrong.forEach(it => {
+      const lbl = verbPromptLabel(it);
+      const div = document.createElement("div");
+      div.className = "review-item";
+      div.innerHTML = `<strong>${it.answer}</strong><p>${it.inf} · ${lbl.tenseLabel} · ${lbl.personLabel}<br>${tenseRuleHTML(it.inf, it.tenseId)}</p>`;
+      listEl.appendChild(div);
+    });
+    reviewBtn.classList.remove("hidden");
+    reviewBtn.textContent = "🔁 Repasar errores";
+    reviewBtn.onclick = () => startVerbReview();
+  } else {
+    titleEl.classList.add("hidden");
+    reviewBtn.classList.add("hidden");
+  }
+  updateVerbReviewButton();
+}
+function endVerbSession(){
+  if(state.verbMode === "exam" && state.verbIndex < state.verbQueue.length){
+    if(!confirm("Vas a perder el avance de este examen. ¿Salir igual?")) return;
+    saveVerbWrong();
+    updateVerbReviewButton();
+    exitToMenu();
+    return;
+  }
+  // Práctica y repaso: si hubo respuestas, mostrar el resumen con la nota.
+  if(state.verbCorrect + state.verbWrong.length > 0){
+    showVerbResults();
+    return;
+  }
+  exitToMenu();
+}
+
 /* ---------------- Init ---------------- */
 loadPrefs();
 loadProgress();
@@ -3141,11 +3932,16 @@ buildAchievementChips();
 buildMathOpChips();
 buildMathTermChips();
 paintMathChips();
+buildVerbTenseChips();
+buildVerbKindChips();
+buildVerbStatsChips();
+updateBestVerbUI();
+updateVerbReviewButton();
 applyLoadedPrefs();
 applySubjectUI();
 updateProgressUI();
 updateChestUI();
-["practice-stage","exam-stage","math-stage"].forEach(id => {
+["practice-stage","exam-stage","math-stage","verb-stage"].forEach(id => {
   document.getElementById(id).setAttribute("aria-live","polite");
 });
 
@@ -3181,6 +3977,18 @@ document.addEventListener("keydown", (e) => {
   if(e.key === " " && !typing && (state.screen === "practice" || state.screen === "exam")){
     e.preventDefault();
     replayCurrent();
+    return;
+  }
+  if(e.key === " " && !typing && state.screen === "verbs"){
+    e.preventDefault();
+    replayVerbPrompt();
+    return;
+  }
+
+  // Verbos: Enter en "revealed" (sin estar escribiendo) pasa al siguiente
+  if(e.key === "Enter" && state.screen === "verbs" && state.verbPhase === "revealed" && !typing){
+    e.preventDefault();
+    advanceVerb();
     return;
   }
 
