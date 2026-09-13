@@ -601,6 +601,34 @@
   .opt-btn.dim{ opacity:0.4; }
   .mini-expr{ font-family: var(--font-body); font-weight:700; font-size:1.02rem; line-height:1.9; }
 
+  /* ---------- GEOMETRIA ---------- */
+  .geo-problem{
+    width:100%; background: var(--input-bg);
+    border:2px dashed rgba(108,92,231,0.32); border-radius:16px;
+    padding:14px 14px 6px; margin-top:6px; text-align:center;
+  }
+  .geo-svg{ width:100%; max-width:260px; height:auto; display:block; margin:2px auto 6px; }
+  .geo-text{
+    color: var(--ink); font-family: var(--font-body); font-weight:700;
+    font-size: clamp(0.95rem, 3.7vw, 1.08rem); line-height:1.5; margin:4px 0 2px;
+  }
+  .geo-ask{
+    display:inline-block; margin:8px 0 10px; padding:5px 14px; border-radius:999px;
+    font-family: var(--font-body); font-weight:800;
+    font-size: clamp(1rem, 4vw, 1.15rem);
+  }
+  .geo-formula{
+    margin-top:14px; padding:13px 15px; border-radius:14px; text-align:left;
+    font-size:0.95rem; line-height:1.6; color: var(--ink);
+  }
+  .geo-formula .gf-title{ font-weight:800; font-size:1.04rem; display:block; margin-bottom:5px; }
+  .geo-formula .gf-sub{ display:block; margin-top:6px; font-weight:700; }
+  .geo-formula .gf-diag{
+    display:block; margin-bottom:8px; padding-bottom:8px;
+    border-bottom:1px solid rgba(128,128,128,0.25);
+  }
+  .geo-formula .gf-tip{ display:block; margin-top:8px; font-size:0.88rem; color: var(--ink-dim); }
+
   /* ---------- CONFETI ---------- */
   .confetti-layer{
     position: fixed; inset:0; pointer-events:none; z-index: 9999; overflow:hidden;
@@ -663,6 +691,7 @@
         <button type="button" class="subject-tab" id="tab-orto" aria-pressed="true" onclick="setSubject('orto')">📖 Ortografía</button>
         <button type="button" class="subject-tab" id="tab-math" aria-pressed="false" onclick="setSubject('math')">🔢 Matemática</button>
         <button type="button" class="subject-tab" id="tab-verbos" aria-pressed="false" onclick="setSubject('verbos')">🔤 Verbos</button>
+        <button type="button" class="subject-tab" id="tab-geo" aria-pressed="false" onclick="setSubject('geo')">📐 Geometría</button>
       </div>
 
       <div id="menu-orto">
@@ -788,6 +817,50 @@
         </div>
       </div>
 
+      <div id="menu-geo" class="hidden">
+        <div class="menu-options">
+          <button type="button" class="mode-btn" id="btn-geo-practice" onclick="startGeoPractice()">
+            <span class="emoji">📐</span>
+            <span>
+              <strong>Práctica</strong>
+              <span class="desc">Problemas sin límite. Elegí el resultado correcto.</span>
+            </span>
+          </button>
+          <button type="button" class="mode-btn" id="btn-geo-exam" onclick="startGeoExam()">
+            <span class="emoji">📝</span>
+            <span>
+              <strong>Examen</strong>
+              <span class="desc">12 problemas. Nota sobre 100.<br><span id="best-geo-line" class="best-score hidden"></span></span>
+            </span>
+          </button>
+          <button type="button" class="mode-btn hidden" id="btn-geo-review" onclick="startGeoReview()">
+            <span class="emoji">🔁</span>
+            <span>
+              <strong>Repasar errores</strong>
+              <span class="desc" id="geo-review-desc">Solo los problemas que fallaste la última vez.</span>
+            </span>
+          </button>
+        </div>
+        <div class="filter-block">
+          <div class="filter-title">Figuras que entran</div>
+          <div class="cat-chips" id="geo-fig-chips"></div>
+          <div class="chip-actions">
+            <button type="button" onclick="setAllGeoFigs(true)">Todas</button>
+            <button type="button" onclick="setAllGeoFigs(false)">Ninguna</button>
+          </div>
+        </div>
+        <div class="filter-block">
+          <div class="filter-title">Qué se pide</div>
+          <div class="cat-chips" id="geo-kind-chips"></div>
+          <div class="filter-count" id="geo-count"></div>
+          <div class="type-tip">💡 El perímetro es el contorno (se mide en cm). El área es lo que ocupa adentro (se mide en cm²).</div>
+        </div>
+        <div class="filter-block" id="geo-stats-block">
+          <div class="filter-title">Tu progreso por figura 📊</div>
+          <div class="stats-chips" id="geo-stats-chips"></div>
+        </div>
+      </div>
+
       <div class="pets-block">
         <div class="filter-title">Mascotas 🐾 · comprá y equipá con tus monedas</div>
         <div class="pet-chips" id="pet-chips"></div>
@@ -860,6 +933,21 @@
       <div class="controls-row">
         <button type="button" class="btn-ghost" onclick="replayVerbPrompt()">🔊 Escuchar de nuevo</button>
         <button type="button" class="btn-ghost" onclick="endVerbSession()">🏠 Terminar</button>
+      </div>
+    </section>
+
+    <!-- GEOMETRIA -->
+    <section id="screen-geo" class="screen hidden">
+      <div class="session-top">
+        <span id="geo-badge"></span>
+        <span id="geo-progress"></span>
+        <span class="session-stats" id="geo-stats"></span>
+      </div>
+      <div class="timerbar hidden" id="geo-progressbar"><div id="geo-progressfill" class="timerbar-fill"></div></div>
+      <div id="geo-status" class="status-line" aria-live="polite"></div>
+      <div id="geo-stage"></div>
+      <div class="controls-row">
+        <button type="button" class="btn-ghost" onclick="endGeoSession()">🏠 Terminar</button>
       </div>
     </section>
 
@@ -1465,6 +1553,299 @@ function isAccentOnlyError(typed, correct){
   return stripAccents(a) === stripAccents(b);
 }
 
+/* ================= GEOMETRÍA ================= */
+// Área y perímetro de figuras simples. La respuesta es de opción múltiple, pero
+// los distractores NO son números al azar: cada uno representa un error típico
+// (usar el perímetro cuando piden área, olvidar dividir por 2, etc.). Así, al
+// fallar, se puede decir QUÉ error cometió y no solo mostrar la fórmula.
+const PI = 3.14; // valor escolar, como en la escuela
+const GEO_EXAM_N = 12;
+
+const GEO_FIGURES = {
+  cuadrado:  { label:"Cuadrado",  color:"#FF6B6B", text:"#fff" },
+  rectangulo:{ label:"Rectángulo",color:"#3A86FF", text:"#fff" },
+  triangulo: { label:"Triángulo", color:"#E8A600", text:"#2b2620" },
+  circulo:   { label:"Círculo",   color:"#1B998B", text:"#fff" },
+  pentagono: { label:"Pentágono", color:"#6A4C93", text:"#fff" },
+  hexagono:  { label:"Hexágono",  color:"#EF476F", text:"#fff" }
+};
+const GEO_KINDS = {
+  perimetro: { label:"Perímetro", color:"#0FA3A3" },
+  area:      { label:"Área",      color:"#B5179E" }
+};
+
+// Pares (lado, apotema) geométricamente consistentes: el apotema es el real
+// redondeado a 1 decimal, para no enseñarle figuras imposibles.
+// Pentágono: a = l / (2·tan(36°)) ≈ l · 0,688
+// Hexágono:  a = l · √3/2        ≈ l · 0,866
+const APOTEMA_PENT = { 4:2.8, 6:4.1, 8:5.5, 10:6.9, 12:8.3, 14:9.6 };
+const APOTEMA_HEX  = { 4:3.5, 6:5.2, 8:6.9, 10:8.7, 12:10.4, 14:12.1 };
+
+function gRand(min,max){ return min + Math.floor(Math.random()*(max-min+1)); }
+function gPick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+// Redondeo a 2 decimales, devolviendo número (no string) para poder comparar.
+function gRound(x){ return Math.round(x*100)/100; }
+// Formato para mostrar: coma decimal y sin ceros finales inútiles
+// (40 en vez de 40,00; 9,6 en vez de 9,60; 78,54 queda igual)
+function gFmt(x){
+  const r = gRound(x);
+  let s = r.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+  return s.replace(".", ",");
+}
+function gUnit(kind){ return kind === "area" ? "cm²" : "cm"; }
+
+/* ---- Generación del problema ---- */
+// Cada figura devuelve: medidas, valor correcto, fórmula (texto y sustitución),
+// y una lista de distractores etiquetados con el error que representan.
+function makeGeoProblem(figKey, kind){
+  const F = {};
+  F.fig = figKey; F.kind = kind;
+  const wrongs = []; // { val, why } — why explica el error de ese distractor
+
+  if(figKey === "cuadrado"){
+    const l = gRand(3, 15);
+    F.dims = { l };
+    F.text = `Un cuadrado tiene lados de ${l} cm.`;
+    if(kind === "perimetro"){
+      F.val = 4*l;
+      F.formula = "P = lado × 4";
+      F.subst = `P = ${l} × 4 = ${gFmt(4*l)} cm`;
+      wrongs.push({ val:l*l,  why:"esa es el <strong>área</strong> (lado × lado), no el perímetro" });
+      wrongs.push({ val:2*l,  why:"sumaste solo dos lados; el cuadrado tiene cuatro" });
+      wrongs.push({ val:l+4,  why:"sumaste 4 en vez de multiplicar por 4" });
+    } else {
+      F.val = l*l;
+      F.formula = "A = lado × lado";
+      F.subst = `A = ${l} × ${l} = ${gFmt(l*l)} cm²`;
+      wrongs.push({ val:4*l,  why:"esa es el <strong>perímetro</strong> (lado × 4), no el área" });
+      wrongs.push({ val:2*l,  why:"multiplicaste por 2 en vez de por el lado" });
+      wrongs.push({ val:l*l+l, why:"sumaste un lado de más" });
+    }
+  }
+
+  else if(figKey === "rectangulo"){
+    let b = gRand(3,15), h = gRand(3,15);
+    if(b === h) h = (h % 15) + 1; // que no quede un cuadrado disfrazado
+    F.dims = { b, h };
+    F.text = `Un rectángulo mide ${b} cm de base y ${h} cm de altura.`;
+    if(kind === "perimetro"){
+      F.val = 2*(b+h);
+      F.formula = "P = (base + altura) × 2";
+      F.subst = `P = (${b} + ${h}) × 2 = ${gFmt(2*(b+h))} cm`;
+      wrongs.push({ val:b*h,  why:"esa es el <strong>área</strong> (base × altura), no el perímetro" });
+      wrongs.push({ val:b+h,  why:"sumaste base y altura pero te faltó multiplicar por 2" });
+      wrongs.push({ val:2*b+h, why:"duplicaste solo la base; hay que duplicar las dos medidas" });
+    } else {
+      F.val = b*h;
+      F.formula = "A = base × altura";
+      F.subst = `A = ${b} × ${h} = ${gFmt(b*h)} cm²`;
+      wrongs.push({ val:2*(b+h), why:"esa es el <strong>perímetro</strong>, no el área" });
+      wrongs.push({ val:b+h,     why:"sumaste en vez de multiplicar" });
+      wrongs.push({ val:gRound(b*h/2), why:"dividiste por 2; eso es para el triángulo, no para el rectángulo" });
+    }
+  }
+
+  else if(figKey === "triangulo"){
+    if(kind === "perimetro"){
+      // Tres lados que cumplen la desigualdad triangular.
+      let a,b,c;
+      do { a = gRand(3,14); b = gRand(3,14); c = gRand(3,14); }
+      while(a+b <= c || a+c <= b || b+c <= a);
+      F.dims = { a,b,c };
+      F.text = `Un triángulo tiene lados de ${a} cm, ${b} cm y ${c} cm.`;
+      F.val = a+b+c;
+      F.formula = "P = lado + lado + lado";
+      F.subst = `P = ${a} + ${b} + ${c} = ${gFmt(a+b+c)} cm`;
+      wrongs.push({ val:a+b,          why:"te faltó sumar el tercer lado" });
+      wrongs.push({ val:gRound((a+b+c)/2), why:"dividiste por 2; eso es para el área, no para el perímetro" });
+      wrongs.push({ val:3*a,          why:"multiplicaste un lado por 3, pero los lados son distintos" });
+    } else {
+      const b = gRand(4,16);
+      const h = gPick([2,4,6,8,10,12]); // par, para que b×h/2 dé entero
+      F.dims = { b, h };
+      F.text = `Un triángulo tiene ${b} cm de base y ${h} cm de altura.`;
+      F.val = b*h/2;
+      F.formula = "A = (base × altura) ÷ 2";
+      F.subst = `A = (${b} × ${h}) ÷ 2 = ${gFmt(b*h/2)} cm²`;
+      wrongs.push({ val:b*h,   why:"multiplicaste base por altura pero <strong>te faltó dividir por 2</strong>" });
+      wrongs.push({ val:b+h,   why:"sumaste en vez de multiplicar" });
+      wrongs.push({ val:gRound((b+h)/2), why:"promediaste base y altura; hay que multiplicarlas y recién ahí dividir" });
+    }
+  }
+
+  else if(figKey === "circulo"){
+    const r = gRand(2,12);
+    F.dims = { r };
+    F.text = `Un círculo tiene ${r} cm de radio. (Usá π = 3,14)`;
+    if(kind === "perimetro"){
+      F.val = gRound(2*PI*r);
+      F.formula = "P = 2 × π × radio";
+      F.subst = `P = 2 × 3,14 × ${r} = ${gFmt(2*PI*r)} cm`;
+      wrongs.push({ val:gRound(PI*r*r), why:"esa es el <strong>área</strong> (π × radio²), no el perímetro" });
+      wrongs.push({ val:gRound(PI*r),   why:"te faltó multiplicar por 2" });
+      wrongs.push({ val:gRound(2*PI*r*r), why:"elevaste el radio al cuadrado; para el perímetro va sin cuadrado" });
+    } else {
+      F.val = gRound(PI*r*r);
+      F.formula = "A = π × radio × radio";
+      F.subst = `A = 3,14 × ${r} × ${r} = ${gFmt(PI*r*r)} cm²`;
+      wrongs.push({ val:gRound(2*PI*r), why:"esa es el <strong>perímetro</strong> (2 × π × radio), no el área" });
+      wrongs.push({ val:gRound(PI*r),   why:"te faltó multiplicar por el radio otra vez (va al cuadrado)" });
+      wrongs.push({ val:gRound(PI*r*r/2), why:"dividiste por 2 de más" });
+    }
+  }
+
+  else { // pentagono | hexagono
+    const n = figKey === "pentagono" ? 5 : 6;
+    const table = figKey === "pentagono" ? APOTEMA_PENT : APOTEMA_HEX;
+    const l = gPick(Object.keys(table).map(Number));
+    const ap = table[l];
+    const nombre = figKey === "pentagono" ? "pentágono" : "hexágono";
+    if(kind === "perimetro"){
+      F.dims = { l, n };
+      F.text = `Un ${nombre} regular tiene lados de ${l} cm.`;
+      F.val = n*l;
+      F.formula = `P = lado × ${n}`;
+      F.subst = `P = ${l} × ${n} = ${gFmt(n*l)} cm`;
+      wrongs.push({ val:(n-1)*l, why:`contaste ${n-1} lados; el ${nombre} tiene ${n}` });
+      wrongs.push({ val:l+n,     why:`sumaste ${n} en vez de multiplicar por ${n}` });
+      wrongs.push({ val:gRound(n*l/2), why:"dividiste por 2; eso es para el área, no para el perímetro" });
+    } else {
+      F.dims = { l, n, ap };
+      F.text = `Un ${nombre} regular tiene lados de ${l} cm y apotema de ${gFmt(ap)} cm.`;
+      const per = n*l;
+      F.val = gRound(per*ap/2);
+      F.formula = "A = (Perímetro × apotema) ÷ 2";
+      F.subst = `P = ${l} × ${n} = ${gFmt(per)} cm<br>A = (${gFmt(per)} × ${gFmt(ap)}) ÷ 2 = ${gFmt(per*ap/2)} cm²`;
+      wrongs.push({ val:gRound(per*ap), why:"multiplicaste perímetro por apotema pero <strong>te faltó dividir por 2</strong>" });
+      wrongs.push({ val:per,            why:`esa es el <strong>perímetro</strong> (lado × ${n}), no el área` });
+      wrongs.push({ val:gRound(l*ap/2), why:"usaste un solo lado en vez del perímetro completo" });
+    }
+  }
+
+  // Los distractores tienen que ser distintos entre sí, distintos del correcto y positivos.
+  const seen = new Set([gRound(F.val)]);
+  F.wrongs = [];
+  wrongs.forEach(w => {
+    const v = gRound(w.val);
+    if(v > 0 && !seen.has(v)){ seen.add(v); F.wrongs.push({ val:v, why:w.why }); }
+  });
+  // Si algún distractor colisionó, se completa con valores cercanos (sin diagnóstico).
+  let bump = 1;
+  while(F.wrongs.length < 3 && bump < 40){
+    const cand = gRound(F.val + (bump % 2 ? bump : -bump) * (F.val > 20 ? 3 : 1));
+    if(cand > 0 && !seen.has(cand)){ seen.add(cand); F.wrongs.push({ val:cand, why:null }); }
+    bump++;
+  }
+  F.val = gRound(F.val);
+  return F;
+}
+
+/* ---- Dibujo SVG de la figura, con las medidas etiquetadas ---- */
+// El dibujo respeta las proporciones reales de las medidas del enunciado: si
+// dice base 6 y altura 7, el rectángulo se ve más alto que ancho. Un dibujo que
+// contradice los números enseña mal, así que todo se escala a partir de las
+// medidas y recién después se ajusta para entrar en el viewBox.
+function geoSVG(p){
+  const c = GEO_FIGURES[p.fig].color;
+  const W = 260, H = 176;
+  const CX = W/2, CY = 84;          // centro del área de dibujo
+  const BOX_W = 150, BOX_H = 104;   // caja máxima que puede ocupar la figura
+  const shape = `fill="${hexToRgba(c,0.14)}" stroke="${c}" stroke-width="2.5" stroke-linejoin="round"`;
+  const dash  = `stroke="${c}" stroke-width="1.6" stroke-dasharray="5 4" fill="none"`;
+  const T = (x,y,t,anchor) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="${anchor||"middle"}" font-family="inherit">${t}</text>`;
+  let inner = "";
+
+  if(p.fig === "cuadrado"){
+    const s = 98, x = CX - s/2, y = CY - s/2;
+    inner = `<rect x="${x}" y="${y}" width="${s}" height="${s}" ${shape}/>` +
+      T(CX, y+s+21, p.dims.l + " cm") +
+      T(x-8, CY+5, p.dims.l + " cm", "end");
+  }
+
+  else if(p.fig === "rectangulo"){
+    // Escala proporcional real: la figura conserva la relación base/altura.
+    const k = Math.min(BOX_W/p.dims.b, BOX_H/p.dims.h);
+    const w = p.dims.b*k, h = p.dims.h*k;
+    const x = CX - w/2, y = CY - h/2;
+    inner = `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" ${shape}/>` +
+      T(CX, y+h+21, p.dims.b + " cm") +
+      T(x-8, CY+5, p.dims.h + " cm", "end");
+  }
+
+  else if(p.fig === "triangulo"){
+    if(p.kind === "perimetro"){
+      // Trilateración: con los 3 lados reales se calculan los vértices, así el
+      // dibujo respeta que un lado de 3 cm se vea más corto que uno de 10 cm.
+      const {a,b,cc} = { a:p.dims.a, b:p.dims.b, cc:p.dims.c };
+      const px = (cc*cc + a*a - b*b) / (2*cc);
+      const py = Math.sqrt(Math.max(a*a - px*px, 0.01));
+      const k = Math.min(BOX_W/cc, BOX_H/py);
+      const P1 = { x:0, y:0 }, P2 = { x:cc*k, y:0 }, P3 = { x:px*k, y:-py*k };
+      // Centrar en la caja
+      const minX = Math.min(P1.x,P2.x,P3.x), maxX = Math.max(P1.x,P2.x,P3.x);
+      const minY = Math.min(P1.y,P2.y,P3.y), maxY = Math.max(P1.y,P2.y,P3.y);
+      const ox = CX - (minX+maxX)/2, oy = CY - (minY+maxY)/2;
+      const A = {x:P1.x+ox, y:P1.y+oy}, B = {x:P2.x+ox, y:P2.y+oy}, C = {x:P3.x+ox, y:P3.y+oy};
+      const cen = { x:(A.x+B.x+C.x)/3, y:(A.y+B.y+C.y)/3 };
+      // Etiqueta en el punto medio de cada lado, empujada hacia afuera del centro.
+      const lab = (P,Q,txt) => {
+        const mx=(P.x+Q.x)/2, my=(P.y+Q.y)/2;
+        let dx=mx-cen.x, dy=my-cen.y;
+        const d=Math.hypot(dx,dy)||1; dx/=d; dy/=d;
+        return T(mx+dx*20, my+dy*20+5, txt);
+      };
+      inner = `<polygon points="${A.x.toFixed(1)},${A.y.toFixed(1)} ${B.x.toFixed(1)},${B.y.toFixed(1)} ${C.x.toFixed(1)},${C.y.toFixed(1)}" ${shape}/>` +
+        lab(A,C, a + " cm") + lab(B,C, b + " cm") + lab(A,B, p.dims.c + " cm");
+    } else {
+      // Base y altura a escala; la altura se marca punteada con el ángulo recto,
+      // que es justo lo que se confunde con el lado.
+      const k = Math.min(BOX_W/p.dims.b, BOX_H/p.dims.h);
+      const w = p.dims.b*k, h = p.dims.h*k;
+      const y0 = CY + h/2, x0 = CX - w/2, x1 = CX + w/2;
+      const apx = x0 + w*0.62;           // ápice corrido: se ve que la altura es interna
+      inner = `<polygon points="${apx.toFixed(1)},${(y0-h).toFixed(1)} ${x1.toFixed(1)},${y0.toFixed(1)} ${x0.toFixed(1)},${y0.toFixed(1)}" ${shape}/>` +
+        `<line x1="${apx.toFixed(1)}" y1="${(y0-h).toFixed(1)}" x2="${apx.toFixed(1)}" y2="${y0.toFixed(1)}" ${dash}/>` +
+        `<path d="M ${(apx-10).toFixed(1)} ${y0.toFixed(1)} L ${(apx-10).toFixed(1)} ${(y0-10).toFixed(1)} L ${apx.toFixed(1)} ${(y0-10).toFixed(1)}" fill="none" stroke="${c}" stroke-width="1.4"/>` +
+        T(CX, y0+21, "base " + p.dims.b + " cm") +
+        T(apx+9, y0-h/2+4, "h " + p.dims.h + " cm", "start");
+    }
+  }
+
+  else if(p.fig === "circulo"){
+    const rr = 56;
+    inner = `<circle cx="${CX}" cy="${CY}" r="${rr}" ${shape}/>` +
+      `<line x1="${CX}" y1="${CY}" x2="${CX+rr}" y2="${CY}" ${dash}/>` +
+      `<circle cx="${CX}" cy="${CY}" r="3" fill="${c}"/>` +
+      T(CX + rr/2, CY - 9, "r " + p.dims.r + " cm");
+  }
+
+  else { // pentagono | hexagono
+    const n = p.dims.n, rr = 58;
+    // Pentágono con punta arriba; hexágono con lado plano arriba.
+    const off = (n === 5) ? -Math.PI/2 : -Math.PI/2 + Math.PI/n;
+    const V = [];
+    for(let k=0;k<n;k++){
+      const ang = off + k*2*Math.PI/n;
+      V.push({ x: CX + rr*Math.cos(ang), y: CY + rr*Math.sin(ang) });
+    }
+    inner = `<polygon points="${V.map(v=>v.x.toFixed(1)+","+v.y.toFixed(1)).join(" ")}" ${shape}/>`;
+    // Etiqueta del lado inferior, debajo de la figura.
+    let lowest = V[0];
+    V.forEach(v => { if(v.y > lowest.y) lowest = v; });
+    inner += T(CX, lowest.y + 21, "lado " + p.dims.l + " cm");
+    if(p.kind === "area" && p.dims.ap != null){
+      // Apotema: del centro al punto medio del lado superior derecho, con la
+      // etiqueta hacia adentro para que no se salga del viewBox.
+      const m1 = V[0], m2 = V[1];
+      const mx = (m1.x+m2.x)/2, my = (m1.y+m2.y)/2;
+      inner += `<line x1="${CX}" y1="${CY}" x2="${mx.toFixed(1)}" y2="${my.toFixed(1)}" ${dash}/>` +
+        `<circle cx="${CX}" cy="${CY}" r="3" fill="${c}"/>` +
+        T((CX+mx)/2 + 16, (CY+my)/2 - 6, "a " + gFmt(p.dims.ap), "start");
+    }
+  }
+  return `<svg class="geo-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${GEO_FIGURES[p.fig].label}">${inner}</svg>`;
+}
+
 /* ---------------- App state ---------------- */
 const STORAGE_KEY = "dictado-ortografia-v2";
 const state = {
@@ -1512,7 +1893,14 @@ const state = {
   verbMode: null,       // "practice" | "exam" | "review"
   verbQueue: [],        // cola fija para examen y repaso
   verbIndex: 0,
-  verbLastWrong: []     // {inf, tenseId, personIdx} de la última sesión, para repasar
+  verbLastWrong: [],    // {inf, tenseId, personIdx} de la última sesión, para repasar
+  geoMode: null,        // "practice" | "exam" | "review"
+  geoIndex: 0,
+  geoCorrect: 0,
+  geoWrong: [],
+  geoCurrent: null,
+  geoQueue: [],
+  geoLastWrong: []      // {fig, kind} de la última sesión, para repasar
 };
 let currentRate = 0.8;
 let selectedCats = new Set(Object.keys(CAT));
@@ -1556,6 +1944,14 @@ const VERB_ACHIEVEMENTS = Object.keys(VERB_TENSES).map(key => ({
   desc: "Acertá 20 conjugaciones de " + VERB_TENSES[key].label.toLowerCase() + ".",
   check: (p) => !!(p.verbStats && p.verbStats[key] && p.verbStats[key].correct >= 20)
 }));
+// Un logro "Experto en <figura>" por cada figura geométrica.
+const GEO_ACHIEVEMENTS = Object.keys(GEO_FIGURES).map(key => ({
+  id: "geo_" + key,
+  emoji: "📐",
+  name: "Experto en " + GEO_FIGURES[key].label.toLowerCase(),
+  desc: "Resolvé 15 problemas de " + GEO_FIGURES[key].label.toLowerCase() + ".",
+  check: (p) => !!(p.geoStats && p.geoStats[key] && p.geoStats[key].correct >= 15)
+}));
 const ACHIEVEMENTS = [
   { id:"racha3",     emoji:"✨", name:"Primeros pasos",    desc:"Practicá 3 días seguidos.",
     check:(p,s) => p.streak >= 3 },
@@ -1590,8 +1986,12 @@ const ACHIEVEMENTS = [
   { id:"quinientosverbos", emoji:"🎤", name:"Quinientos verbos", desc:"Conjugá correctamente 500 verbos en total.",
     check:(p,s) => (p.totalVerbsCorrect || 0) >= 500 },
   { id:"examenverboperfecto", emoji:"🥇", name:"Examen de verbos perfecto", desc:"Sacá 100/100 en un examen de verbos.",
-    check:(p,s) => p.bestVerbScore >= 100 }
-].concat(CATEGORY_ACHIEVEMENTS).concat(VERB_ACHIEVEMENTS);
+    check:(p,s) => p.bestVerbScore >= 100 },
+  { id:"cienfiguras", emoji:"🔷", name:"Cien figuras", desc:"Resolvé 100 problemas de geometría.",
+    check:(p,s) => (p.totalGeoCorrect || 0) >= 100 },
+  { id:"examengeoperfecto", emoji:"🏆", name:"Examen de geometría perfecto", desc:"Sacá 100/100 en un examen de geometría.",
+    check:(p,s) => p.bestGeoScore >= 100 }
+].concat(CATEGORY_ACHIEVEMENTS).concat(VERB_ACHIEVEMENTS).concat(GEO_ACHIEVEMENTS);
 let progress = {
   coins: 0,
   totalCoinsEarned: 0,
@@ -1605,12 +2005,15 @@ let progress = {
   bestExamScore: 0,
   bestMathScore: 0,
   bestVerbScore: 0,
+  bestGeoScore: 0,
   lastChestDate: null,
   catStats: {},          // { bv: {correct, wrong}, ... } — para "fortalezas por regla" y logros de categoría
   verbStats: {},         // { presente: {correct, wrong}, ... } — mismo patrón, para tiempos verbales
+  geoStats: {},          // { cuadrado: {correct, wrong}, ... } — por figura geométrica
   totalWordsCorrect: 0,  // acumulado histórico de palabras acertadas (práctica + examen + repaso)
   totalMathCorrect: 0,   // acumulado histórico de operaciones acertadas
-  totalVerbsCorrect: 0   // acumulado histórico de conjugaciones acertadas
+  totalVerbsCorrect: 0,  // acumulado histórico de conjugaciones acertadas
+  totalGeoCorrect: 0     // acumulado histórico de problemas de geometría acertados
 };
 function loadProgress(){
   try{
@@ -1629,6 +2032,7 @@ function loadProgress(){
     if(typeof data.bestExamScore === "number") progress.bestExamScore = data.bestExamScore;
     if(typeof data.bestMathScore === "number") progress.bestMathScore = data.bestMathScore;
     if(typeof data.bestVerbScore === "number") progress.bestVerbScore = data.bestVerbScore;
+    if(typeof data.bestGeoScore === "number") progress.bestGeoScore = data.bestGeoScore;
     if(typeof data.lastChestDate === "string") progress.lastChestDate = data.lastChestDate;
     if(data.catStats && typeof data.catStats === "object"){
       Object.keys(data.catStats).forEach(key => {
@@ -1647,7 +2051,22 @@ function loadProgress(){
       });
     }
     if(typeof data.totalVerbsCorrect === "number") progress.totalVerbsCorrect = data.totalVerbsCorrect;
+    if(data.geoStats && typeof data.geoStats === "object"){
+      Object.keys(data.geoStats).forEach(key => {
+        if(!Object.prototype.hasOwnProperty.call(GEO_FIGURES, key)) return;
+        const s = data.geoStats[key];
+        if(s && typeof s.correct === "number" && typeof s.wrong === "number") progress.geoStats[key] = { correct:s.correct, wrong:s.wrong };
+      });
+    }
+    if(typeof data.totalGeoCorrect === "number") progress.totalGeoCorrect = data.totalGeoCorrect;
   }catch(e){}
+}
+function recordGeoStat(figKey, correct){
+  if(!progress.geoStats[figKey]) progress.geoStats[figKey] = { correct:0, wrong:0 };
+  if(correct){ progress.geoStats[figKey].correct++; progress.totalGeoCorrect++; }
+  else{ progress.geoStats[figKey].wrong++; }
+  saveProgress();
+  paintGeoStatsChips();
 }
 function recordCategoryStat(cat, correct){
   if(!progress.catStats[cat]) progress.catStats[cat] = { correct:0, wrong:0 };
@@ -2091,7 +2510,7 @@ function loadPrefs(){
     if(typeof data.typeMode === "boolean") state.typeMode = data.typeMode;
     if(Array.isArray(data.lastWrong)) state.lastWrong = data.lastWrong;
     if(typeof data.darkMode === "boolean") state.darkMode = data.darkMode;
-    if(data.subject === "math" || data.subject === "orto" || data.subject === "verbos") state.subject = data.subject;
+    if(data.subject === "math" || data.subject === "orto" || data.subject === "verbos" || data.subject === "geo") state.subject = data.subject;
     if(Array.isArray(data.mathOps)){
       const v = data.mathOps.filter(k => Object.prototype.hasOwnProperty.call(MATH_OPS, k));
       if(v.length) mathOps = new Set(v);
@@ -2110,6 +2529,19 @@ function loadPrefs(){
         x && typeof x.inf === "string" && typeof x.personIdx === "number" &&
         Object.prototype.hasOwnProperty.call(VERB_TENSES, x.tenseId));
     }
+    if(Array.isArray(data.geoFigs)){
+      const gf = data.geoFigs.filter(k => Object.prototype.hasOwnProperty.call(GEO_FIGURES, k));
+      if(gf.length) geoFigs = new Set(gf);
+    }
+    if(Array.isArray(data.geoKinds)){
+      const gk = data.geoKinds.filter(k => Object.prototype.hasOwnProperty.call(GEO_KINDS, k));
+      if(gk.length) geoKinds = new Set(gk);
+    }
+    if(Array.isArray(data.geoLastWrong)){
+      state.geoLastWrong = data.geoLastWrong.filter(x =>
+        x && Object.prototype.hasOwnProperty.call(GEO_FIGURES, x.fig) &&
+        Object.prototype.hasOwnProperty.call(GEO_KINDS, x.kind));
+    }
   }catch(e){}
 }
 function savePrefs(){
@@ -2125,7 +2557,10 @@ function savePrefs(){
       mathTerms: mathTerms,
       verbTenses: [...selectedTenses],
       verbKinds: [...verbKinds],
-      verbLastWrong: state.verbLastWrong.slice(0, 40)
+      verbLastWrong: state.verbLastWrong.slice(0, 40),
+      geoFigs: [...geoFigs],
+      geoKinds: [...geoKinds],
+      geoLastWrong: state.geoLastWrong.slice(0, 40)
     }));
   }catch(e){}
 }
@@ -2268,7 +2703,7 @@ function replayCurrent(){
 
 /* ---------------- Screen switching ---------------- */
 function showScreen(name){
-  ["menu","practice","exam","math","verbs","results"].forEach(s => {
+  ["menu","practice","exam","math","verbs","geo","results"].forEach(s => {
     document.getElementById("screen-" + s).classList.toggle("hidden", s !== name);
   });
   state.screen = name;
@@ -2309,10 +2744,13 @@ function exitToMenu(){
   state.verbCurrent = null;
   state.verbPhase = null;
   state.verbMode = null;
+  state.geoCurrent = null;
+  state.geoMode = null;
   showScreen("menu");
   applySubjectUI();
   updateReviewButton();
   updateVerbReviewButton();
+  updateGeoReviewButton();
 }
 
 /* ---------------- Timer (JS, pausable) ---------------- */
@@ -3293,27 +3731,29 @@ function toggleMathOp(k){
 function setMathTerms(v){ mathTerms = v; paintMathChips(); }
 
 function setSubject(s){
-  state.subject = (s === "math") ? "math" : (s === "verbos" ? "verbos" : "orto");
+  state.subject = (s === "math" || s === "verbos" || s === "geo") ? s : "orto";
   applySubjectUI();
   savePrefs();
 }
 function applySubjectUI(){
-  const isMath = state.subject === "math";
-  const isVerbos = state.subject === "verbos";
-  const orto = document.getElementById("menu-orto");
-  const math = document.getElementById("menu-math");
-  const verbos = document.getElementById("menu-verbos");
-  if(orto) orto.classList.toggle("hidden", isMath || isVerbos);
-  if(math) math.classList.toggle("hidden", !isMath);
-  if(verbos) verbos.classList.toggle("hidden", !isVerbos);
-  const to = document.getElementById("tab-orto"), tm = document.getElementById("tab-math"), tv = document.getElementById("tab-verbos");
-  if(to) to.setAttribute("aria-pressed", (!isMath && !isVerbos) ? "true" : "false");
-  if(tm) tm.setAttribute("aria-pressed", isMath ? "true" : "false");
-  if(tv) tv.setAttribute("aria-pressed", isVerbos ? "true" : "false");
-  const sc = document.getElementById("speed-control");   // la velocidad de voz no aplica a mates, pero sí a verbos (también se dictan)
-  if(sc) sc.classList.toggle("hidden", isMath);
+  const sub = state.subject;
+  const isMath = sub === "math", isVerbos = sub === "verbos", isGeo = sub === "geo";
+  const isOrto = !isMath && !isVerbos && !isGeo;
+  const show = { "menu-orto":isOrto, "menu-math":isMath, "menu-verbos":isVerbos, "menu-geo":isGeo };
+  Object.keys(show).forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle("hidden", !show[id]);
+  });
+  const tabs = { "tab-orto":isOrto, "tab-math":isMath, "tab-verbos":isVerbos, "tab-geo":isGeo };
+  Object.keys(tabs).forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.setAttribute("aria-pressed", tabs[id] ? "true" : "false");
+  });
+  // La velocidad de voz solo aplica donde hay dictado: ortografía y verbos.
+  const sc = document.getElementById("speed-control");
+  if(sc) sc.classList.toggle("hidden", isMath || isGeo);
   const title = document.getElementById("app-title");
-  title && (title.textContent = isMath ? "🔢 Matemática" : (isVerbos ? "🔤 Verbos" : "✏️ Dictado"));
+  if(title) title.textContent = isMath ? "🔢 Matemática" : isVerbos ? "🔤 Verbos" : isGeo ? "📐 Geometría" : "✏️ Dictado";
 }
 function updateBestMathUI(){
   const el = document.getElementById("best-math-line");
@@ -3921,6 +4361,352 @@ function endVerbSession(){
   exitToMenu();
 }
 
+/* ---------------- Menú de geometría: chips y progreso ---------------- */
+let geoFigs = new Set(Object.keys(GEO_FIGURES));
+let geoKinds = new Set(Object.keys(GEO_KINDS));
+
+function buildGeoFigChips(){
+  const el = document.getElementById("geo-fig-chips");
+  if(!el) return;
+  el.innerHTML = Object.entries(GEO_FIGURES).map(([k,f]) =>
+    `<button type="button" class="cat-chip" id="gfchip-${k}" aria-pressed="true"
+      style="border-color:${f.color}; color:${f.color}"
+      onclick="toggleGeoFig('${k}')">${f.label}</button>`).join("");
+  paintGeoChips();
+}
+function buildGeoKindChips(){
+  const el = document.getElementById("geo-kind-chips");
+  if(!el) return;
+  el.innerHTML = Object.entries(GEO_KINDS).map(([k,c]) =>
+    `<button type="button" class="cat-chip" id="gkchip-${k}" aria-pressed="true"
+      style="border-color:${c.color}; color:${c.color}"
+      onclick="toggleGeoKind('${k}')">${c.label}</button>`).join("");
+  paintGeoChips();
+}
+function geoReady(){ return geoFigs.size > 0 && geoKinds.size > 0; }
+function paintGeoChips(){
+  Object.entries(GEO_FIGURES).forEach(([k,f]) => {
+    const ch = document.getElementById("gfchip-" + k);
+    if(!ch) return;
+    const on = geoFigs.has(k);
+    ch.setAttribute("aria-pressed", on ? "true" : "false");
+    ch.style.background = on ? hexToRgba(f.color, 0.14) : "";
+  });
+  Object.entries(GEO_KINDS).forEach(([k,c]) => {
+    const ch = document.getElementById("gkchip-" + k);
+    if(!ch) return;
+    const on = geoKinds.has(k);
+    ch.setAttribute("aria-pressed", on ? "true" : "false");
+    ch.style.background = on ? hexToRgba(c.color, 0.14) : "";
+  });
+  const countEl = document.getElementById("geo-count");
+  const ready = geoReady();
+  if(countEl){
+    countEl.textContent = geoFigs.size === 0 ? "Elegí al menos una figura para empezar."
+                        : geoKinds.size === 0 ? "Elegí si se pide perímetro, área o las dos cosas." : "";
+    countEl.classList.toggle("warn", !ready);
+  }
+  document.querySelectorAll("#menu-geo .mode-btn:not(#btn-geo-review)").forEach(b => { b.disabled = !ready; });
+  savePrefs();
+}
+function toggleGeoFig(k){
+  if(geoFigs.has(k)) geoFigs.delete(k); else geoFigs.add(k);
+  paintGeoChips();
+}
+function setAllGeoFigs(on){
+  geoFigs = on ? new Set(Object.keys(GEO_FIGURES)) : new Set();
+  paintGeoChips();
+}
+function toggleGeoKind(k){
+  if(geoKinds.has(k)) geoKinds.delete(k); else geoKinds.add(k);
+  paintGeoChips();
+}
+function geoFigAccuracy(key){
+  const s = progress.geoStats && progress.geoStats[key];
+  if(!s || (s.correct + s.wrong) === 0) return null;
+  return Math.round(s.correct / (s.correct + s.wrong) * 100);
+}
+function buildGeoStatsChips(){
+  const wrap = document.getElementById("geo-stats-chips");
+  if(!wrap) return;
+  wrap.innerHTML = Object.entries(GEO_FIGURES).map(([key, f]) => `
+    <span class="stat-chip" id="geo-stat-chip-${key}" style="border-color:${f.color}; color:${f.color}">
+      <span class="stat-dot" id="geo-stat-dot-${key}"></span>${f.label}
+      <span id="geo-stat-pct-${key}"></span>
+    </span>`).join("");
+  paintGeoStatsChips();
+}
+function paintGeoStatsChips(){
+  Object.keys(GEO_FIGURES).forEach(key => {
+    const chip = document.getElementById("geo-stat-chip-" + key);
+    const dot  = document.getElementById("geo-stat-dot-" + key);
+    const pctEl = document.getElementById("geo-stat-pct-" + key);
+    if(!chip || !dot || !pctEl) return;
+    const pct = geoFigAccuracy(key);
+    if(pct === null){
+      chip.classList.add("empty");
+      dot.style.background = "#B9B4C9";
+      pctEl.textContent = "sin datos";
+    } else {
+      chip.classList.remove("empty");
+      dot.style.background = pct >= 80 ? "#22C55E" : pct >= 50 ? "#E8A600" : "#FF3B30";
+      pctEl.textContent = pct + "%";
+    }
+  });
+}
+
+/* ---------------- Sesión de geometría ---------------- */
+function resetGeoSession(mode){
+  state.subject = "geo";
+  state.geoMode = mode;
+  state.geoIndex = 0;
+  state.geoCorrect = 0;
+  state.geoWrong = [];
+  state.geoQueue = [];
+  state.sessionCorrectStreak = 0;
+}
+function randomGeoPair(){
+  const f = [...geoFigs][Math.floor(Math.random() * geoFigs.size)];
+  const k = [...geoKinds][Math.floor(Math.random() * geoKinds.size)];
+  return { fig:f, kind:k };
+}
+function startGeoPractice(){
+  if(!geoReady()) return;
+  resetGeoSession("practice");
+  showScreen("geo");
+  nextGeoProblem();
+}
+function startGeoExam(){
+  if(!geoReady()) return;
+  resetGeoSession("exam");
+  // Reparte las figuras elegidas lo más parejo posible y alterna qué se pide.
+  const figs = [...geoFigs], kinds = [...geoKinds], queue = [];
+  for(let n = 0; n < GEO_EXAM_N; n++){
+    queue.push({ fig: figs[n % figs.length], kind: kinds[n % kinds.length] });
+  }
+  state.geoQueue = shuffle(queue);
+  showScreen("geo");
+  nextGeoProblem();
+}
+function startGeoReview(){
+  if(state.geoLastWrong.length === 0){
+    alert("No hay errores guardados para repasar.");
+    return;
+  }
+  resetGeoSession("review");
+  // Se regenera el problema con medidas nuevas: repasa el TIPO de problema,
+  // no el número exacto, así no lo resuelve de memoria.
+  state.geoQueue = shuffle(state.geoLastWrong.map(x => ({ fig:x.fig, kind:x.kind })));
+  showScreen("geo");
+  nextGeoProblem();
+}
+function nextGeoProblem(){
+  clearPending();
+  const usesQueue = state.geoMode === "exam" || state.geoMode === "review";
+  if(usesQueue && state.geoIndex >= state.geoQueue.length){ showGeoResults(); return; }
+  const pair = usesQueue ? state.geoQueue[state.geoIndex] : randomGeoPair();
+  const p = makeGeoProblem(pair.fig, pair.kind);
+  // Las opciones se barajan para que la correcta no quede siempre en el mismo lugar.
+  const opts = shuffle([{ val:p.val, why:null, correct:true }].concat(
+    p.wrongs.map(w => ({ val:w.val, why:w.why, correct:false }))));
+  state.geoCurrent = { p, opts, picked:-1, answered:false };
+  renderGeo();
+}
+function syncGeoProgressBar(){
+  const bar = document.getElementById("geo-progressbar");
+  const fill = document.getElementById("geo-progressfill");
+  if(!bar || !fill) return;
+  const usesQueue = state.geoMode === "exam" || state.geoMode === "review";
+  bar.classList.toggle("hidden", !usesQueue);
+  if(!usesQueue) return;
+  const total = state.geoQueue.length || 1;
+  fill.style.width = Math.min(100, (state.geoIndex / total) * 100) + "%";
+}
+function renderGeo(){
+  const cur = state.geoCurrent;
+  if(!cur) return;
+  const p = cur.p;
+  const F = GEO_FIGURES[p.fig], K = GEO_KINDS[p.kind];
+  const usesQueue = state.geoMode === "exam" || state.geoMode === "review";
+  const modeLabel = state.geoMode === "exam" ? "Examen" : state.geoMode === "review" ? "Repaso" : "Práctica";
+
+  document.getElementById("geo-badge").innerHTML =
+    `<span class="badge" style="background:${F.color};color:${F.text}">${F.label}</span>`;
+  document.getElementById("geo-progress").textContent = usesQueue
+    ? "Problema " + (state.geoIndex + 1) + " / " + state.geoQueue.length
+    : modeLabel + " · " + (state.geoIndex + 1);
+  document.getElementById("geo-stats").innerHTML =
+    `<span class="ok">✓ ${state.geoCorrect}</span> · <span class="ko">✗ ${state.geoWrong.length}</span>`;
+  syncGeoProgressBar();
+
+  const status = document.getElementById("geo-status");
+  const stage  = document.getElementById("geo-stage");
+
+  let html = '<div class="geo-problem">' + geoSVG(p) +
+    '<div class="geo-text">' + p.text + '</div>' +
+    '<span class="geo-ask" style="background:' + hexToRgba(K.color, 0.16) + ';color:' + K.color + '">' +
+    '¿Cuál es su ' + K.label.toUpperCase() + '?</span></div>';
+
+  html += '<div class="opt-grid">';
+  cur.opts.forEach((o,i) => {
+    let cls = "opt-btn";
+    if(cur.answered){
+      if(o.correct) cls += " ok";
+      else if(i === cur.picked) cls += " ko";
+      else cls += " dim";
+    }
+    html += '<button type="button" class="' + cls + '"' + (cur.answered ? " disabled" : "") +
+            ' onclick="pickGeo(' + i + ')">' + gFmt(o.val) + ' ' + gUnit(p.kind) + '</button>';
+  });
+  html += '</div>';
+
+  if(cur.answered){
+    const chosen = cur.opts[cur.picked];
+    const ok = chosen.correct;
+    status.textContent = ok ? "¡Bien! 🎉" : "Fijate la fórmula 👇";
+    // Al fallar se muestra la fórmula. Si el distractor elegido corresponde a un
+    // error típico, primero se le dice QUÉ error cometió.
+    if(!ok){
+      const tint = hexToRgba(F.color, 0.10);
+      const diag = chosen.why
+        ? `<span class="gf-diag">✗ Elegiste ${gFmt(chosen.val)} ${gUnit(p.kind)}: ${chosen.why}.</span>` : "";
+      const tip = p.kind === "area"
+        ? `<span class="gf-tip">El área se mide en cm² (con el 2 chiquito), porque son cuadraditos que llenan la figura.</span>`
+        : `<span class="gf-tip">El perímetro se mide en cm: es lo que caminarías dando la vuelta al borde.</span>`;
+      html += `<div class="geo-formula" style="background:${tint}; border-left:5px solid ${F.color};">
+        ${diag}<span class="gf-title">${p.formula}</span>
+        <span class="gf-sub">${p.subst}</span>${tip}</div>`;
+    }
+    html += '<div class="controls-row" style="margin-top:16px;">' +
+            '<button type="button" class="btn-primary" onclick="nextGeoTap()">➡️ Siguiente</button></div>' +
+            '<div class="hint-text"><kbd>Enter</kbd> para seguir</div>';
+  } else {
+    status.textContent = "Resolvé y elegí el resultado";
+    html += '<div class="hint-text">Teclas <kbd>1</kbd>–<kbd>' + cur.opts.length + '</kbd> para elegir</div>';
+  }
+  stage.innerHTML = html;
+}
+function pickGeo(i){
+  const cur = state.geoCurrent;
+  if(!cur || cur.answered || i < 0 || i >= cur.opts.length) return;
+  cur.picked = i;
+  cur.answered = true;
+  const ok = cur.opts[i].correct;
+  recordGeoStat(cur.p.fig, ok);
+  if(ok){
+    state.geoCorrect++;
+    state.sessionCorrectStreak++;
+    rewardCorrect();
+    checkAchievements();
+  } else {
+    state.geoWrong.push({ fig:cur.p.fig, kind:cur.p.kind, text:cur.p.text,
+                          val:cur.p.val, formula:cur.p.formula, subst:cur.p.subst });
+    state.sessionCorrectStreak = 0;
+    reactWrong();
+  }
+  renderGeo();
+}
+function nextGeoTap(){
+  const cur = state.geoCurrent;
+  if(!cur || !cur.answered) return;
+  state.geoIndex++;
+  nextGeoProblem();
+}
+function saveGeoWrong(){
+  if(state.geoWrong.length){
+    state.geoLastWrong = state.geoWrong.map(x => ({ fig:x.fig, kind:x.kind }));
+    savePrefs();
+  }
+}
+function updateGeoReviewButton(){
+  const btn = document.getElementById("btn-geo-review");
+  const desc = document.getElementById("geo-review-desc");
+  if(!btn || !desc) return;
+  const n = state.geoLastWrong.length;
+  if(n > 0){
+    btn.classList.remove("hidden");
+    desc.textContent = n + " problema" + (n === 1 ? "" : "s") + " de la última sesión, con medidas nuevas.";
+  } else {
+    btn.classList.add("hidden");
+  }
+}
+function updateBestGeoUI(){
+  const el = document.getElementById("best-geo-line");
+  if(!el) return;
+  if(progress.bestGeoScore > 0){
+    el.textContent = "🏅 Mejor puntaje: " + progress.bestGeoScore + "/100";
+    el.classList.remove("hidden");
+  } else {
+    el.classList.add("hidden");
+  }
+}
+function showGeoResults(){
+  clearPending();
+  state.geoCurrent = null;
+  const isExam = state.geoMode === "exam";
+  saveGeoWrong();
+  showScreen("results");
+  const total = state.geoCorrect + state.geoWrong.length;
+  const score = total ? Math.round(state.geoCorrect / total * 100) : 0;
+  if(total > 0){
+    registerActivity();
+    if(score >= 70 && (isExam || total >= MIN_CELEBRATE)) burstConfetti(true);
+  }
+  if(isExam && score > progress.bestGeoScore){
+    progress.bestGeoScore = score;
+    saveProgress();
+    updateBestGeoUI();
+  }
+  if(total > 0) checkAchievements();
+  document.getElementById("result-score").textContent = score;
+  document.getElementById("result-den").textContent = isExam ? "de 100" : "de 100 (práctica)";
+  state.lastResultScore = score;
+  state.lastResultLabel = isExam ? "en el examen de geometría" : "practicando geometría";
+  const msg = total === 0 ? "No resolviste ningún problema."
+    : isExam ? (score >= 90 ? pickEncouragement("excellent") : score >= 70 ? pickEncouragement("great")
+        : score >= 51 ? pickEncouragement("good") : pickEncouragement("keep"))
+    : tierMessage(score, total);
+  document.getElementById("result-msg").textContent = msg;
+  document.getElementById("result-sub").textContent = state.geoCorrect + " de " + total + " correctos";
+
+  const listEl    = document.getElementById("result-review-list");
+  const titleEl   = document.getElementById("result-review-title");
+  const reviewBtn = document.getElementById("result-review-btn");
+  const againBtn  = document.getElementById("result-again");
+  listEl.innerHTML = "";
+  againBtn.textContent = isExam ? "🔄 Repetir examen" : "📐 Seguir practicando";
+  againBtn.onclick = isExam ? (() => startGeoExam()) : (() => startGeoPractice());
+  if(state.geoWrong.length > 0){
+    titleEl.classList.remove("hidden");
+    titleEl.textContent = "Para repasar:";
+    state.geoWrong.forEach(it => {
+      const div = document.createElement("div");
+      div.className = "review-item";
+      div.innerHTML = `<strong>${GEO_FIGURES[it.fig].label} · ${GEO_KINDS[it.kind].label}</strong>` +
+        `<p>${it.text}<br><strong>${it.formula}</strong><br>${it.subst}</p>`;
+      listEl.appendChild(div);
+    });
+    reviewBtn.classList.remove("hidden");
+    reviewBtn.textContent = "🔁 Repasar errores";
+    reviewBtn.onclick = () => startGeoReview();
+  } else {
+    titleEl.classList.add("hidden");
+    reviewBtn.classList.add("hidden");
+  }
+  updateGeoReviewButton();
+}
+function endGeoSession(){
+  if(state.geoMode === "exam" && state.geoIndex < state.geoQueue.length){
+    if(!confirm("Vas a perder el avance de este examen. ¿Salir igual?")) return;
+    saveGeoWrong();
+    updateGeoReviewButton();
+    exitToMenu();
+    return;
+  }
+  if(state.geoCorrect + state.geoWrong.length > 0){ showGeoResults(); return; }
+  exitToMenu();
+}
+
 /* ---------------- Init ---------------- */
 loadPrefs();
 loadProgress();
@@ -3937,6 +4723,11 @@ buildVerbKindChips();
 buildVerbStatsChips();
 updateBestVerbUI();
 updateVerbReviewButton();
+buildGeoFigChips();
+buildGeoKindChips();
+buildGeoStatsChips();
+updateBestGeoUI();
+updateGeoReviewButton();
 applyLoadedPrefs();
 applySubjectUI();
 updateProgressUI();
@@ -3970,6 +4761,18 @@ document.addEventListener("keydown", (e) => {
       return;
     }
     if(cur && cur.answered && e.key === "Enter"){ e.preventDefault(); nextMathTap(); return; }
+    return;
+  }
+
+  // Geometría: 1-4 elige opción, Enter pasa al siguiente
+  if(state.screen === "geo" && !typing){
+    const cur = state.geoCurrent;
+    if(cur && !cur.answered && e.key >= "1" && e.key <= "9"){
+      const i = parseInt(e.key, 10) - 1;
+      if(i < cur.opts.length){ e.preventDefault(); pickGeo(i); }
+      return;
+    }
+    if(cur && cur.answered && e.key === "Enter"){ e.preventDefault(); nextGeoTap(); return; }
     return;
   }
 
