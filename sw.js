@@ -3,7 +3,7 @@
 //  - Siempre intenta la red primero → nunca queda pegado en una versión vieja.
 //  - Guarda copia de lo que descarga → si no hay internet, la app igual abre.
 // Para forzar que todos los dispositivos descarten la caché vieja, subí el número.
-const CACHE = "dictado-shell-v20";
+const CACHE = "dictado-shell-v21";
 
 // Lo mínimo para que la app arranque sin conexión.
 const SHELL = [
@@ -42,7 +42,7 @@ self.addEventListener("fetch", (e) => {
   let url;
   try { url = new URL(req.url); } catch (err) { return; }
   if (url.protocol !== "http:" && url.protocol !== "https:") return;
-  if (url.origin !== self.location.origin) return; // Google Fonts lo maneja el navegador
+  if (url.origin !== self.location.origin) return; // las fuentes van embebidas en index.html
 
   e.respondWith(
     fetch(req)
