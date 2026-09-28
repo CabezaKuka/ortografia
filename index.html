@@ -606,6 +606,19 @@
   .opt-btn.dim{ opacity:0.4; }
   .mini-expr{ font-family: var(--font-body); font-weight:700; font-size:1.02rem; line-height:1.9; }
 
+  /* ---------- FRACCIONES ---------- */
+  .sub-tabs{ display:flex; gap:6px; margin: 0 0 14px; background: var(--chip-bg); border-radius:14px; padding:4px; }
+  .sub-tab{ flex:1; min-width:0; background:transparent; color: var(--ink-dim); border-radius:11px; padding:8px 6px;
+            font-family: var(--font-body); font-weight:800; font-size:0.82rem; border:none; cursor:pointer; }
+  .sub-tab[aria-pressed="true"]{ background: var(--surface); color: var(--ui-accent); box-shadow: 0 2px 8px rgba(108,92,231,0.18); }
+  .mmixed{ display:inline-flex; align-items:center; gap:2px; vertical-align:middle; }
+  .mmixed .mwhole{ font-size:1.12em; }
+  .frac-expr{ line-height:2.3; }
+  .frac-steps{ margin:6px 0 0; padding-left:1.25em; }
+  .frac-steps li{ margin:6px 0; line-height:2.1; font-size:0.93rem; }
+  .frac-steps .frac{ font-size:0.9em; }
+  .opt-btn .mmixed .mwhole{ font-size:1.05em; }
+
   /* ---------- META DIARIA ---------- */
   .goal-wrap{ margin: -4px 0 14px; }
   .goal-text{ font-size:0.82rem; font-weight:700; color: var(--ink-dim); text-align:center; margin-bottom:5px; }
@@ -812,6 +825,10 @@
       </div><!-- /menu-orto -->
 
       <div id="menu-math" class="hidden">
+        <div class="sub-tabs" role="group" aria-label="Tipo de ejercicio">
+          <button type="button" class="sub-tab" id="msub-comb" aria-pressed="true" onclick="setMathSub('comb')">🧮 Operaciones combinadas</button>
+          <button type="button" class="sub-tab" id="msub-frac" aria-pressed="false" onclick="setMathSub('frac')">🍕 Fracciones</button>
+        </div>
         <div class="menu-options">
           <button type="button" class="mode-btn" id="btn-math-practice" onclick="startMathPractice()">
             <span class="emoji">🧮</span>
@@ -827,6 +844,13 @@
               <span class="desc">10 operaciones. Nota sobre 100.<br><span id="best-math-line" class="best-score hidden"></span></span>
             </span>
           </button>
+          <button type="button" class="mode-btn hidden" id="btn-frac-review" onclick="startFracReview()">
+            <span class="emoji">🔁</span>
+            <span>
+              <strong>Repasar errores</strong>
+              <span class="desc" id="frac-review-desc">Las operaciones que fallaste, con números nuevos.</span>
+            </span>
+          </button>
         </div>
         <div class="options-row">
           <label class="opt-toggle" id="opt-math-typed" aria-pressed="false">
@@ -834,6 +858,7 @@
             Escribir el resultado (sin opciones)
           </label>
         </div>
+        <div id="math-comb-opts">
         <div class="filter-block">
           <div class="filter-title">Operaciones que entran</div>
           <div class="cat-chips" id="math-op-chips"></div>
@@ -843,6 +868,27 @@
           <div class="filter-title">Cantidad de términos</div>
           <div class="cat-chips" id="math-term-chips"></div>
           <div class="type-tip">💡 Los resultados pueden ser negativos. Las raíces son siempre exactas.</div>
+        </div>
+        </div>
+        <div id="math-frac-opts" class="hidden">
+          <div class="filter-block">
+            <div class="filter-title">Operaciones</div>
+            <div class="cat-chips" id="frac-op-chips"></div>
+          </div>
+          <div class="filter-block">
+            <div class="filter-title">Tipos de fracción</div>
+            <div class="cat-chips" id="frac-type-chips"></div>
+          </div>
+          <div class="filter-block">
+            <div class="filter-title">Cantidad de términos</div>
+            <div class="cat-chips" id="frac-term-chips"></div>
+            <div class="filter-count" id="frac-count"></div>
+            <div class="type-tip">💡 El resultado va siempre <strong>simplificado</strong>. Vale escribirlo como fracción (7/4) o como número mixto (1 3/4). Sin negativos.</div>
+          </div>
+          <div class="filter-block" id="frac-stats-block">
+            <div class="filter-title">Tu progreso por operación 📊</div>
+            <div class="stats-chips" id="frac-stats-chips"></div>
+          </div>
         </div>
       </div>
 
@@ -2399,7 +2445,10 @@ const state = {
   geoWrong: [],
   geoCurrent: null,
   geoQueue: [],
-  geoLastWrong: []      // {fig, kind} de la última sesión, para repasar
+  geoLastWrong: [],     // {fig, kind} de la última sesión, para repasar
+  mathFrac: false,      // la sesión de mate en curso es del modo Fracciones
+  mathQueue: [],        // repaso de fracciones: operaciones a repetir
+  fracLastWrong: []     // operaciones de fracciones falladas (add/sub/mul/div)
 };
 let currentRate = 0.8;
 let selectedCats = new Set(Object.keys(CAT));
@@ -2444,6 +2493,14 @@ const VERB_ACHIEVEMENTS = Object.keys(VERB_TENSES).map(key => ({
   check: (p) => !!(p.verbStats && p.verbStats[key] && p.verbStats[key].correct >= 20)
 }));
 // Un logro "Experto en <figura>" por cada figura geométrica.
+// Fracciones: un logro por operación (claves literales: FRAC_OPS se declara más abajo).
+const FRAC_ACHIEVEMENTS = [["add","suma"],["sub","resta"],["mul","multiplicación"],["div","división"]].map(([key, name]) => ({
+  id: "frac_" + key,
+  emoji: "🍕",
+  name: "Experto en " + name + " de fracciones",
+  desc: "Resolvé bien 20 ejercicios de " + name + " de fracciones.",
+  check: (p) => !!(p.fracStats && p.fracStats[key] && p.fracStats[key].correct >= 20)
+}));
 const GEO_ACHIEVEMENTS = Object.keys(GEO_FIGURES).map(key => ({
   id: "geo_" + key,
   emoji: "📐",
@@ -2476,6 +2533,8 @@ const ACHIEVEMENTS = [
     check:(p,s) => (p.totalMathCorrect || 0) >= 50 },
   { id:"matematico200", emoji:"🧠", name:"Genio del cálculo", desc:"Resolvé 200 operaciones correctas en total.",
     check:(p,s) => (p.totalMathCorrect || 0) >= 200 },
+  { id:"examenfracperfecto", emoji:"🍕", name:"Examen de fracciones perfecto", desc:"Sacá 100/100 en un examen de fracciones.",
+    check:(p,s) => (p.bestFracScore || 0) >= 100 },
   { id:"examenmateperfecto", emoji:"🏅", name:"Examen de mate perfecto", desc:"Sacá 100/100 en un examen de matemática.",
     check:(p,s) => p.bestMathScore >= 100 },
   { id:"todaslasmascotas", emoji:"🐾", name:"Coleccionista", desc:"Desbloqueá todas las mascotas.",
@@ -2496,7 +2555,7 @@ const ACHIEVEMENTS = [
     check:(p,s) => (p.totalGeoCorrect || 0) >= 100 },
   { id:"examengeoperfecto", emoji:"🏆", name:"Examen de geometría perfecto", desc:"Sacá 100/100 en un examen de geometría.",
     check:(p,s) => p.bestGeoScore >= 100 }
-].concat(CATEGORY_ACHIEVEMENTS).concat(VERB_ACHIEVEMENTS).concat(GEO_ACHIEVEMENTS);
+].concat(CATEGORY_ACHIEVEMENTS).concat(VERB_ACHIEVEMENTS).concat(GEO_ACHIEVEMENTS).concat(FRAC_ACHIEVEMENTS);
 let progress = {
   coins: 0,
   totalCoinsEarned: 0,
@@ -2509,6 +2568,8 @@ let progress = {
   achievements: [],
   bestExamScore: 0,
   bestMathScore: 0,
+  bestFracScore: 0,
+  fracStats: {},         // { add: {correct, wrong}, ... } — modo Fracciones, por operación
   bestVerbScore: 0,
   bestGeoScore: 0,
   lastChestDate: null,
@@ -2540,6 +2601,13 @@ function loadProgress(){
     if(Array.isArray(data.achievements)) progress.achievements = data.achievements;
     if(typeof data.bestExamScore === "number") progress.bestExamScore = data.bestExamScore;
     if(typeof data.bestMathScore === "number") progress.bestMathScore = data.bestMathScore;
+    if(typeof data.bestFracScore === "number") progress.bestFracScore = data.bestFracScore;
+    if(data.fracStats && typeof data.fracStats === "object"){
+      ["add","sub","mul","div"].forEach(k => {
+        const s = data.fracStats[k];
+        if(s && typeof s.correct === "number" && typeof s.wrong === "number") progress.fracStats[k] = { correct:s.correct, wrong:s.wrong };
+      });
+    }
     if(typeof data.bestVerbScore === "number") progress.bestVerbScore = data.bestVerbScore;
     if(typeof data.bestGeoScore === "number") progress.bestGeoScore = data.bestGeoScore;
     if(typeof data.lastChestDate === "string") progress.lastChestDate = data.lastChestDate;
@@ -3140,6 +3208,11 @@ function loadPrefs(){
     }
     if(typeof data.mathTerms === "number" && [0,2,3,4,5].indexOf(data.mathTerms) !== -1) mathTerms = data.mathTerms;
     if(typeof data.mathTyped === "boolean") mathTyped = data.mathTyped;
+    if(data.mathSub === "comb" || data.mathSub === "frac") mathSub = data.mathSub;
+    if(Array.isArray(data.fracOps)){ const v = data.fracOps.filter(k => FRAC_OPS[k]); if(v.length) fracOps = new Set(v); }
+    if(Array.isArray(data.fracTypes)){ const v = data.fracTypes.filter(k => FRAC_TYPES[k]); if(v.length) fracTypes = new Set(v); }
+    if([0,2,3].indexOf(data.fracTerms) !== -1) fracTerms = data.fracTerms;
+    if(Array.isArray(data.fracLastWrong)) state.fracLastWrong = data.fracLastWrong.filter(k => FRAC_OPS[k]);
     if(typeof data.geoTyped === "boolean") geoTyped = data.geoTyped;
     if(Array.isArray(data.verbTenses)){
       const vt = data.verbTenses.filter(k => Object.prototype.hasOwnProperty.call(VERB_TENSES, k));
@@ -3185,6 +3258,11 @@ function savePrefs(){
       mathTerms: mathTerms,
       verbTenses: [...selectedTenses],
       mathTyped: mathTyped,
+      mathSub: mathSub,
+      fracOps: [...fracOps],
+      fracTypes: [...fracTypes],
+      fracTerms: fracTerms,
+      fracLastWrong: (state.fracLastWrong || []).slice(0, 40),
       geoTyped: geoTyped,
       verbKinds: [...verbKinds],
       verbLastWrong: state.verbLastWrong.slice(0, 40),
@@ -4077,7 +4155,10 @@ function syncTypedToggles(){
   });
 }
 
-function mathReady(){ return mathOps.has("add") || mathOps.has("mul") || mathOps.has("div"); }
+function mathReady(){
+  if(mathSub === "frac") return fracOps.size > 0 && fracTypes.size > 0;
+  return mathOps.has("add") || mathOps.has("mul") || mathOps.has("div");
+}
 
 /* ---------------- Generación del ejercicio ---------------- */
 /* Enfoque: generar hacia adelante con pools acotados y RECHAZAR lo feo.
@@ -4335,6 +4416,479 @@ function makeDistractors(prob){
   return shuffle(out).slice(0,3);
 }
 
+/* ================= FRACCIONES (modo dedicado) =================
+   Operaciones con fracciones propias, impropias y mixtas, sin negativos.
+   - El resultado se EXIGE simplificado; si lo deja sin simplificar se le
+     explica cómo hacerlo (cuenta como error, con esa aclaración).
+   - Se aceptan las dos formas equivalentes: 7/4 o 1 3/4.
+   - Los distractores son errores típicos con diagnóstico, y al fallar se
+     muestra el desarrollo paso a paso. */
+const FRAC_OPS = {
+  add: { label:"Suma",           sym:"+", color:"#3A86FF" },
+  sub: { label:"Resta",          sym:"−", color:"#FB8500" },
+  mul: { label:"Multiplicación", sym:"×", color:"#2ECC71" },
+  div: { label:"División",       sym:"÷", color:"#FF2D95" }
+};
+const FRAC_TYPES = {
+  propia:   { label:"Propias (3/4)",   color:"#6A4C93" },
+  impropia: { label:"Impropias (7/4)", color:"#1B998B" },
+  mixta:    { label:"Mixtas (1 ¾)",    color:"#E76F51" }
+};
+const FRAC_TERM_OPTS = [{v:2,l:"2 términos"},{v:3,l:"3 términos"},{v:0,l:"Mezcla"}];
+const FRAC_DENS = [2,3,4,5,6,8,10,12,3,4,6,9];
+let mathSub = "comb";                                   // "comb" (combinadas) | "frac"
+let fracOps = new Set(Object.keys(FRAC_OPS));
+let fracTypes = new Set(Object.keys(FRAC_TYPES));
+let fracTerms = 2;                                      // 2 | 3 | 0 (mezcla)
+
+function fracLcm(a,b){ return a / mgcd(a,b) * b; }
+// Fracción SIN reducir, para mostrar pasos intermedios (6/8 antes de simplificar).
+function rawHTML(n, d){
+  if(d === 1) return '<span class="mwhole">' + n + '</span>';
+  return '<span class="frac"><span class="fnum">' + n + '</span><span class="fden">' + d + '</span></span>';
+}
+function mixedHTML(w, n, d){
+  return '<span class="mmixed"><span class="mwhole">' + w + '</span>' + rawHTML(n, d) + '</span>';
+}
+// Valor en la forma pedida: "mixed" muestra 1 ¾ cuando es mayor que 1; "improper" muestra 7/4.
+function formHTML(f, form){
+  if(f.d === 1) return rawHTML(f.n, 1);
+  if(form === "mixed" && f.n > f.d){ const w = Math.floor(f.n / f.d); return mixedHTML(w, f.n - w*f.d, f.d); }
+  return rawHTML(f.n, f.d);
+}
+function fracMixedText(f){
+  if(f.d === 1) return String(f.n);
+  if(f.n > f.d){ const w = Math.floor(f.n / f.d); return w + " " + (f.n - w*f.d) + "/" + f.d; }
+  return f.n + "/" + f.d;
+}
+// Las dos formas aceptadas, para mostrar al corregir: "7/4 = 1 3/4"
+function bothFormsHTML(f){
+  if(f.d !== 1 && f.n > f.d) return rawHTML(f.n, f.d) + '<span class="mop">=</span>' + formHTML(f, "mixed");
+  return formHTML(f, "improper");
+}
+
+function randFracOperand(type){
+  for(let t = 0; t < 50; t++){
+    const d = mpick(FRAC_DENS);
+    if(type === "propia"){
+      const n = 1 + mrand(d - 1);
+      if(mgcd(n, d) === 1) return { type, w:0, n, d, val: fr(n, d) };
+    } else if(type === "impropia"){
+      const n = d + 1 + mrand(Math.max(1, d * 2 - 1));
+      if(n % d !== 0 && mgcd(n, d) === 1) return { type, w:0, n, d, val: fr(n, d) };
+    } else {
+      const w = 1 + mrand(3), n = 1 + mrand(d - 1);
+      if(mgcd(n, d) === 1) return { type:"mixta", w, n, d, val: fr(w*d + n, d) };
+    }
+  }
+  return { type:"propia", w:0, n:1, d:2, val: fr(1,2) };
+}
+function operandHTML(o){ return o.type === "mixta" ? mixedHTML(o.w, o.n, o.d) : rawHTML(o.n, o.d); }
+function operandText(o){ return o.type === "mixta" ? o.w + " " + o.n + "/" + o.d : o.n + "/" + o.d; }
+
+// Una operación entre dos fracciones "a mano": devuelve el resultado SIN simplificar
+// (como sale del procedimiento del cuaderno). err simula un error típico.
+function fracBinRaw(A, B, op, err){
+  if(op === "add" || op === "sub"){
+    const s = op === "add" ? 1 : -1;
+    if(err === "sumaDirecta") return { n: A.n + s*B.n, d: A.d + B.d };
+    if(err === "sinAmplificar"){ const L = fracLcm(A.d, B.d); return { n: A.n + s*B.n, d: L }; }
+    const L = fracLcm(A.d, B.d);
+    return { n: A.n*(L/A.d) + s*B.n*(L/B.d), d: L };
+  }
+  if(op === "mul"){
+    if(err === "cruzMul") return { n: A.n*B.d, d: A.d*B.n };
+    return { n: A.n*B.n, d: A.d*B.d };
+  }
+  // div
+  if(err === "noInvertir") return { n: A.n*B.n, d: A.d*B.d };
+  if(err === "invertirPrimera") return { n: A.d*B.n, d: A.n*B.d };
+  return { n: A.n*B.d, d: A.d*B.n };
+}
+const FRAC_PREC = { add:1, sub:1, mul:2, div:2 };
+// Evalúa la expresión. err: error típico a simular (o null). Devuelve
+// { val (reducido), raw (último paso sin simplificar), partialsOk } o null.
+function fracEval(ops, opnds, err){
+  const conv = o => (err === "mixtoMal" && o.type === "mixta") ? fr(o.w + o.n, o.d) : o.val;
+  let vals = opnds.map(conv), o = ops.slice(), raws = vals.map(v => ({ n:v.n, d:v.d }));
+  let partialsOk = true;
+  const step = (i) => {
+    const r = fracBinRaw(vals[i], vals[i+1], o[i], err);
+    if(r.d === 0) return false;
+    const v = fr(r.n, r.d);
+    if(!v) return false;
+    if(v.n < 0) partialsOk = false;
+    vals.splice(i, 2, v); raws.splice(i, 2, r); o.splice(i, 1);
+    return true;
+  };
+  if(err !== "izqDer"){
+    for(let i = 0; i < o.length; ){
+      if(FRAC_PREC[o[i]] === 2){ if(!step(i)) return null; } else i++;
+    }
+  }
+  while(o.length){ if(!step(0)) return null; }
+  return { val: vals[0], raw: raws[0], partialsOk };
+}
+const FRAC_ERR_WHY = {
+  sumaDirecta:    "operaste numerador con numerador y denominador con denominador. En la suma y la resta el denominador <strong>no se suma</strong>: primero se busca el común denominador (mcm)",
+  sinAmplificar:  "pusiste el denominador común pero no ajustaste los numeradores: cada numerador se multiplica por lo mismo que su denominador",
+  cruzMul:        "multiplicaste en cruz; eso se hace para <strong>dividir</strong>. Para multiplicar: numerador × numerador y denominador × denominador",
+  noInvertir:     "multiplicaste directo. Para dividir hay que <strong>invertir la segunda fracción</strong> y después multiplicar",
+  invertirPrimera:"invertiste la primera fracción; la que se invierte es la <strong>segunda</strong> (el divisor)",
+  mixtoMal:       "pasaste mal el número mixto: entero × denominador + numerador. Ej: 2 ¼ = (2 × 4 + 1)/4 = 9/4, no (2 + 1)/4",
+  izqDer:         "resolviste de izquierda a derecha; primero se hacen las <strong>multiplicaciones y divisiones</strong>, después las sumas y restas"
+};
+
+// Genera el problema. forceOp: para el repaso (misma operación, números nuevos).
+function makeFracProblem(forceOp){
+  const opList = [...fracOps], typeList = [...fracTypes];
+  if(!opList.length || !typeList.length) return null;
+  for(let attempt = 0; attempt < 300; attempt++){
+    const terms = forceOp ? 2 : (fracTerms === 0 ? (Math.random() < 0.6 ? 2 : 3) : fracTerms);
+    const ops = []; for(let i = 0; i < terms - 1; i++) ops.push(forceOp || mpick(opList));
+    let opnds = []; for(let i = 0; i < terms; i++) opnds.push(randFracOperand(mpick(typeList)));
+    // En restas de dos términos, el mayor va primero (sin negativos).
+    if(terms === 2 && ops[0] === "sub" && fracEval(ops, opnds, null) && fracEval(ops, opnds, null).val.n < 0) opnds.reverse();
+    const res = fracEval(ops, opnds, null);
+    if(!res || !res.partialsOk || res.val.n <= 0) continue;
+    if(res.val.d > 144 || res.val.n > 400 || res.raw.n > 2000 || res.raw.d > 2000) continue;
+    if(opnds.length === 2 && opnds[0].n === opnds[1].n && opnds[0].d === opnds[1].d && opnds[0].w === opnds[1].w) continue;
+
+    const p = { frac:true, dec:false, ops, opnds, val: res.val, raw: res.raw };
+    p.html = opnds.map((o, i) => (i ? '<span class="mop">' + FRAC_OPS[ops[i-1]].sym + '</span>' : '') + operandHTML(o)).join("");
+    p.text = opnds.map((o, i) => (i ? " " + FRAC_OPS[ops[i-1]].sym + " " : "") + operandText(o)).join("");
+    // Errores típicos que aplican a ESTE ejercicio
+    const cand = [];
+    const has = k => ops.includes(k);
+    if(has("add") || has("sub")){ cand.push("sumaDirecta"); cand.push("sinAmplificar"); }
+    if(has("mul")) cand.push("cruzMul");
+    if(has("div")){ cand.push("noInvertir"); cand.push("invertirPrimera"); }
+    if(opnds.some(o => o.type === "mixta")) cand.push("mixtoMal");
+    if(ops.length > 1 && FRAC_PREC[ops[0]] < FRAC_PREC[ops[1]]) cand.push("izqDer");
+    const seen = new Set([p.val.n + "/" + p.val.d]);
+    p.wrongs = [];
+    // "Sin simplificar": mismo valor, otra escritura. Cuenta como error, con aclaración.
+    const g = mgcd(res.raw.n, res.raw.d);
+    if(g > 1) p.unsimplified = { n: res.raw.n, d: res.raw.d, g };
+    shuffle(cand).forEach(k => {
+      const r = fracEval(ops, opnds, k);
+      if(!r || r.val.n <= 0 || r.val.d > 200 || r.val.n > 600) return;
+      const key = r.val.n + "/" + r.val.d;
+      if(seen.has(key)) return;
+      seen.add(key);
+      p.wrongs.push({ val: r.val, why: FRAC_ERR_WHY[k], err:k });
+    });
+    p.steps = fracSteps(p);
+    return p;
+  }
+  return null;
+}
+
+// Desarrollo paso a paso, como en el cuaderno.
+function fracSteps(p){
+  const lines = [];
+  const mix = p.opnds.filter(o => o.type === "mixta");
+  mix.forEach(o => {
+    lines.push("Paso el mixto a fracción: " + mixedHTML(o.w, o.n, o.d) + '<span class="mop">=</span>' +
+      rawHTML("(" + o.w + " × " + o.d + " + " + o.n + ")", o.d) + '<span class="mop">=</span>' + rawHTML(o.w*o.d + o.n, o.d));
+  });
+  let vals = p.opnds.map(o => o.val), o = p.ops.slice();
+  const bin = (i) => {
+    const A = vals[i], B = vals[i+1], op = o[i];
+    const a = rawHTML(A.n, A.d), b = rawHTML(B.n, B.d);
+    const r = fracBinRaw(A, B, op, null);
+    if(op === "add" || op === "sub"){
+      const sym = FRAC_OPS[op].sym;
+      if(A.d === B.d){
+        lines.push("Mismo denominador: " + (op === "add" ? "sumo" : "resto") + " los numeradores. " + a + '<span class="mop">' + sym + '</span>' + b + '<span class="mop">=</span>' + rawHTML(r.n, r.d));
+      } else {
+        const L = r.d;
+        lines.push("Denominador común: mcm(" + A.d + ", " + B.d + ") = " + L + ". " +
+          a + '<span class="mop">=</span>' + rawHTML(A.n*(L/A.d), L) + " (×" + (L/A.d) + ") · " +
+          b + '<span class="mop">=</span>' + rawHTML(B.n*(L/B.d), L) + " (×" + (L/B.d) + ")");
+        lines.push((op === "add" ? "Sumo" : "Resto") + " los numeradores: " + rawHTML(A.n*(L/A.d), L) + '<span class="mop">' + sym + '</span>' +
+          rawHTML(B.n*(L/B.d), L) + '<span class="mop">=</span>' + rawHTML(r.n, r.d));
+      }
+    } else if(op === "mul"){
+      lines.push("Multiplico numerador × numerador y denominador × denominador: " + a + '<span class="mop">×</span>' + b +
+        '<span class="mop">=</span>' + rawHTML(A.n + " × " + B.n, A.d + " × " + B.d) + '<span class="mop">=</span>' + rawHTML(r.n, r.d));
+    } else {
+      lines.push("Invierto la segunda y multiplico: " + a + '<span class="mop">÷</span>' + b + '<span class="mop">=</span>' +
+        a + '<span class="mop">×</span>' + rawHTML(B.d, B.n) + '<span class="mop">=</span>' + rawHTML(r.n, r.d));
+    }
+    const v = fr(r.n, r.d);
+    const last = o.length === 1;
+    const g = mgcd(r.n, r.d);
+    if(g > 1 && !last){
+      lines.push("Simplifico (÷" + g + "): " + rawHTML(r.n, r.d) + '<span class="mop">=</span>' + rawHTML(v.n, v.d));
+    }
+    vals.splice(i, 2, v); o.splice(i, 1);
+    return r;
+  };
+  if(o.length > 1 && o.some(x => FRAC_PREC[x] === 2) && o.some(x => FRAC_PREC[x] === 1)){
+    lines.push("Primero la " + (o.find(x => FRAC_PREC[x] === 2) === "mul" ? "multiplicación" : "división") + ", después la " + (o.find(x => FRAC_PREC[x] === 1) === "add" ? "suma" : "resta") + ".");
+  }
+  let lastRaw = null;
+  for(let i = 0; i < o.length; ){ if(FRAC_PREC[o[i]] === 2) lastRaw = bin(i); else i++; }
+  while(o.length) lastRaw = bin(0);
+  const fin = p.val;
+  if(lastRaw){
+    const g = mgcd(lastRaw.n, lastRaw.d);
+    if(g > 1) lines.push("Simplifico (÷" + g + "): " + rawHTML(lastRaw.n, lastRaw.d) + '<span class="mop">=</span>' + formHTML(fin, "improper"));
+  }
+  if(fin.d !== 1 && fin.n > fin.d){
+    const w = Math.floor(fin.n / fin.d);
+    lines.push("Como número mixto: " + fin.n + " ÷ " + fin.d + " = " + w + " y sobran " + (fin.n - w*fin.d) + " → " +
+      rawHTML(fin.n, fin.d) + '<span class="mop">=</span>' + formHTML(fin, "mixed"));
+  }
+  return lines;
+}
+
+
+/* ---------------- Fracciones: menú, sesión y corrección ---------------- */
+function buildFracChips(){
+  const ops = document.getElementById("frac-op-chips");
+  if(ops) ops.innerHTML = Object.entries(FRAC_OPS).map(([k,c]) =>
+    `<button type="button" class="cat-chip" id="fchip-op-${k}" aria-pressed="true" style="border-color:${c.color}; color:${c.color}"
+      onclick="toggleFracOp('${k}')">${c.sym} ${c.label}</button>`).join("");
+  const tys = document.getElementById("frac-type-chips");
+  if(tys) tys.innerHTML = Object.entries(FRAC_TYPES).map(([k,c]) =>
+    `<button type="button" class="cat-chip" id="fchip-ty-${k}" aria-pressed="true" style="border-color:${c.color}; color:${c.color}"
+      onclick="toggleFracType('${k}')">${c.label}</button>`).join("");
+  const tms = document.getElementById("frac-term-chips");
+  if(tms) tms.innerHTML = FRAC_TERM_OPTS.map(t =>
+    `<button type="button" class="cat-chip" id="fchip-tm-${t.v}" aria-pressed="false" style="border-color:#6C5CE7; color:#6C5CE7"
+      onclick="setFracTerms(${t.v})">${t.l}</button>`).join("");
+  const st = document.getElementById("frac-stats-chips");
+  if(st) st.innerHTML = Object.entries(FRAC_OPS).map(([k,c]) => `
+    <span class="stat-chip" id="frac-stat-chip-${k}" style="border-color:${c.color}; color:${c.color}">
+      <span class="stat-dot" id="frac-stat-dot-${k}"></span>${c.label}
+      <span id="frac-stat-pct-${k}"></span>
+    </span>`).join("");
+}
+function paintFracChips(){
+  Object.entries(FRAC_OPS).forEach(([k,c]) => {
+    const ch = document.getElementById("fchip-op-" + k); if(!ch) return;
+    const on = fracOps.has(k);
+    ch.setAttribute("aria-pressed", on ? "true" : "false");
+    ch.style.background = on ? hexToRgba(c.color, 0.14) : "";
+  });
+  Object.entries(FRAC_TYPES).forEach(([k,c]) => {
+    const ch = document.getElementById("fchip-ty-" + k); if(!ch) return;
+    const on = fracTypes.has(k);
+    ch.setAttribute("aria-pressed", on ? "true" : "false");
+    ch.style.background = on ? hexToRgba(c.color, 0.14) : "";
+  });
+  FRAC_TERM_OPTS.forEach(t => {
+    const ch = document.getElementById("fchip-tm-" + t.v); if(!ch) return;
+    const on = fracTerms === t.v;
+    ch.setAttribute("aria-pressed", on ? "true" : "false");
+    ch.style.background = on ? hexToRgba("#6C5CE7", 0.14) : "";
+  });
+  paintFracStatsChips();
+}
+function paintFracStatsChips(){
+  Object.keys(FRAC_OPS).forEach(k => {
+    const chip = document.getElementById("frac-stat-chip-" + k);
+    const dot = document.getElementById("frac-stat-dot-" + k);
+    const pctEl = document.getElementById("frac-stat-pct-" + k);
+    if(!chip || !dot || !pctEl) return;
+    const s = (progress.fracStats || {})[k];
+    const n = s ? s.correct + s.wrong : 0;
+    if(!n){ chip.classList.add("empty"); dot.style.background = "#B9B4C9"; pctEl.textContent = "sin datos"; return; }
+    const pct = Math.round(s.correct / n * 100);
+    chip.classList.remove("empty");
+    dot.style.background = pct >= 80 ? "#22C55E" : pct >= 50 ? "#E8A600" : "#FF3B30";
+    pctEl.textContent = pct + "%";
+  });
+}
+function toggleFracOp(k){ if(fracOps.has(k)) fracOps.delete(k); else fracOps.add(k); paintMathChips(); }
+function toggleFracType(k){ if(fracTypes.has(k)) fracTypes.delete(k); else fracTypes.add(k); paintMathChips(); }
+function setFracTerms(v){ fracTerms = v; paintMathChips(); }
+function setMathSub(s){ mathSub = s === "frac" ? "frac" : "comb"; applyMathSubUI(); savePrefs(); }
+function applyMathSubUI(){
+  const isFrac = mathSub === "frac";
+  const c = document.getElementById("msub-comb"), f = document.getElementById("msub-frac");
+  if(c) c.setAttribute("aria-pressed", isFrac ? "false" : "true");
+  if(f) f.setAttribute("aria-pressed", isFrac ? "true" : "false");
+  const co = document.getElementById("math-comb-opts"), fo = document.getElementById("math-frac-opts");
+  if(co) co.classList.toggle("hidden", isFrac);
+  if(fo) fo.classList.toggle("hidden", !isFrac);
+  updateFracReviewButton();
+  updateBestMathUI();
+  paintMathChips();
+}
+function updateFracReviewButton(){
+  const btn = document.getElementById("btn-frac-review"), desc = document.getElementById("frac-review-desc");
+  if(!btn) return;
+  const n = (state.fracLastWrong || []).length;
+  btn.classList.toggle("hidden", !(mathSub === "frac" && n > 0));
+  if(desc && n) desc.textContent = n + " operación" + (n === 1 ? "" : "es") + " que fallaste, con números nuevos.";
+}
+function recordFracStat(ops, ok){
+  if(!progress.fracStats) progress.fracStats = {};
+  [...new Set(ops || [])].forEach(k => {
+    const s = progress.fracStats[k] || (progress.fracStats[k] = { correct:0, wrong:0 });
+    if(ok) s.correct++; else s.wrong++;
+  });
+  saveProgress();
+  paintFracStatsChips();
+}
+function saveFracWrong(){
+  const wrong = state.mathWrong.filter(w => w.frac);
+  if(!wrong.length) return;
+  const list = [];
+  wrong.forEach(w => (w.ops || []).forEach(k => list.push(k)));
+  state.fracLastWrong = list.slice(0, 40);
+  savePrefs();
+  updateFracReviewButton();
+}
+function startFracReview(){
+  if(!(state.fracLastWrong || []).length){ alert("No hay errores guardados para repasar."); return; }
+  mathSub = "frac";
+  state.subject = "math";
+  resetMathSession("review");
+  state.mathQueue = shuffle(state.fracLastWrong);
+  showScreen("math");
+  nextMathProblem();
+}
+function nextFracProblem(){
+  const forceOp = state.mathMode === "review" ? state.mathQueue[state.mathIndex] : null;
+  const p = makeFracProblem(forceOp);
+  if(!p){
+    alert("No pude generar un ejercicio con esa combinación. Probá activar más operaciones o tipos de fracción.");
+    exitToMenu();
+    return;
+  }
+  const v = p.val;
+  // Si el resultado es mayor que 1, las opciones se muestran como mixto o como
+  // fracción (al azar): así practica reconocer las dos formas.
+  const form = (v.d !== 1 && v.n > v.d && Math.random() < 0.5) ? "mixed" : "improper";
+  const opts = [{ val:v, correct:true, kind:"ok" }];
+  const seen = new Set([v.n + "/" + v.d]);
+  if(p.unsimplified && Math.random() < 0.6) opts.push({ val:v, raw:p.unsimplified, correct:false, kind:"uns" });
+  shuffle(p.wrongs).forEach(w => {
+    if(opts.length >= 4) return;
+    seen.add(w.val.n + "/" + w.val.d);
+    opts.push({ val:w.val, why:w.why, correct:false, kind:"err" });
+  });
+  const fillers = shuffle([fAdd(v, fr(1,1)), fSub(v, fr(1,1)), fAdd(v, fr(1, v.d)), fSub(v, fr(1, v.d)),
+                           fMul(v, fr(2,1)), fMul(v, fr(1,2)), v.n ? fr(v.d, v.n) : null]);
+  fillers.forEach(f => {
+    if(opts.length >= 4 || !f || f.n <= 0) return;
+    const key = f.n + "/" + f.d;
+    if(seen.has(key)) return;
+    seen.add(key);
+    opts.push({ val:f, correct:false, kind:"near" });
+  });
+  state.mathCurrent = { p, opts: shuffle(opts), picked:-1, answered:false, frac:true, typedMode: mathTyped, form };
+  renderMath();
+}
+function fracOptHTML(o, form){ return o.kind === "uns" ? rawHTML(o.raw.n, o.raw.d) : formHTML(o.val, form); }
+// Explica cómo simplificar lo que escribió (o eligió) sin simplificar.
+function fracUnsimplifiedMsg(t, val){
+  const both = bothFormsHTML(val);
+  if(!t) return "Vale lo mismo, pero no está simplificado. Queda: " + both;
+  if(t.w > 0 && t.n >= t.d) return "La parte fraccionaria (" + t.n + "/" + t.d + ") es mayor que 1: se pasa al entero. Queda: " + both;
+  const g = mgcd(t.n, t.d);
+  if(t.d === 1 || t.d / g === 1) return "Es un número entero: se escribe " + both + ".";
+  if(g > 1) return "Dividí numerador y denominador por <strong>" + g + "</strong>: " + rawHTML(t.n, t.d) + '<span class="mop">=</span>' +
+                   rawHTML(t.n / g, t.d / g) + (t.w ? " (y el entero " + t.w + " queda igual)" : "") + ". Queda: " + both;
+  return "Queda: " + both;
+}
+function submitFracTyped(){
+  const cur = state.mathCurrent;
+  if(!cur || cur.answered || !cur.typedMode) return;
+  const inp = document.getElementById("math-input");
+  const raw = inp ? inp.value : "";
+  if(!raw.trim()){ if(inp) inp.focus(); return; }   // vacío: no cuenta
+  const parsed = parseMathAnswer(raw);
+  cur.typed = raw.trim();
+  cur.answered = true;
+  let ok = false;
+  if(parsed && fEq(parsed.val, cur.p.val)){
+    if(/[.,]/.test(cur.typed)) cur.decTyped = true;           // valor bien, pero en decimal
+    else if(parsed.reduced) ok = true;
+    else cur.unsTyped = parsed.typed || null;                 // valor bien, sin simplificar
+  } else {
+    cur.typedBad = !parsed;
+    cur.diag = parsed ? (cur.p.wrongs.find(w => fEq(w.val, parsed.val)) || null) : null;
+  }
+  mathAnswered(ok);
+}
+function renderFrac(){
+  const cur = state.mathCurrent, p = cur.p;
+  const isExam = state.mathMode === "exam", isRev = state.mathMode === "review";
+  document.getElementById("math-badge").innerHTML =
+    '<span class="badge" style="background:#E76F51;color:#fff">🍕 ' + (isExam ? "Examen" : isRev ? "Repaso" : "Fracciones") + '</span>';
+  document.getElementById("math-progress").textContent =
+    "Ejercicio " + (state.mathIndex + 1) + (isExam ? " / " + MATH_EXAM_N : isRev ? " / " + state.mathQueue.length : "");
+  document.getElementById("math-stats").innerHTML =
+    `<span class="ok">✓ ${state.mathCorrect}</span> · <span class="ko">✗ ${state.mathWrong.length}</span>`;
+  const status = document.getElementById("math-status");
+  const stage  = document.getElementById("math-stage");
+  const v = p.val;
+  const isImproper = v.d !== 1 && v.n > v.d;
+
+  let html = '<div class="expr-box frac-expr">' + p.html + '<span class="mop">=</span>' +
+             (cur.answered ? bothFormsHTML(v) : '<span class="mq">?</span>') + '</div>';
+
+  if(cur.typedMode){
+    if(!cur.answered){
+      html += `<div class="type-box"><input type="text" id="math-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          placeholder="Ej: 7/4 o 1 3/4" aria-label="Escribí el resultado"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();submitMathTyped();}"></div>
+        <div class="timer-actions"><button type="button" class="btn-primary" style="padding:9px 20px;" onclick="submitMathTyped()">✅ Corregir</button></div>
+        <div class="hint-text">Simplificado. Fracción con barra (7/4) o mixto con un espacio (1 3/4).</div>`;
+    }
+  } else {
+    html += '<div class="opt-grid">';
+    cur.opts.forEach((o, i) => {
+      let cls = "opt-btn";
+      if(cur.answered){ cls += o.correct ? " ok" : (i === cur.picked ? " ko" : " dim"); }
+      html += '<button type="button" class="' + cls + '"' + (cur.answered ? " disabled" : "") +
+              ' onclick="pickMath(' + i + ')">' + fracOptHTML(o, cur.form) + '</button>';
+    });
+    html += '</div>';
+  }
+
+  if(cur.answered){
+    const uns = cur.unsimplifiedPick || !!cur.unsTyped;
+    if(cur.ok){
+      status.textContent = "¡Bien! 🎉";
+      html += `<div class="type-feedback ok">✓ ¡Correcto!${isImproper ? " Vale igual como fracción o como mixto: " + bothFormsHTML(v) : ""}</div>`;
+    } else if(uns){
+      status.textContent = "¡Casi! Falta simplificar ✍️";
+      const t = cur.unsTyped || (cur.unsimplifiedPick ? { w:0, n:cur.opts[cur.picked].raw.n, d:cur.opts[cur.picked].raw.d } : null);
+      html += `<div class="type-feedback ko">El cálculo está bien, pero <strong>el resultado tiene que ir simplificado</strong>. ${fracUnsimplifiedMsg(t, v)}</div>`;
+    } else if(cur.decTyped){
+      status.textContent = "Escribilo como fracción ✍️";
+      html += `<div class="type-feedback ko">El valor es correcto, pero en este modo se escribe como fracción o número mixto: ${bothFormsHTML(v)}</div>`;
+    } else {
+      status.textContent = "Fijate el desarrollo 👇";
+      if(cur.typedMode) html += `<div class="type-feedback ko">✗ Escribiste «${escapeHtml(cur.typed)}»${cur.typedBad ? " (no lo pude leer: usá 7/4 o 1 3/4)" : ""}</div>`;
+    }
+    if(!cur.ok){
+      const diag = cur.diag && cur.diag.why
+        ? `<span class="gf-diag">✗ ${cur.typedMode ? "Tu resultado" : "La opción que elegiste"} (${formHTML(cur.diag.val, cur.form || "improper")}) sale si ${cur.diag.why}.</span>` : "";
+      html += `<div class="geo-formula frac-explain" style="background:${hexToRgba("#E76F51", 0.09)}; border-left:5px solid #E76F51;">
+        ${diag}<span class="gf-title">Paso a paso</span>
+        <ol class="frac-steps">${p.steps.map(l => "<li>" + l + "</li>").join("")}</ol>
+        <span class="gf-tip">El resultado va siempre simplificado. Se acepta como fracción (7/4) o como número mixto (1 ¾).</span></div>`;
+    }
+    html += '<div class="controls-row" style="margin-top:16px;">' +
+            '<button type="button" class="btn-primary" onclick="nextMathTap()">➡️ Siguiente</button></div>' +
+            '<div class="hint-text"><kbd>Enter</kbd> para seguir</div>';
+  } else {
+    status.textContent = cur.typedMode ? "Resolvé y escribí el resultado simplificado" : "Resolvé y elegí el resultado simplificado";
+    if(!cur.typedMode) html += '<div class="hint-text">Teclas <kbd>1</kbd>–<kbd>' + cur.opts.length + '</kbd> para elegir</div>';
+  }
+  stage.innerHTML = html;
+  if(cur.typedMode && !cur.answered){
+    setTimeout(() => { const inp = document.getElementById("math-input"); if(inp) inp.focus(); }, 50);
+  }
+}
+
 /* ---------------- Menú de matemática ---------------- */
 function buildMathOpChips(){
   const el = document.getElementById("math-op-chips");
@@ -4367,12 +4921,20 @@ function paintMathChips(){
     ch.setAttribute("aria-pressed", on ? "true" : "false");
     ch.style.background = on ? hexToRgba("#6C5CE7", 0.14) : "";
   });
+  paintFracChips();
   const warn = document.getElementById("math-op-count");
-  const btns = document.querySelectorAll("#menu-math .mode-btn");
+  const fwarn = document.getElementById("frac-count");
+  const btns = document.querySelectorAll("#menu-math .mode-btn:not(#btn-frac-review)");
   const ready = mathReady();
+  const combOk = mathOps.has("add") || mathOps.has("mul") || mathOps.has("div");
   if(warn){
-    warn.textContent = ready ? "" : "Elegí al menos una de +−, × o ÷.";
-    warn.classList.toggle("warn", !ready);
+    warn.textContent = combOk ? "" : "Elegí al menos una de +−, × o ÷.";
+    warn.classList.toggle("warn", !combOk);
+  }
+  if(fwarn){
+    const msg = !fracOps.size ? "Elegí al menos una operación." : !fracTypes.size ? "Elegí al menos un tipo de fracción." : "";
+    fwarn.textContent = msg;
+    fwarn.classList.toggle("warn", !!msg);
   }
   btns.forEach(b => { b.disabled = !ready; });
   savePrefs();
@@ -4413,8 +4975,9 @@ function applySubjectUI(){
 function updateBestMathUI(){
   const el = document.getElementById("best-math-line");
   if(!el) return;
-  if(progress.bestMathScore > 0){
-    el.textContent = "🏅 Mejor puntaje: " + progress.bestMathScore + "/100";
+  const best = mathSub === "frac" ? (progress.bestFracScore || 0) : progress.bestMathScore;
+  if(best > 0){
+    el.textContent = "🏅 Mejor puntaje: " + best + "/100";
     el.classList.remove("hidden");
   } else {
     el.classList.add("hidden");
@@ -4423,6 +4986,8 @@ function updateBestMathUI(){
 
 /* ---------------- Sesión de matemática ---------------- */
 function resetMathSession(mode){
+  state.mathFrac = (mathSub === "frac");
+  state.mathQueue = [];
   state.mathMode = mode;
   state.mathIndex = 0;
   state.mathCorrect = 0;
@@ -4447,6 +5012,8 @@ function startMathExam(){
 function nextMathProblem(){
   clearPending();
   if(state.mathMode === "exam" && state.mathIndex >= MATH_EXAM_N){ showMathResults(); return; }
+  if(state.mathMode === "review" && state.mathIndex >= state.mathQueue.length){ showMathResults(); return; }
+  if(state.mathFrac){ nextFracProblem(); return; }
   const p = makeProblem();
   if(!p){
     alert("No pude generar una operación con esa combinación. Probá activar más operaciones o menos términos.");
@@ -4459,6 +5026,7 @@ function nextMathProblem(){
 function renderMath(){
   const cur = state.mathCurrent;
   if(!cur) return;
+  if(cur.frac){ renderFrac(); return; }
   const isExam = state.mathMode === "exam";
   document.getElementById("math-badge").innerHTML =
     '<span class="badge" style="background:#3A86FF;color:#fff">' + (isExam ? "Examen" : "Práctica") + '</span>';
@@ -4545,12 +5113,12 @@ function parseMathAnswer(raw){
   if((m = t.match(/^(\d+)\s*\/\s*(\d+)$/))){
     const n = parseInt(m[1],10), d = parseInt(m[2],10);
     if(d === 0) return null;
-    return { val: fr(sign*n, d), reduced: mgcd(n, d) === 1 && d !== 1 };
+    return { val: fr(sign*n, d), reduced: mgcd(n, d) === 1 && d !== 1, typed:{ w:0, n, d } };
   }
   if((m = t.match(/^(\d+) (\d+)\s*\/\s*(\d+)$/))){
     const w = parseInt(m[1],10), n = parseInt(m[2],10), d = parseInt(m[3],10);
     if(d === 0) return null;
-    return { val: fr(sign*(w*d + n), d), reduced: mgcd(n, d) === 1 };
+    return { val: fr(sign*(w*d + n), d), reduced: n > 0 && n < d && mgcd(n, d) === 1, typed:{ w, n, d } };
   }
   return null;
 }
@@ -4566,21 +5134,30 @@ function mathAnswered(ok){
     rewardCorrect();
     checkAchievements();
   } else {
-    state.mathWrong.push({ html: cur.p.html, val: cur.p.val, dec: cur.p.dec });
+    state.mathWrong.push({ html: cur.p.html, val: cur.p.val, dec: cur.p.dec, frac: !!cur.frac, ops: cur.p.ops });
     state.sessionCorrectStreak = 0;
     reactWrong();
   }
+  if(cur.frac) recordFracStat(cur.p.ops, ok);
   renderMath();
 }
 function pickMath(i){
   const cur = state.mathCurrent;
-  if(!cur || cur.answered || mathTyped || i < 0 || i >= cur.opts.length) return;
+  if(!cur || cur.answered || (cur.frac ? cur.typedMode : mathTyped) || i < 0 || i >= cur.opts.length) return;
   cur.picked = i;
   cur.answered = true;
+  if(cur.frac){
+    const o = cur.opts[i];
+    cur.diag = o.correct ? null : o;
+    cur.unsimplifiedPick = o.kind === "uns";
+    mathAnswered(o.correct);
+    return;
+  }
   mathAnswered(fEq(cur.opts[i], cur.p.val));
 }
 function submitMathTyped(){
   const cur = state.mathCurrent;
+  if(cur && cur.frac){ submitFracTyped(); return; }
   if(!cur || cur.answered || !mathTyped) return;
   const inp = document.getElementById("math-input");
   const raw = inp ? inp.value : "";
@@ -4603,6 +5180,7 @@ function endMathSession(){
   if(state.mathMode === "exam" && state.mathIndex < MATH_EXAM_N){
     if(!confirm("Vas a perder el avance de este examen. ¿Salir igual?")) return;
   }
+  if(state.mathMode === "review" && state.mathCorrect + state.mathWrong.length > 0){ showMathResults(); return; }
   // Igual que en ortografía: salir de la práctica antes de tiempo nunca muestra
   // nota ni frase de cierre — eso quedaría rarísimo con solo 1 o 2 operaciones
   // hechas. La pantalla de resultados es exclusiva del examen completo.
@@ -4619,16 +5197,22 @@ function showMathResults(){
     registerActivity();
     if(score >= 70 && (isExam || total >= MIN_CELEBRATE)) burstConfetti(true);
   }
-  if(isExam && score > progress.bestMathScore){
+  const isFrac = !!state.mathFrac;
+  if(isFrac) saveFracWrong();
+  if(isExam && isFrac && score > (progress.bestFracScore || 0)){
+    progress.bestFracScore = score;
+    saveProgress();
+  } else if(isExam && !isFrac && score > progress.bestMathScore){
     progress.bestMathScore = score;
     saveProgress();
-    updateBestMathUI();
   }
+  updateBestMathUI();
   if(total > 0) checkAchievements(); // por si el examen de mate perfecto se logró recién ahora
   document.getElementById("result-score").textContent = score;
   document.getElementById("result-den").textContent = isExam ? "de 100" : "de 100 (práctica)";
   state.lastResultScore = score;
-  state.lastResultLabel = isExam ? "en el examen de matemática" : "en una práctica de matemática";
+  state.lastResultLabel = isFrac ? (isExam ? "en el examen de fracciones" : "practicando fracciones")
+                                  : (isExam ? "en el examen de matemática" : "en una práctica de matemática");
   const msg = total === 0 ? "No resolviste ninguna operación."
     : isExam ? (score >= 90 ? pickEncouragement("excellent") : score >= 70 ? pickEncouragement("great")
         : score >= 51 ? pickEncouragement("good") : pickEncouragement("keep"))
@@ -4643,7 +5227,12 @@ function showMathResults(){
   listEl.innerHTML = "";
   againBtn.textContent = isExam ? "🔄 Repetir examen" : "🧮 Seguir practicando";
   againBtn.onclick = isExam ? (() => startMathExam()) : (() => startMathPractice());
-  reviewBtn.classList.add("hidden");   // el repaso de errores es solo de ortografía
+  reviewBtn.classList.add("hidden");
+  if(isFrac && state.mathWrong.length > 0){
+    reviewBtn.classList.remove("hidden");
+    reviewBtn.textContent = "🔁 Repasar errores";
+    reviewBtn.onclick = () => startFracReview();
+  }
   if(state.mathWrong.length > 0){
     titleEl.classList.remove("hidden");
     titleEl.textContent = "Para repasar:";
@@ -4651,7 +5240,7 @@ function showMathResults(){
       const div = document.createElement("div");
       div.className = "review-item";
       div.innerHTML = '<div class="mini-expr">' + it.html +
-                      '<span class="mop">=</span>' + (it.dec ? decHTML(it.val) : fracHTML(it.val)) + '</div>';
+                      '<span class="mop">=</span>' + (it.frac ? bothFormsHTML(it.val) : it.dec ? decHTML(it.val) : fracHTML(it.val)) + '</div>';
       listEl.appendChild(div);
     });
   } else {
@@ -5554,6 +6143,7 @@ function renderReport(){
 
   const catRows = Object.keys(CAT).map(k => { const s = progress.catStats[k] || {correct:0, wrong:0}; const n = s.correct + s.wrong; return { label:CAT[k].label, n, p:pctOf(s.correct, n) }; });
   const verbRows = Object.keys(VERB_TENSES).map(k => { const s = progress.verbStats[k] || {correct:0, wrong:0}; const n = s.correct + s.wrong; return { label:VERB_TENSES[k].label, n, p:pctOf(s.correct, n) }; });
+  const fracRows = Object.keys(FRAC_OPS).map(k => { const s = (progress.fracStats || {})[k] || {correct:0, wrong:0}; const n = s.correct + s.wrong; return { label:FRAC_OPS[k].label, n, p:pctOf(s.correct, n) }; });
   const geoRows = Object.keys(GEO_FIGURES).map(k => { const s = progress.geoStats[k] || {correct:0, wrong:0}; const n = s.correct + s.wrong; return { label:GEO_FIGURES[k].label, n, p:pctOf(s.correct, n) }; });
 
   body.innerHTML = `
@@ -5576,6 +6166,7 @@ function renderReport(){
     <div class="filter-block"><div class="filter-title">Ortografía · de la regla más floja a la más fuerte</div>${weakRowsHTML(catRows)}</div>
     <div class="filter-block"><div class="filter-title">Verbos · por tiempo</div>${weakRowsHTML(verbRows)}</div>
     <div class="filter-block"><div class="filter-title">Geometría · por figura</div>${weakRowsHTML(geoRows)}</div>
+    <div class="filter-block"><div class="filter-title">Fracciones · por operación</div>${weakRowsHTML(fracRows)}</div>
     <div class="filter-block"><div class="filter-title">Matemática</div>
       <p class="report-note">${progress.totalMathCorrect || 0} operaciones resueltas bien en total · mejor examen: ${progress.bestMathScore || 0}/100.</p></div>`;
 }
@@ -5632,7 +6223,9 @@ buildAccessoryChips();
 buildAchievementChips();
 buildMathOpChips();
 buildMathTermChips();
+buildFracChips();
 paintMathChips();
+applyMathSubUI();
 buildVerbTenseChips();
 buildVerbKindChips();
 buildVerbStatsChips();
