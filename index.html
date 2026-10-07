@@ -705,6 +705,13 @@
   }
   .geo-formula .gf-tip{ display:block; margin-top:8px; font-size:0.88rem; color: var(--ink-dim); }
 
+  /* Hoja de fórmulas */
+  .fx-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap:12px; margin-top:12px; }
+  .fx-card{ background: var(--input-bg); border-radius:16px; padding:10px 12px 12px; text-align:center; }
+  .fx-card .fx-name{ font-family: var(--font-body); font-weight:800; font-size:1.05rem; display:block; margin-bottom:2px; }
+  .fx-card .geo-svg{ max-width:220px; }
+  .fx-card .geo-formula{ margin-top:6px; }
+
   /* ---------- CONFETI ---------- */
   .confetti-layer{
     position: fixed; inset:0; pointer-events:none; z-index: 9999; overflow:hidden;
@@ -959,6 +966,13 @@
               <span class="desc" id="geo-review-desc">Solo los problemas que fallaste la última vez.</span>
             </span>
           </button>
+          <button type="button" class="mode-btn" id="btn-geo-formulas" onclick="openFormulas()">
+            <span class="emoji">📖</span>
+            <span>
+              <strong>Fórmulas</strong>
+              <span class="desc">Todas las de perímetro, área y volumen, con un ejemplo.</span>
+            </span>
+          </button>
         </div>
         <div class="options-row">
           <label class="opt-toggle" id="opt-geo-typed" aria-pressed="false">
@@ -967,21 +981,29 @@
           </label>
         </div>
         <div class="filter-block">
-          <div class="filter-title">Figuras que entran</div>
+          <div class="filter-title">Figuras planas · perímetro y área</div>
           <div class="cat-chips" id="geo-fig-chips"></div>
           <div class="chip-actions">
-            <button type="button" onclick="setAllGeoFigs(true)">Todas</button>
-            <button type="button" onclick="setAllGeoFigs(false)">Ninguna</button>
+            <button type="button" onclick="setAllGeoFigs(true, false)">Todas</button>
+            <button type="button" onclick="setAllGeoFigs(false, false)">Ninguna</button>
+          </div>
+        </div>
+        <div class="filter-block">
+          <div class="filter-title">Cuerpos · volumen 🧊</div>
+          <div class="cat-chips" id="geo-solid-chips"></div>
+          <div class="chip-actions">
+            <button type="button" onclick="setAllGeoFigs(true, true)">Todos</button>
+            <button type="button" onclick="setAllGeoFigs(false, true)">Ninguno</button>
           </div>
         </div>
         <div class="filter-block">
           <div class="filter-title">Qué se pide</div>
           <div class="cat-chips" id="geo-kind-chips"></div>
           <div class="filter-count" id="geo-count"></div>
-          <div class="type-tip">💡 El perímetro es el contorno (se mide en cm). El área es lo que ocupa adentro (se mide en cm²).</div>
+          <div class="type-tip">💡 El perímetro es el contorno (se mide en cm). El área es lo que ocupa adentro (se mide en cm²). El volumen es el espacio que ocupa un cuerpo (se mide en cm³).</div>
         </div>
         <div class="filter-block" id="geo-stats-block">
-          <div class="filter-title">Tu progreso por figura 📊</div>
+          <div class="filter-title">Tu progreso por figura y cuerpo 📊</div>
           <div class="stats-chips" id="geo-stats-chips"></div>
         </div>
       </div>
@@ -1016,6 +1038,20 @@
         <div class="filter-title">Logros 🏆 <span id="ach-count"></span></div>
         <div class="ach-chips" id="ach-chips"></div>
       </div>
+      <div class="controls-row">
+        <button type="button" class="btn-ghost" onclick="exitToMenu()">🏠 Volver al menú</button>
+      </div>
+    </section>
+
+    <!-- FÓRMULAS DE GEOMETRÍA -->
+    <section id="screen-formulas" class="screen hidden">
+      <div class="screen-head">
+        <button type="button" class="btn-ghost" onclick="exitToMenu()">← Volver</button>
+        <h2>📖 Fórmulas</h2>
+      </div>
+      <div class="cat-chips" id="fx-kind-chips" style="margin-top:10px;"></div>
+      <div class="type-tip" id="fx-tip"></div>
+      <div class="fx-grid" id="fx-body"></div>
       <div class="controls-row">
         <button type="button" class="btn-ghost" onclick="exitToMenu()">🏠 Volver al menú</button>
       </div>
@@ -1797,7 +1833,7 @@ const VERB_TENSES = {
 // hablar/comer/vivir.
 const VERB_BANK = {
   ar: ["hablar","cantar","caminar","estudiar","escuchar","mirar","comprar","bailar","saltar","dibujar",
-       "cocinar","llamar","terminar","trabajar","ayudar","lavar","limpiar","pintar","cortar","marcar"],
+       "cocinar","llamar","terminar","trabajar","ayudar","lavar","limpiar","pintar","cortar","tomar"],
   er: ["comer","correr","aprender","beber","temer","vender","deber","romper","toser","meter",
        "sorprender","esconder","comprender"],
   ir: ["vivir","escribir","abrir","subir","decidir","describir","permitir","recibir","insistir",
@@ -1986,7 +2022,7 @@ function isAccentOnlyError(typed, correct){
 }
 
 /* ================= GEOMETRÍA ================= */
-// Área y perímetro de figuras simples. La respuesta es de opción múltiple, pero
+// Área y perímetro de figuras planas, y volumen de cuerpos. La respuesta es de opción múltiple, pero
 // los distractores NO son números al azar: cada uno representa un error típico
 // (usar el perímetro cuando piden área, olvidar dividir por 2, etc.). Así, al
 // fallar, se puede decir QUÉ error cometió y no solo mostrar la fórmula.
@@ -2001,13 +2037,20 @@ const GEO_FIGURES = {
   pentagono: { label:"Pentágono", color:"#6A4C93", text:"#fff" },
   hexagono:  { label:"Hexágono",  color:"#EF476F", text:"#fff" },
   rombo:     { label:"Rombo",     color:"#F77F00", text:"#fff" },
-  trapecio:  { label:"Trapecio",  color:"#2A9D8F", text:"#fff" }
+  trapecio:  { label:"Trapecio",  color:"#2A9D8F", text:"#fff" },
+  // Cuerpos (solid:true): solo se les pide VOLUMEN. A las figuras planas, perímetro o área.
+  cubo:      { label:"Cubo",      color:"#9D4EDD", text:"#fff", solid:true },
+  prisma:    { label:"Prisma rectangular", color:"#0077B6", text:"#fff", solid:true },
+  cilindro:  { label:"Cilindro",  color:"#D62828", text:"#fff", solid:true },
+  piramide:  { label:"Pirámide",  color:"#B5651D", text:"#fff", solid:true },
+  cono:      { label:"Cono",      color:"#2D9C5A", text:"#fff", solid:true }
 };
 // Enunciados en contexto: se reemplaza el sujeto genérico ("Un cuadrado") por
 // un objeto real la mitad de las veces. Los datos y la pregunta no cambian.
 const GEO_SUBJ = {
   cuadrado:"Un cuadrado", rectangulo:"Un rectángulo", triangulo:"Un triángulo", circulo:"Un círculo",
-  pentagono:"Un pentágono regular", hexagono:"Un hexágono regular", rombo:"Un rombo", trapecio:"Un trapecio isósceles"
+  pentagono:"Un pentágono regular", hexagono:"Un hexágono regular", rombo:"Un rombo", trapecio:"Un trapecio isósceles",
+  cubo:"Un cubo", prisma:"Un prisma rectangular", cilindro:"Un cilindro", piramide:"Una pirámide de base cuadrada", cono:"Un cono"
 };
 const GEO_CONTEXT = {
   cuadrado:  ["Una baldosa cuadrada", "Un pañuelo cuadrado", "Un marco de fotos cuadrado"],
@@ -2017,12 +2060,24 @@ const GEO_CONTEXT = {
   pentagono: ["La tapa de una caja con forma de pentágono regular"],
   hexagono:  ["Una baldosa hexagonal regular", "Una celda de panal (hexágono regular)"],
   rombo:     ["Una cometa con forma de rombo", "Un vitral con forma de rombo"],
-  trapecio:  ["Una ventana con forma de trapecio isósceles", "El frente de una carpa con forma de trapecio isósceles"]
+  trapecio:  ["Una ventana con forma de trapecio isósceles", "El frente de una carpa con forma de trapecio isósceles"],
+  cubo:      ["Un dado gigante", "Una caja con forma de cubo", "Un cubo de hielo"],
+  prisma:    ["Una pecera", "Una caja de zapatos", "Un ladrillo"],
+  cilindro:  ["Una lata de conservas", "Un vaso cilíndrico", "Un tanque de agua cilíndrico"],
+  piramide:  ["Una carpa con forma de pirámide de base cuadrada", "Un adorno con forma de pirámide de base cuadrada"],
+  cono:      ["Un cucurucho", "Un gorro de cumpleaños con forma de cono"]
 };
 const GEO_KINDS = {
   perimetro: { label:"Perímetro", color:"#0FA3A3" },
-  area:      { label:"Área",      color:"#B5179E" }
+  area:      { label:"Área",      color:"#B5179E" },
+  volumen:   { label:"Volumen",   color:"#E85D04" }
 };
+// Qué se le puede pedir a cada figura: volumen solo a los cuerpos; perímetro y
+// área solo a las figuras planas.
+function geoValid(fig, kind){
+  const F = GEO_FIGURES[fig];
+  return !!F && Object.prototype.hasOwnProperty.call(GEO_KINDS, kind) && (!!F.solid === (kind === "volumen"));
+}
 
 // Pares (lado, apotema) geométricamente consistentes: el apotema es el real
 // redondeado a 1 decimal, para no enseñarle figuras imposibles.
@@ -2042,7 +2097,7 @@ function gFmt(x){
   let s = r.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
   return s.replace(".", ",");
 }
-function gUnit(kind){ return kind === "area" ? "cm²" : "cm"; }
+function gUnit(kind){ return kind === "area" ? "cm²" : kind === "volumen" ? "cm³" : "cm"; }
 
 /* ---- Generación del problema ---- */
 // Cada figura devuelve: medidas, valor correcto, fórmula (texto y sustitución),
@@ -2075,7 +2130,7 @@ function makeGeoProblem(figKey, kind){
 
   else if(figKey === "rectangulo"){
     let b = gRand(3,15), h = gRand(3,15);
-    if(b === h) h = (h % 15) + 1; // que no quede un cuadrado disfrazado
+    if(b === h) h = (h === 15) ? 14 : h + 1; // que no quede un cuadrado disfrazado (y siempre entre 3 y 15)
     F.dims = { b, h };
     F.text = `Un rectángulo mide ${b} cm de base y ${h} cm de altura.`;
     if(kind === "perimetro"){
@@ -2194,6 +2249,76 @@ function makeGeoProblem(figKey, kind){
       wrongs.push({ val:B*h,     why:"usaste solo la base mayor; hay que sumar las dos bases" });
       wrongs.push({ val:gRound((B-b)*h/2), why:"restaste las bases; hay que sumarlas" });
     }
+  }
+
+  /* ---- Cuerpos: volumen ---- */
+  else if(figKey === "cubo"){
+    const a = gRand(2, 10);
+    F.kind = "volumen";
+    F.dims = { a };
+    F.text = `Un cubo tiene aristas de ${a} cm.`;
+    F.val = a*a*a;
+    F.formula = "V = arista × arista × arista";
+    F.subst = `V = ${a} × ${a} × ${a} = ${gFmt(a*a*a)} cm³`;
+    wrongs.push({ val:a*a,   why:"esa es el <strong>área de una cara</strong> (arista × arista); te faltó multiplicar por la arista una vez más" });
+    wrongs.push({ val:3*a,   why:"multiplicaste la arista por 3; elevar al cubo es multiplicarla <strong>por sí misma</strong> tres veces" });
+    wrongs.push({ val:6*a*a, why:"esa es el <strong>área total</strong> de las 6 caras, no el volumen" });
+  }
+
+  else if(figKey === "prisma"){
+    let l = gRand(3, 12), a = gRand(2, 8), h = gRand(2, 10);
+    if(l === a && a === h) h = (h === 10) ? 9 : h + 1;   // que no quede un cubo disfrazado
+    F.kind = "volumen";
+    F.dims = { l, a, h };
+    F.text = `Un prisma rectangular mide ${l} cm de largo, ${a} cm de ancho y ${h} cm de alto.`;
+    F.val = l*a*h;
+    F.formula = "V = largo × ancho × alto";
+    F.subst = `V = ${l} × ${a} × ${h} = ${gFmt(l*a*h)} cm³`;
+    wrongs.push({ val:l*a,     why:"esa es el <strong>área de la base</strong> (largo × ancho); te faltó multiplicar por el alto" });
+    wrongs.push({ val:l+a+h,   why:"sumaste las tres medidas; hay que multiplicarlas" });
+    wrongs.push({ val:2*(l*a + l*h + a*h), why:"esa es el <strong>área total</strong> de las caras, no el volumen" });
+  }
+
+  else if(figKey === "cilindro"){
+    const r = gRand(2, 6), h = gRand(3, 12);
+    F.kind = "volumen";
+    F.dims = { r, h };
+    F.text = `Un cilindro tiene ${r} cm de radio y ${h} cm de altura. (Usá π = 3,14)`;
+    F.val = gRound(PI*r*r*h);
+    F.formula = "V = π × radio × radio × altura";
+    F.subst = `Base = 3,14 × ${r} × ${r} = ${gFmt(PI*r*r)} cm²<br>V = ${gFmt(PI*r*r)} × ${h} = ${gFmt(PI*r*r*h)} cm³`;
+    wrongs.push({ val:gRound(PI*r*h),   why:"te faltó multiplicar por el radio otra vez (el radio va al cuadrado)" });
+    wrongs.push({ val:gRound(PI*r*r),   why:"esa es el <strong>área de la base</strong> (π × radio²); te faltó multiplicar por la altura" });
+    wrongs.push({ val:gRound(2*PI*r*h), why:"esa es el <strong>área lateral</strong> (2 × π × radio × altura), no el volumen" });
+  }
+
+  else if(figKey === "piramide"){
+    const l = gRand(3, 9);
+    // Para que el volumen dé entero: si el lado no es múltiplo de 3, la altura sí.
+    const h = (l % 3 === 0) ? gRand(3, 12) : gPick([3, 6, 9, 12]);
+    F.kind = "volumen";
+    F.dims = { l, h };
+    F.text = `Una pirámide de base cuadrada tiene ${l} cm de lado en la base y ${h} cm de altura.`;
+    F.val = l*l*h/3;
+    F.formula = "V = (área de la base × altura) ÷ 3";
+    F.subst = `Base = ${l} × ${l} = ${gFmt(l*l)} cm²<br>V = (${gFmt(l*l)} × ${h}) ÷ 3 = ${gFmt(l*l*h/3)} cm³`;
+    wrongs.push({ val:l*l*h,          why:"multiplicaste la base por la altura pero <strong>te faltó dividir por 3</strong>; así sale el volumen de un prisma" });
+    wrongs.push({ val:gRound(l*l*h/2), why:"dividiste por 2; en la pirámide se divide <strong>por 3</strong>" });
+    wrongs.push({ val:l*h,            why:"multiplicaste lado × altura; la base es un cuadrado: primero lado × lado, después × altura y ÷ 3" });
+  }
+
+  else if(figKey === "cono"){
+    const r = gRand(2, 6);
+    const h = gPick([3, 6, 9, 12]);   // múltiplo de 3: el resultado queda con 2 decimales exactos
+    F.kind = "volumen";
+    F.dims = { r, h };
+    F.text = `Un cono tiene ${r} cm de radio y ${h} cm de altura. (Usá π = 3,14)`;
+    F.val = gRound(PI*r*r*h/3);
+    F.formula = "V = (π × radio × radio × altura) ÷ 3";
+    F.subst = `Base = 3,14 × ${r} × ${r} = ${gFmt(PI*r*r)} cm²<br>V = (${gFmt(PI*r*r)} × ${h}) ÷ 3 = ${gFmt(PI*r*r*h/3)} cm³`;
+    wrongs.push({ val:gRound(PI*r*r*h),   why:"ese es el volumen del <strong>cilindro</strong>; en el cono <strong>te faltó dividir por 3</strong>" });
+    wrongs.push({ val:gRound(PI*r*h/3),   why:"te faltó multiplicar por el radio otra vez (el radio va al cuadrado)" });
+    wrongs.push({ val:gRound(PI*r*r*h/2), why:"dividiste por 2; en el cono se divide <strong>por 3</strong>" });
   }
 
   else { // pentagono | hexagono
@@ -2363,6 +2488,75 @@ function geoSVG(p){
       inner += T((P1.x+P4.x)/2 - 8, CY + 4, p.dims.l + " cm", "end") +
                T((P2.x+P3.x)/2 + 8, CY + 4, p.dims.l + " cm", "start");
     }
+  }
+  /* ---- Cuerpos, en perspectiva caballera. Las aristas ocultas van punteadas. ---- */
+  else if(p.fig === "cubo" || p.fig === "prisma"){
+    // w × h es la cara de frente; (dx, dy) es el corrimiento de la cara de atrás.
+    let w, h, dx, dy;
+    if(p.fig === "cubo"){ w = 78; h = 78; dx = 30; dy = -22; }
+    else {
+      const k = Math.min(BOX_W / (p.dims.l + 0.5*p.dims.a), BOX_H / (p.dims.h + 0.35*p.dims.a));
+      w = p.dims.l*k; h = p.dims.h*k; dx = 0.5*p.dims.a*k; dy = -0.35*p.dims.a*k;
+    }
+    const x0 = CX - (w + dx)/2, y0 = CY - (h - dy)/2 - dy;   // esquina superior izquierda de la cara de frente
+    const pt = (x,y) => x.toFixed(1) + "," + y.toFixed(1);
+    const ln = (x1,y1,x2,y2) => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" ${dash}/>`;
+    inner = ln(x0+dx, y0+h+dy, x0, y0+h) + ln(x0+dx, y0+h+dy, x0+dx, y0+dy) + ln(x0+dx, y0+h+dy, x0+w+dx, y0+h+dy) +
+      `<polygon points="${pt(x0,y0)} ${pt(x0+dx,y0+dy)} ${pt(x0+w+dx,y0+dy)} ${pt(x0+w,y0)}" ${shape}/>` +
+      `<polygon points="${pt(x0+w,y0)} ${pt(x0+w+dx,y0+dy)} ${pt(x0+w+dx,y0+h+dy)} ${pt(x0+w,y0+h)}" ${shape}/>` +
+      `<rect x="${x0.toFixed(1)}" y="${y0.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" ${shape}/>`;
+    if(p.fig === "cubo"){
+      inner += T(x0 + w/2, y0 + h + 21, "arista " + p.dims.a + " cm");
+    } else {
+      // Largo abajo, alto a la izquierda, ancho sobre la arista que se va al fondo.
+      inner += T(x0 + w/2, y0 + h + 21, p.dims.l + " cm") +
+               T(x0 - 8, y0 + h/2 + 5, p.dims.h + " cm", "end") +
+               T(x0 + w + dx/2 + 10, y0 + h + dy/2 + 11, p.dims.a + " cm", "start");
+    }
+  }
+  else if(p.fig === "cilindro" || p.fig === "cono"){
+    const isCone = p.fig === "cono";
+    const r = p.dims.r, hh = p.dims.h;
+    // Se deja lugar a la derecha para la etiqueta de la altura.
+    const k = Math.min(110 / (2*r), BOX_H / (hh + (isCone ? 0.3 : 0.6)*r));
+    const rx = r*k, ry = rx*0.3, hp = hh*k;
+    const yT = isCone ? CY - (hp + ry)/2 : CY - hp/2, yB = yT + hp;
+    const L = (CX - rx).toFixed(1), R = (CX + rx).toFixed(1), yb = yB.toFixed(1), yt = yT.toFixed(1);
+    const arc = `A ${rx.toFixed(1)} ${ry.toFixed(1)} 0 0`;
+    // Mitad de atrás de la base: punteada (no se ve).
+    inner = `<path d="M ${L} ${yb} ${arc} 1 ${R} ${yb}" ${dash}/>`;
+    if(isCone){
+      inner += `<path d="M ${CX} ${yt} L ${L} ${yb} ${arc} 0 ${R} ${yb} Z" ${shape}/>` +
+        `<line x1="${CX}" y1="${yt}" x2="${CX}" y2="${yb}" ${dash}/>` +
+        `<line x1="${CX}" y1="${yb}" x2="${R}" y2="${yb}" ${dash}/>` +
+        `<path d="M ${CX+8} ${yb} L ${CX+8} ${(yB-8).toFixed(1)} L ${CX} ${(yB-8).toFixed(1)}" fill="none" stroke="${c}" stroke-width="1.4"/>` +
+        `<circle cx="${CX}" cy="${yb}" r="3" fill="${c}"/>` +
+        T(CX - rx/2 - 10, CY + 5, "h " + hh + " cm", "end") +
+        T(CX, yB + ry + 17, "r " + r + " cm");
+    } else {
+      inner += `<path d="M ${L} ${yt} L ${L} ${yb} ${arc} 0 ${R} ${yb} L ${R} ${yt}" ${shape}/>` +
+        `<ellipse cx="${CX}" cy="${yt}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" ${shape}/>` +
+        `<line x1="${CX}" y1="${yt}" x2="${R}" y2="${yt}" ${dash}/>` +
+        `<circle cx="${CX}" cy="${yt}" r="3" fill="${c}"/>` +
+        T(CX, yT - ry - 7, "r " + r + " cm") +
+        T(CX + rx + 9, CY + 5, "h " + hh + " cm", "start");
+    }
+  }
+  else if(p.fig === "piramide"){
+    const l = p.dims.l, hh = p.dims.h;
+    const k = Math.min(130 / (1.5*l), BOX_H / (hh + 0.15*l));
+    const w = l*k, dx = 0.5*w, dy = -0.3*w, hp = hh*k;
+    const x0 = CX - (w + dx)/2, yF = CY + (hp - dy/2)/2;      // arista de frente de la base
+    const A = {x:x0, y:yF}, B = {x:x0+w, y:yF}, C = {x:x0+w+dx, y:yF+dy}, D = {x:x0+dx, y:yF+dy};
+    const O = {x:x0 + (w+dx)/2, y:yF + dy/2}, P = {x:O.x, y:O.y - hp};
+    const pt = v => v.x.toFixed(1) + "," + v.y.toFixed(1);
+    const ln = (U,V) => `<line x1="${U.x.toFixed(1)}" y1="${U.y.toFixed(1)}" x2="${V.x.toFixed(1)}" y2="${V.y.toFixed(1)}" ${dash}/>`;
+    inner = ln(A,D) + ln(D,C) + ln(D,P) +
+      `<polygon points="${pt(B)} ${pt(C)} ${pt(P)}" ${shape}/>` +
+      `<polygon points="${pt(A)} ${pt(B)} ${pt(P)}" ${shape}/>` +
+      ln(P,O) + `<circle cx="${O.x.toFixed(1)}" cy="${O.y.toFixed(1)}" r="2.6" fill="${c}"/>` +
+      T((A.x+B.x)/2, yF + 21, "lado " + l + " cm") +
+      T(C.x + 6, (P.y + C.y)/2 + 5, "h " + hh + " cm", "start");
   }
   else { // pentagono | hexagono
     const n = p.dims.n, rr = 58;
@@ -2764,6 +2958,15 @@ function daysBetween(dateStrA, dateStrB){
   const a = new Date(dateStrA + "T00:00:00");
   const b = new Date(dateStrB + "T00:00:00");
   return Math.round((b - a) / 86400000);
+}
+// Si pasó más de un día sin practicar, la racha ya se cortó: sin esto se seguía
+// mostrando la racha vieja y dando sus bonos (cofre, monedas) hasta la primera
+// respuesta del día.
+function expireStreak(){
+  if(progress.streak > 0 && progress.lastActiveDate && daysBetween(progress.lastActiveDate, todayKey()) > 1){
+    progress.streak = 0;
+    saveProgress();
+  }
 }
 function registerActivity(){
   const key = todayKey();
@@ -3184,6 +3387,7 @@ function escapeHtml(s){
 // categorías / figuras agregadas después arranquen activadas y no apagadas.
 const LEGACY_CATS = ["bv","csz","h","tilde","gj","lly","mp","nv","u"];
 const LEGACY_GEO_FIGS = ["cuadrado","rectangulo","triangulo","circulo","pentagono","hexagono"];
+const LEGACY_GEO_KINDS = ["perimetro","area"];
 function loadPrefs(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -3225,6 +3429,8 @@ function loadPrefs(){
     if(Array.isArray(data.verbLastWrong)){
       state.verbLastWrong = data.verbLastWrong.filter(x =>
         x && typeof x.inf === "string" && typeof x.personIdx === "number" &&
+        x.personIdx >= 0 && x.personIdx < 6 &&
+        (VERB_LIST.indexOf(x.inf) !== -1 || isIrregular(x.inf)) &&   // descarta verbos que ya no están en el banco
         Object.prototype.hasOwnProperty.call(VERB_TENSES, x.tenseId));
     }
     if(Array.isArray(data.geoFigs)){
@@ -3235,12 +3441,13 @@ function loadPrefs(){
     }
     if(Array.isArray(data.geoKinds)){
       const gk = data.geoKinds.filter(k => Object.prototype.hasOwnProperty.call(GEO_KINDS, k));
+      // Tipos que no existían cuando se guardó (volumen) → arrancan activados.
+      const kknown = Array.isArray(data.geoKindsKnown) ? data.geoKindsKnown : LEGACY_GEO_KINDS;
+      Object.keys(GEO_KINDS).forEach(k => { if(kknown.indexOf(k) === -1 && gk.indexOf(k) === -1) gk.push(k); });
       if(gk.length) geoKinds = new Set(gk);
     }
     if(Array.isArray(data.geoLastWrong)){
-      state.geoLastWrong = data.geoLastWrong.filter(x =>
-        x && Object.prototype.hasOwnProperty.call(GEO_FIGURES, x.fig) &&
-        Object.prototype.hasOwnProperty.call(GEO_KINDS, x.kind));
+      state.geoLastWrong = data.geoLastWrong.filter(x => x && geoValid(x.fig, x.kind));
     }
   }catch(e){}
 }
@@ -3269,6 +3476,7 @@ function savePrefs(){
       geoFigs: [...geoFigs],
       geoFigsKnown: Object.keys(GEO_FIGURES),
       geoKinds: [...geoKinds],
+      geoKindsKnown: Object.keys(GEO_KINDS),
       geoLastWrong: state.geoLastWrong.slice(0, 40)
     }));
   }catch(e){}
@@ -3419,7 +3627,7 @@ function replayCurrent(){
 
 /* ---------------- Screen switching ---------------- */
 function showScreen(name){
-  ["menu","practice","exam","math","verbs","geo","results","collection","report"].forEach(s => {
+  ["menu","practice","exam","math","verbs","geo","results","collection","report","formulas"].forEach(s => {
     document.getElementById("screen-" + s).classList.toggle("hidden", s !== name);
   });
   state.screen = name;
@@ -3437,6 +3645,15 @@ function shareResult(){
 function exitToMenu(){
   if(state.screen === "exam" && state.examIndex < state.examWords.length){
     if(!confirm("Vas a perder el avance de este examen. ¿Salir igual?")) return;
+  }
+  if((state.screen === "practice" || state.screen === "exam") && state.typeMode && state.phase === "revealed" && state.current){
+    // Ya estaba corregida (y premiada si acertó) pero todavía no anotada.
+    const okLast = !!state._lastMatch;
+    state.phase = "scoring";
+    recordCategoryStat(state.current.cat, okLast, state.current.w);
+    if(state.screen === "practice"){
+      if(okLast) state.practiceCorrect++; else state.practiceWrong.push(state.current);
+    }
   }
   if(state.screen === "practice" && (state.practiceCorrect > 0 || state.practiceWrong.length > 0)){
     // guardar errores de la sesión de práctica
@@ -4541,8 +4758,11 @@ const FRAC_ERR_WHY = {
 
 // Genera el problema. forceOp: para el repaso (misma operación, números nuevos).
 function makeFracProblem(forceOp){
-  const opList = [...fracOps], typeList = [...fracTypes];
-  if(!opList.length || !typeList.length) return null;
+  const opList = [...fracOps];
+  // En el repaso la operación viene dada: no tiene que fallar porque en el menú
+  // se hayan apagado todas las operaciones o todos los tipos de fracción.
+  const typeList = (forceOp && !fracTypes.size) ? Object.keys(FRAC_TYPES) : [...fracTypes];
+  if((!forceOp && !opList.length) || !typeList.length) return null;
   for(let attempt = 0; attempt < 300; attempt++){
     const terms = forceOp ? 2 : (fracTerms === 0 ? (Math.random() < 0.6 ? 2 : 3) : fracTerms);
     const ops = []; for(let i = 0; i < terms - 1; i++) ops.push(forceOp || mpick(opList));
@@ -4736,10 +4956,16 @@ function recordFracStat(ops, ok){
 }
 function saveFracWrong(){
   const wrong = state.mathWrong.filter(w => w.frac);
-  if(!wrong.length) return;
   const list = [];
   wrong.forEach(w => (w.ops || []).forEach(k => list.push(k)));
-  state.fracLastWrong = list.slice(0, 40);
+  if(state.mathMode === "review"){
+    // Repaso: lo acertado sale de la lista; queda lo fallado y lo no respondido.
+    const answered = state.mathCorrect + state.mathWrong.length;
+    state.fracLastWrong = list.concat(state.mathQueue.slice(answered)).slice(0, 40);
+  } else {
+    if(!list.length) return;
+    state.fracLastWrong = list.slice(0, 40);
+  }
   savePrefs();
   updateFracReviewButton();
 }
@@ -5181,6 +5407,9 @@ function endMathSession(){
     if(!confirm("Vas a perder el avance de este examen. ¿Salir igual?")) return;
   }
   if(state.mathMode === "review" && state.mathCorrect + state.mathWrong.length > 0){ showMathResults(); return; }
+  // Fracciones: la práctica no tiene fin, así que los errores se guardan al salir
+  // (si no, "Repasar errores" solo se llenaba con el examen completo).
+  if(state.mathFrac) saveFracWrong();
   // Igual que en ortografía: salir de la práctica antes de tiempo nunca muestra
   // nota ni frase de cierre — eso quedaría rarísimo con solo 1 o 2 operaciones
   // hechas. La pantalla de resultados es exclusiva del examen completo.
@@ -5585,8 +5814,15 @@ function renderVerbs(){
   }
 }
 function saveVerbWrong(){
-  if(state.verbWrong.length){
-    state.verbLastWrong = state.verbWrong.map(x => ({ inf:x.inf, tenseId:x.tenseId, personIdx:x.personIdx }));
+  const slim = x => ({ inf:x.inf, tenseId:x.tenseId, personIdx:x.personIdx });
+  const wrong = state.verbWrong.map(slim);
+  if(state.verbMode === "review"){
+    // Repaso: lo acertado sale de la lista; queda lo fallado y lo no respondido.
+    const answered = state.verbCorrect + state.verbWrong.length;
+    state.verbLastWrong = wrong.concat(state.verbQueue.slice(answered).map(slim));
+    savePrefs();
+  } else if(wrong.length){
+    state.verbLastWrong = wrong;
     savePrefs();
   }
 }
@@ -5689,13 +5925,22 @@ let geoFigs = new Set(Object.keys(GEO_FIGURES));
 let geoKinds = new Set(Object.keys(GEO_KINDS));
 
 function buildGeoFigChips(){
-  const el = document.getElementById("geo-fig-chips");
-  if(!el) return;
-  el.innerHTML = Object.entries(GEO_FIGURES).map(([k,f]) =>
-    `<button type="button" class="cat-chip" id="gfchip-${k}" aria-pressed="true"
-      style="border-color:${f.color}; color:${f.color}"
-      onclick="toggleGeoFig('${k}')">${f.label}</button>`).join("");
+  // Dos grupos de chips: figuras planas y cuerpos (los de volumen).
+  [["geo-fig-chips", false], ["geo-solid-chips", true]].forEach(([id, solid]) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = Object.entries(GEO_FIGURES).filter(([k,f]) => !!f.solid === solid).map(([k,f]) =>
+      `<button type="button" class="cat-chip" id="gfchip-${k}" aria-pressed="true"
+        style="border-color:${f.color}; color:${f.color}"
+        onclick="toggleGeoFig('${k}')">${f.label}</button>`).join("");
+  });
   paintGeoChips();
+}
+// Todas las combinaciones figura × qué se pide que tienen sentido con los chips actuales.
+function geoCombos(){
+  const out = [];
+  [...geoFigs].forEach(f => [...geoKinds].forEach(k => { if(geoValid(f, k)) out.push({ fig:f, kind:k }); }));
+  return out;
 }
 function buildGeoKindChips(){
   const el = document.getElementById("geo-kind-chips");
@@ -5706,7 +5951,7 @@ function buildGeoKindChips(){
       onclick="toggleGeoKind('${k}')">${c.label}</button>`).join("");
   paintGeoChips();
 }
-function geoReady(){ return geoFigs.size > 0 && geoKinds.size > 0; }
+function geoReady(){ return geoCombos().length > 0; }
 function paintGeoChips(){
   Object.entries(GEO_FIGURES).forEach(([k,f]) => {
     const ch = document.getElementById("gfchip-" + k);
@@ -5725,19 +5970,25 @@ function paintGeoChips(){
   const countEl = document.getElementById("geo-count");
   const ready = geoReady();
   if(countEl){
-    countEl.textContent = geoFigs.size === 0 ? "Elegí al menos una figura para empezar."
-                        : geoKinds.size === 0 ? "Elegí si se pide perímetro, área o las dos cosas." : "";
+    countEl.textContent = geoFigs.size === 0 ? "Elegí al menos una figura o un cuerpo para empezar."
+                        : geoKinds.size === 0 ? "Elegí qué se pide: perímetro, área o volumen."
+                        : !ready ? "Esa combinación no da ningún problema: perímetro y área son para las figuras planas; volumen, para los cuerpos."
+                        : "";
     countEl.classList.toggle("warn", !ready);
   }
-  document.querySelectorAll("#menu-geo .mode-btn:not(#btn-geo-review)").forEach(b => { b.disabled = !ready; });
+  document.querySelectorAll("#menu-geo .mode-btn:not(#btn-geo-review):not(#btn-geo-formulas)").forEach(b => { b.disabled = !ready; });
   savePrefs();
 }
 function toggleGeoFig(k){
   if(geoFigs.has(k)) geoFigs.delete(k); else geoFigs.add(k);
   paintGeoChips();
 }
-function setAllGeoFigs(on){
-  geoFigs = on ? new Set(Object.keys(GEO_FIGURES)) : new Set();
+// solid: false = figuras planas, true = cuerpos. Solo toca ese grupo.
+function setAllGeoFigs(on, solid){
+  Object.keys(GEO_FIGURES).forEach(k => {
+    if(!!GEO_FIGURES[k].solid !== !!solid) return;
+    if(on) geoFigs.add(k); else geoFigs.delete(k);
+  });
   paintGeoChips();
 }
 function toggleGeoKind(k){
@@ -5789,9 +6040,13 @@ function resetGeoSession(mode){
   state.sessionCorrectStreak = 0;
 }
 function randomGeoPair(){
-  const f = [...geoFigs][Math.floor(Math.random() * geoFigs.size)];
-  const k = [...geoKinds][Math.floor(Math.random() * geoKinds.size)];
-  return { fig:f, kind:k };
+  // Primero se sortea la figura y después qué se le pide: así todas las figuras
+  // salen igual de seguido (las planas tienen 2 preguntas posibles; los cuerpos, 1).
+  const combos = geoCombos();
+  const figs = [...new Set(combos.map(c => c.fig))];
+  const f = figs[Math.floor(Math.random() * figs.length)];
+  const mine = combos.filter(c => c.fig === f);
+  return mine[Math.floor(Math.random() * mine.length)];
 }
 function startGeoPractice(){
   if(!geoReady()) return;
@@ -5805,8 +6060,7 @@ function startGeoExam(){
   // Arma TODAS las combinaciones figura × qué se pide y las recorre barajadas.
   // (Antes figura y tipo avanzaban juntos con n % len y la mitad de las
   // combinaciones nunca salía: el cuadrado siempre era perímetro, etc.)
-  const combos = [];
-  [...geoFigs].forEach(f => [...geoKinds].forEach(k => combos.push({ fig:f, kind:k })));
+  const combos = geoCombos();
   let pool = [], queue = [];
   while(queue.length < GEO_EXAM_N){
     if(pool.length === 0) pool = shuffle(combos);
@@ -5874,6 +6128,11 @@ function renderGeo(){
     '<div class="geo-text">' + p.text + '</div>' +
     '<span class="geo-ask" style="background:' + hexToRgba(K.color, 0.16) + ';color:' + K.color + '">' +
     '¿Cuál es su ' + K.label.toUpperCase() + '?</span></div>';
+  const tipHTML = p.kind === "area"
+    ? `<span class="gf-tip">El área se mide en cm² (con el 2 chiquito), porque son cuadraditos que llenan la figura.</span>`
+    : p.kind === "volumen"
+    ? `<span class="gf-tip">El volumen se mide en cm³ (con el 3 chiquito), porque son cubitos que llenan el cuerpo por dentro.</span>`
+    : `<span class="gf-tip">El perímetro se mide en cm: es lo que caminarías dando la vuelta al borde.</span>`;
 
   if(cur.typedMode){
     if(!cur.answered){
@@ -5911,9 +6170,7 @@ function renderGeo(){
       const d = cur.diag;
       const diag = d && d.why
         ? `<span class="gf-diag">✗ ${cur.typedMode ? "Pusiste" : "Elegiste"} ${gFmt(d.val)} ${gUnit(p.kind)}: ${d.why}.</span>` : "";
-      const tip = p.kind === "area"
-        ? `<span class="gf-tip">El área se mide en cm² (con el 2 chiquito), porque son cuadraditos que llenan la figura.</span>`
-        : `<span class="gf-tip">El perímetro se mide en cm: es lo que caminarías dando la vuelta al borde.</span>`;
+      const tip = tipHTML;
       html += `<div class="geo-formula" style="background:${tint}; border-left:5px solid ${F.color};">
         ${diag}<span class="gf-title">${p.formula}</span>
         <span class="gf-sub">${p.subst}</span>${tip}</div>`;
@@ -5957,7 +6214,7 @@ function pickGeo(i){
 }
 // Lee un número con coma o punto decimal. Acepta que escriba la unidad al final.
 function parseGeoNumber(raw){
-  const t = String(raw || "").trim().toLowerCase().replace(/\s*(cm²|cm2|cm)\s*$/, "").replace(",", ".");
+  const t = String(raw || "").trim().toLowerCase().replace(/\s*(cm³|cm3|cm²|cm2|cm)\s*$/, "").replace(",", ".");
   if(!/^\d+(\.\d+)?$/.test(t)) return null;
   return parseFloat(t);
 }
@@ -5982,8 +6239,16 @@ function nextGeoTap(){
   nextGeoProblem();
 }
 function saveGeoWrong(){
-  if(state.geoWrong.length){
-    state.geoLastWrong = state.geoWrong.map(x => ({ fig:x.fig, kind:x.kind }));
+  const wrong = state.geoWrong.map(x => ({ fig:x.fig, kind:x.kind }));
+  if(state.geoMode === "review"){
+    // Repaso: lo que acertó sale de la lista; queda lo que volvió a fallar y lo
+    // que no llegó a responder. (Antes un repaso perfecto no borraba nada y el
+    // botón "Repasar errores" quedaba para siempre.)
+    const answered = state.geoCorrect + state.geoWrong.length;
+    state.geoLastWrong = wrong.concat(state.geoQueue.slice(answered).map(x => ({ fig:x.fig, kind:x.kind })));
+    savePrefs();
+  } else if(wrong.length){
+    state.geoLastWrong = wrong;
     savePrefs();
   }
 }
@@ -6074,6 +6339,50 @@ function endGeoSession(){
   }
   if(state.geoCorrect + state.geoWrong.length > 0){ showGeoResults(); return; }
   exitToMenu();
+}
+
+/* ---------------- Hoja de fórmulas de geometría ---------------- */
+// Las fórmulas y los ejemplos salen de makeGeoProblem (la misma fuente que usan
+// los ejercicios), así la hoja nunca queda desfasada de lo que se pregunta.
+let fxKind = "perimetro";
+const FX_TIPS = {
+  perimetro: "💡 El perímetro es el contorno: se suman todos los lados. Se mide en cm.",
+  area:      "💡 El área es la superficie que ocupa la figura por dentro. Se mide en cm² (cuadraditos).",
+  volumen:   "💡 El volumen es el espacio que ocupa un cuerpo. Se mide en cm³ (cubitos). En los cuerpos que terminan en punta (pirámide y cono) se divide por 3."
+};
+function openFormulas(){
+  renderFormulas();
+  showScreen("formulas");
+  window.scrollTo(0, 0);
+}
+function setFxKind(k){
+  if(Object.prototype.hasOwnProperty.call(GEO_KINDS, k)) fxKind = k;
+  renderFormulas();
+}
+function renderFormulas(){
+  const chips = document.getElementById("fx-kind-chips");
+  const body = document.getElementById("fx-body");
+  const tip = document.getElementById("fx-tip");
+  if(!chips || !body) return;
+  chips.innerHTML = Object.entries(GEO_KINDS).map(([k,c]) => {
+    const on = k === fxKind;
+    return `<button type="button" class="cat-chip" aria-pressed="${on ? "true" : "false"}"
+      style="border-color:${c.color}; color:${c.color};${on ? " background:" + hexToRgba(c.color, 0.14) + ";" : ""}"
+      onclick="setFxKind('${k}')">${c.label}</button>`;
+  }).join("");
+  if(tip) tip.textContent = FX_TIPS[fxKind];
+  body.innerHTML = Object.keys(GEO_FIGURES).filter(f => geoValid(f, fxKind)).map(f => {
+    const F = GEO_FIGURES[f];
+    const p = makeGeoProblem(f, fxKind);     // ejemplo con medidas al azar: cambia cada vez
+    return `<div class="fx-card" style="border:2px solid ${hexToRgba(F.color, 0.45)};">
+      <span class="fx-name" style="color:${F.color}">${F.label}</span>
+      ${geoSVG(p)}
+      <div class="geo-formula" style="background:${hexToRgba(F.color, 0.10)}; border-left:5px solid ${F.color};">
+        <span class="gf-title">${p.formula}</span>
+        <span class="gf-tip" style="margin-top:2px;">Ejemplo con las medidas del dibujo:</span>
+        <span class="gf-sub" style="margin-top:2px;">${p.subst}</span>
+      </div></div>`;
+  }).join("");
 }
 
 /* ---------------- Mi colección ---------------- */
@@ -6238,11 +6547,12 @@ updateBestGeoUI();
 migrateLegacyWrong();
 updateGoalUI();
 updateGeoReviewButton();
+expireStreak();
 applyLoadedPrefs();
 applySubjectUI();
 updateProgressUI();
 updateChestUI();
-["practice-stage","exam-stage","math-stage","verb-stage"].forEach(id => {
+["practice-stage","exam-stage","math-stage","verb-stage","geo-stage"].forEach(id => {
   document.getElementById(id).setAttribute("aria-live","polite");
 });
 
@@ -6251,6 +6561,8 @@ document.addEventListener("visibilitychange", () => {
   if(document.hidden && "speechSynthesis" in window){
     window.speechSynthesis.cancel();
   }
+  // Al volver a la app (quedó abierta de un día para otro): racha, cofre y meta al día.
+  if(!document.hidden){ expireStreak(); updateProgressUI(); updateChestUI(); updateGoalUI(); }
 });
 
 /* ---------------- Teclado ---------------- */
