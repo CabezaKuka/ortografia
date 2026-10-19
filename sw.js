@@ -3,7 +3,7 @@
 //  - Siempre intenta la red primero → nunca queda pegado en una versión vieja.
 //  - Guarda copia de lo que descarga → si no hay internet, la app igual abre.
 // Para forzar que todos los dispositivos descarten la caché vieja, subí el número.
-const CACHE = "dictado-shell-v24";
+const CACHE = "dictado-shell-v25";
 
 // Lo mínimo para que la app arranque sin conexión.
 const SHELL = [
@@ -44,29 +44,42 @@ self.addEventListener("fetch", (e) => {
   if (url.protocol !== "http:" && url.protocol !== "https:") return;
   if (url.origin !== self.location.origin) return; // las fuentes van embebidas en index.html
 
-  e.respondWith(
-    fetch(req)
-      .then(res => {
-        // Guardar copia fresca (solo respuestas propias y válidas)
-        if (res && res.ok && res.type === "basic") {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
-        }
-        return res;
-      })
-      .catch(() =>
-        caches.match(req).then(hit => {
-          if (hit) return hit;
-          // Navegación sin conexión y sin coincidencia exacta → servir el index
-          if (req.mode === "navigate") {
-            return caches.match("./index.html").then(idx => idx || new Response("Sin conexión", {
-              status: 503,
-              headers: { "Content-Type": "text/plain; charset=utf-8" }
-            }));
-          }
-          // Nunca devolver undefined: respondWith lo trata como error de red
-          return new Response("", { status: 504, statusText: "Sin conexion" });
-        })
-      )
-  );
+  e.respondWith(networkFirst(req));
 });
+
+// Red primero, pero sin quedarse esperando para siempre: con señal mala
+// (conectado pero lento) a los 3,5 s se usa la copia guardada si existe.
+// Si no hay copia, se sigue esperando a la red.
+const NET_TIMEOUT_MS = 3500;
+function networkFirst(req){
+  const net = fetch(req).then(res => {
+    // Guardar copia fresca (solo respuestas propias y válidas)
+    if (res && res.ok && res.type === "basic") {
+      const copy = res.clone();
+      caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+    }
+    return res;
+  });
+  const timeout = new Promise(resolve => setTimeout(() => resolve(null), NET_TIMEOUT_MS));
+  return Promise.race([net.catch(() => null), timeout]).then(res => {
+    if (res) return res;
+    return caches.match(req).then(hit => {
+      if (hit) return hit;
+      return net.catch(() => offlineFallback(req));
+    });
+  });
+}
+function offlineFallback(req){
+  return caches.match(req).then(hit => {
+    if (hit) return hit;
+    // Navegación sin conexión y sin coincidencia exacta → servir el index
+    if (req.mode === "navigate") {
+      return caches.match("./index.html").then(idx => idx || new Response("Sin conexión", {
+        status: 503,
+        headers: { "Content-Type": "text/plain; charset=utf-8" }
+      }));
+    }
+    // Nunca devolver undefined: respondWith lo trata como error de red
+    return new Response("", { status: 504, statusText: "Sin conexion" });
+  });
+}
